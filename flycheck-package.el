@@ -51,7 +51,8 @@
     (save-excursion
       (widen)
       (goto-char (point-min))
-      (when (re-search-forward "^;+ *Package-Requires *: *\\(.*?\\) *$" nil t)
+      (when (let ((case-fold-search t))
+              (re-search-forward "^;+ *Package-Requires *: *\\(.*?\\) *$" nil t))
         (match-string 1)
         ;; Behold this horrible code. This is why monads, folks.
         (let* ((line-no (line-number-at-pos))
