@@ -41,7 +41,6 @@ helpfully anyway.
 
 Checks to add in the short term:
 
-- WARN: If `lexical-binding` is declared, then `(emacs "24.something")` should be a dependency
 - WARN: Required version numbers of packages should be available for installation
 - WARN: Stable version numbers should be used in dependencies when possible
 - WARN: "0" dependency version are discouraged
@@ -66,7 +65,6 @@ performed by other flycheck checkers:
 - files lacking a (provide ...) which matches their name
 - use of unsafe local variables
 - use of emacs version dependencies
-- using `lexical-binding: t` without an "emacs 24" dependency
 - `lexical-binding: t` set on a line other than the first
 - local variable set in header line
 - non-empty commentary

@@ -60,21 +60,34 @@
           (condition-case err
               (cl-destructuring-bind (parsed-deps . parse-end-pos)
                   (read-from-string deps)
+                ;; Check for () wrapping entire dependency list
                 (unless (eq parse-end-pos (length deps))
                   (push (list line-no 0 'error (format "More than one expression provided")) errors))
-                (dolist (entry parsed-deps)
-                  (if (and (listp entry)
-                           (= (length entry) 2)
-                           (symbolp (car entry))
-                           (stringp (nth 1 entry)))
-                      (let ((package-name (car entry))
-                            (package-version (nth 1 entry)))
-                        (unless (ignore-errors (version-to-list package-version))
-                          (push (list line-no 0 'error (format "%S is not a valid version string: see version-to-string" package-version)) errors))
-                        (unless (or (eq 'emacs package-name)
-                                    (assq package-name package-archive-contents))
-                          (push (list line-no 0 'error (format "Package %S is unknown in the current package list." package-name)) errors)))
-                    (push (list line-no 0 'error (format "Expected (package-name \"version-num\"), but found %S" entry)) errors))))
+                (let (valid-deps)
+                  ;; Check for well-formed dependency entries
+                  (dolist (entry parsed-deps)
+                    (if (and (listp entry)
+                             (= (length entry) 2)
+                             (symbolp (car entry))
+                             (stringp (nth 1 entry)))
+                        (let ((package-name (car entry))
+                              (package-version (nth 1 entry)))
+                          (if (ignore-errors (version-to-list package-version))
+                              (push (cons package-name (version-to-list package-version)) valid-deps)
+                            (push (list line-no 0 'error (format "%S is not a valid version string: see version-to-string" package-version)) errors))
+                          )
+                      (push (list line-no 0 'error (format "Expected (package-name \"version-num\"), but found %S" entry)) errors)))
+
+                  (dolist (entry valid-deps)
+                    (cl-destructuring-bind (package-name . package-version) entry
+                      (unless (or (eq 'emacs package-name)
+                                  (assq package-name package-archive-contents))
+                        (push (list line-no 0 'error (format "Package %S is unknown in the current package list." package-name)) errors))))
+                  (when (save-excursion
+                          (goto-char (point-min))
+                          (when (looking-at ".*lexical-binding: t")
+                            (unless (assq 'emacs valid-deps)
+                              (push (list line-no 0 'warning (format "You should depend on (emacs \"24\") if you need lexical-binding")) errors)))))))
             (error
              (push (list line-no 0 'error (format "Couldn't parse \"Package-Requires\" header: %s" (error-message-string err))) errors)))
           (condition-case err
