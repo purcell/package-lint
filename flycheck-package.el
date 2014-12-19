@@ -54,6 +54,7 @@
 ;; Checks to add in the short term:
 ;;
 ;; - WARN: If `lexical-binding' is declared, then `(emacs "24.something")' should be a dependency
+;; - WARN: Required version numbers of packages should be available for installation
 ;; - WARN: Stable version numbers should be used in dependencies when possible
 ;; - WARN: "0" dependency version are discouraged
 ;;
@@ -65,6 +66,7 @@
 ;; - Version header presence
 ;; - URL header presence
 ;; - WARN: suggest cl-lib vs cl
+;; - ERROR: don't depend on (cl-lib "1.0")
 ;; - use of non-snapshot dependencies
 ;; - keywords separated by only spaces
 ;; - use of non-standard keywords
