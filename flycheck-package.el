@@ -81,7 +81,9 @@
                     (cl-destructuring-bind (package-name . package-version) entry
                       (unless (or (eq 'emacs package-name)
                                   (assq package-name package-archive-contents))
-                        (push (list line-no 0 'error (format "Package %S is not installable." package-name)) errors))))
+                        (push (list line-no 0 'error (format "Package %S is not installable." package-name)) errors))
+                      (unless (version-list-< package-version (list 19001201 1))
+                        (push (list line-no 0 'warning (format "Use a non-snapshot version number for dependency on \"%S\" if possible." package-name)) errors))))
                   (when (save-excursion
                           (goto-char (point-min))
                           (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) nil))

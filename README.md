@@ -54,7 +54,6 @@ performed by other flycheck checkers:
 - URL header presence
 - WARN: suggest cl-lib vs cl
 - ERROR: don't depend on (cl-lib "1.0")
-- use of non-snapshot dependencies
 - keywords separated by only spaces
 - use of non-standard keywords
 - non-use of standard keywords
