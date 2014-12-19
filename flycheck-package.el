@@ -37,6 +37,7 @@
 
 (require 'flycheck)
 (require 'cl-lib)
+(require 'package)
 
 (flycheck-define-generic-checker 'emacs-lisp-package
   "A checker for \"Package-Requires\" headers."
@@ -53,7 +54,6 @@
 ;; Checks to add in the short term:
 ;;
 ;; - WARN: If `lexical-binding' is declared, then `(emacs "24.something")' should be a dependency
-;; - WARN: Named dependencies should exist in the local user's package repository
 ;; - WARN: Stable version numbers should be used in dependencies when possible
 ;; - WARN: "0" dependency version are discouraged
 ;;
@@ -110,7 +110,10 @@
                       (let ((package-name (car entry))
                             (package-version (nth 1 entry)))
                         (unless (ignore-errors (version-to-list package-version))
-                          (push (list line-no 0 'error (format "%S is not a valid version string: see version-to-string" package-version)) errors)))
+                          (push (list line-no 0 'error (format "%S is not a valid version string: see version-to-string" package-version)) errors))
+                        (unless (or (eq 'emacs package-name)
+                                    (assq package-name package-archive-contents))
+                          (push (list line-no 0 'error (format "Package %S is unknown in the current package list." package-name)) errors)))
                     (push (list line-no 0 'error (format "Expected (package-name \"version-num\"), but found %S" entry)) errors))))
             (error
              (push (list line-no 0 'error (format "Couldn't parse \"Package-Requires\" header: %s" (error-message-string err))) errors)
