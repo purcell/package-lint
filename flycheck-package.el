@@ -36,7 +36,7 @@
 ;;; Code:
 
 (require 'flycheck)
-(require 'cl-lib)
+(require 'pcase) ; `pcase-dolist' is not autoloaded
 (require 'package)
 
 (flycheck-define-generic-checker 'emacs-lisp-package
@@ -58,32 +58,29 @@
         (let* ((line-no (line-number-at-pos))
                (deps (match-string 1)))
           (condition-case err
-              (cl-destructuring-bind (parsed-deps . parse-end-pos)
-                  (read-from-string deps)
+              (pcase-let ((`(,parsed-deps . ,parse-end-pos) (read-from-string deps)))
                 ;; Check for () wrapping entire dependency list
                 (unless (eq parse-end-pos (length deps))
                   (push (list line-no 0 'error (format "More than one expression provided.")) errors))
                 (let (valid-deps)
                   ;; Check for well-formed dependency entries
                   (dolist (entry parsed-deps)
-                    (if (and (listp entry)
-                             (= (length entry) 2)
-                             (symbolp (car entry))
-                             (stringp (nth 1 entry)))
-                        (let ((package-name (car entry))
-                              (package-version (nth 1 entry)))
-                          (if (ignore-errors (version-to-list package-version))
-                              (push (cons package-name (version-to-list package-version)) valid-deps)
-                            (push (list line-no 0 'error (format "%S is not a valid version string: see `version-to-string'." package-version)) errors)))
-                      (push (list line-no 0 'error (format "Expected (package-name \"version-num\"), but found %S." entry)) errors)))
+                    (pcase entry
+                      ((and `(,package-name ,package-version)
+                            (guard (symbolp package-name))
+                            (guard (stringp package-version)))
+                       (if (ignore-errors (version-to-list package-version))
+                           (push (cons package-name (version-to-list package-version)) valid-deps)
+                         (push (list line-no 0 'error (format "%S is not a valid version string: see `version-to-string'." package-version)) errors)))
+                      (_
+                       (push (list line-no 0 'error (format "Expected (package-name \"version-num\"), but found %S." entry)) errors))))
 
-                  (dolist (entry valid-deps)
-                    (cl-destructuring-bind (package-name . package-version) entry
-                      (unless (or (eq 'emacs package-name)
-                                  (assq package-name package-archive-contents))
-                        (push (list line-no 0 'error (format "Package %S is not installable." package-name)) errors))
-                      (unless (version-list-< package-version (list 19001201 1))
-                        (push (list line-no 0 'warning (format "Use a non-snapshot version number for dependency on \"%S\" if possible." package-name)) errors))))
+                  (pcase-dolist (`(,package-name . ,package-version) valid-deps)
+                    (unless (or (eq 'emacs package-name)
+                                (assq package-name package-archive-contents))
+                      (push (list line-no 0 'error (format "Package %S is not installable." package-name)) errors))
+                    (unless (version-list-< package-version (list 19001201 1))
+                      (push (list line-no 0 'warning (format "Use a non-snapshot version number for dependency on \"%S\" if possible." package-name)) errors)))
                   (when (save-excursion
                           (goto-char (point-min))
                           (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) nil))
