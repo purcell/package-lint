@@ -41,11 +41,11 @@
 
 (flycheck-define-generic-checker 'emacs-lisp-package
   "A checker for \"Package-Requires\" headers."
-  :start #'emacs-lisp-package-start
+  :start #'flycheck-package--start
   :modes '(emacs-lisp-mode))
 
 ;; Disclaimer: this is currently very hacky and will be cleaned up as & when it grows in scope.
-(defun emacs-lisp-package-start (checker callback)
+(defun flycheck-package--start (checker callback)
   "Flycheck start function for checking metadata used by package.el."
   (let (errors)
     (save-excursion
