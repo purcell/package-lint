@@ -37,6 +37,11 @@
 
 ;; Disclaimer: this is currently very hacky and will be cleaned up as & when it grows in scope.
 ;;
+;; Once this is more useful, the plan is to extract the checks into a separate
+;; `package-lint.el', which can then be used by this checker and also by
+;; MELPA -- this will probably be essential in order to check multi-file packages
+;; helpfully anyway.
+;;
 ;; Checks to add in the short term:
 ;;
 ;; - WARN: If `lexical-binding' is declared, then `(emacs "24.something")' should be a dependency
