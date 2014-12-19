@@ -80,9 +80,30 @@
           (condition-case err
               (package-buffer-info)
             (error
-             (push (list 0 0 'warning (format "package.el cannot parse this buffer: %s" (error-message-string err))) errors)))))
+             ;; Try fixing up the Version header before complaining
+             (let ((contents (buffer-string)))
+               (with-temp-buffer
+                 (insert contents)
+                 (flycheck-package--update-or-insert-version "0")
+                 (condition-case err
+                     (progn
+                       (package-buffer-info)
+                       (push (list 0 0 'warning "Missing a valid \"Version:\" header.") errors))
+                   (error
+                    (push (list 0 0 'error (format "package.el cannot parse this buffer: %s" (error-message-string err))) errors)))))))))
       (funcall callback 'finished
                (mapcar (lambda (e) (apply #'flycheck-error-new-at (append e (list :checker checker)))) errors)))))
+
+
+(defun flycheck-package--update-or-insert-version (version)
+  "Ensure current buffer has a \"Version: VERSION\" header."
+  (goto-char (point-min))
+  (if (let ((case-fold-search t)) (re-search-forward "^;* *Version *: *" nil t))
+      (move-beginning-of-line nil)
+    (forward-line))
+  (insert (format ";; Version: %s" version))
+  (newline))
+
 
 ;;;###autoload
 (defun flycheck-package-setup ()
