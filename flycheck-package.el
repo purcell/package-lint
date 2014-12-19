@@ -56,8 +56,7 @@
         (match-string 1)
         ;; Behold this horrible code. This is why monads, folks.
         (let* ((line-no (line-number-at-pos))
-               (deps (match-string 1))
-               (parse-result ))
+               (deps (match-string 1)))
           (condition-case err
               (cl-destructuring-bind (parsed-deps . parse-end-pos)
                   (read-from-string deps)
@@ -77,18 +76,13 @@
                           (push (list line-no 0 'error (format "Package %S is unknown in the current package list." package-name)) errors)))
                     (push (list line-no 0 'error (format "Expected (package-name \"version-num\"), but found %S" entry)) errors))))
             (error
-             (push (list line-no 0 'error (format "Couldn't parse \"Package-Requires\" header: %s" (error-message-string err))) errors)
-             (cons nil 0)))
+             (push (list line-no 0 'error (format "Couldn't parse \"Package-Requires\" header: %s" (error-message-string err))) errors)))
           (condition-case err
               (package-buffer-info)
             (error
-             (push (list 0 0 'warning (format "package.el cannot parse this buffer: %s" (error-message-string err))) errors)
-             nil))
-
-          ))
+             (push (list 0 0 'warning (format "package.el cannot parse this buffer: %s" (error-message-string err))) errors)))))
       (funcall callback 'finished
-               (mapcar (lambda (e) (apply #'flycheck-error-new-at (append e (list :checker checker)))) errors))
-      )))
+               (mapcar (lambda (e) (apply #'flycheck-error-new-at (append e (list :checker checker)))) errors)))))
 
 ;;;###autoload
 (defun flycheck-package-setup ()
