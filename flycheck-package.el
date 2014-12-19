@@ -5,7 +5,7 @@
 ;; Author: Steve Purcell <steve@sanityinc.com>
 ;; Keywords: lisp
 ;; Version: DEV
-;; Package-Requires: ((cl-lib "0.5") (flycheck "0.22-cvs1"))
+;; Package-Requires: ((cl-lib "0.5") (flycheck "0.22-cvs1") (emacs "24"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
