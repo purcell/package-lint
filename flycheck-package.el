@@ -36,6 +36,42 @@
   :modes '(emacs-lisp-mode))
 
 ;; Disclaimer: this is currently very hacky and will be cleaned up as & when it grows in scope.
+;;
+;; Checks to add in the short term:
+;;
+;; - WARN: If `lexical-binding' is declared, then `(emacs "24.something")' should be a dependency
+;; - WARN: Named dependencies should exist in the local user's package repository
+;; - WARN: Stable version numbers should be used in dependencies when possible
+;; - WARN: "0" dependency version are discouraged
+;;
+;; Further checks for a future package-lint.el, some of which are currently
+;; performed by other flycheck checkers:
+;;
+;; - WARN: header line formatting / length / capitalisation / use of "Emacs"
+;; - trailing line presence / formatting
+;; - Version header presence
+;; - URL header presence
+;; - WARN: suggest cl-lib vs cl
+;; - use of non-snapshot dependencies
+;; - keywords separated by only spaces
+;; - use of non-standard keywords
+;; - non-use of standard keywords
+;; - checkdoc failures for interactive functions / defcustoms
+;; - presence of :group for each defcustom / defgroup
+;; - trailing whitespace?
+;; - themes which aren't in a matching *-theme.el file
+;; - files lacking a (provide ...) which matches their name
+;; - use of unsafe local variables
+;; - use of emacs version dependencies
+;; - using `lexical-binding: t` without an "emacs 24" dependency
+;; - `lexical-binding: t` set on a line other than the first
+;; - local variable set in header line
+;; - non-empty commentary
+;; - using commentary to talk about load[- ]path and installation
+;; - lack of autoloads
+;; - references to README files which won't be bundled in a package
+;; - dependencies on unavailable packages / versions
+;; - use of CamelCase identifiers
 (defun emacs-lisp-package-start (checker callback)
   "Flycheck start function for checking metadata used by package.el."
   (let (errors)
