@@ -35,76 +35,184 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'pcase))    ; `pcase-dolist' is not autoloaded
+(eval-when-compile (require 'cl-lib))
 (require 'flycheck)
-(require 'pcase) ; `pcase-dolist' is not autoloaded
 (require 'package)
 
-(flycheck-define-generic-checker 'emacs-lisp-package
-  "A checker for \"Package-Requires\" headers."
-  :start #'flycheck-package--start
-  :modes '(emacs-lisp-mode))
+(cl-defstruct (flycheck-package--context
+               (:constructor nil)
+               (:constructor flycheck-package--create-context (checker))
+               (:copier nil)
+               (:predicate nil))
+  (checker nil :read-only t)
+  (error-list nil)
+  (pass-results (make-hash-table :test #'eq) :read-only t))
 
-;; Disclaimer: this is currently very hacky and will be cleaned up as & when it grows in scope.
+(defvar flycheck-package--registered-passes '())
+
+(defconst flycheck-package--pass-not-yet-run
+  (make-symbol "<pass-not-yet-run>"))
+
+(defun flycheck-package--call-pass (context pass)
+  (let* ((pass-results
+          (flycheck-package--context-pass-results context))
+         (result (gethash pass pass-results
+                          flycheck-package--pass-not-yet-run)))
+    (when (eq flycheck-package--pass-not-yet-run result)
+      (let ((result* (condition-case err
+                         (cons 'ok (funcall pass context))
+                       (error (cons 'error err)))))
+        (setq result result*)
+        (puthash pass result* pass-results)))
+    (pcase-let ((`(,code . ,actual-result) result))
+      (if (eq 'error code)
+          (signal (car actual-result) (cdr actual-result))
+        actual-result))))
+
 (defun flycheck-package--start (checker callback)
-  "Flycheck start function for checking metadata used by package.el."
-  (let (errors)
-    (save-excursion
-      (widen)
-      (when (flycheck-package--goto-header "Package-Requires")
-        ;; Behold this horrible code. This is why monads, folks.
-        (let* ((line-no (line-number-at-pos))
-               (deps (match-string 1)))
-          (condition-case err
-              (pcase-let ((`(,parsed-deps . ,parse-end-pos) (read-from-string deps)))
-                ;; Check for () wrapping entire dependency list
-                (unless (eq parse-end-pos (length deps))
-                  (push (list line-no 0 'error (format "More than one expression provided.")) errors))
-                (let (valid-deps)
-                  ;; Check for well-formed dependency entries
-                  (dolist (entry parsed-deps)
-                    (pcase entry
-                      ((and `(,package-name ,package-version)
-                            (guard (symbolp package-name))
-                            (guard (stringp package-version)))
-                       (if (ignore-errors (version-to-list package-version))
-                           (push (cons package-name (version-to-list package-version)) valid-deps)
-                         (push (list line-no 0 'error (format "%S is not a valid version string: see `version-to-string'." package-version)) errors)))
-                      (_
-                       (push (list line-no 0 'error (format "Expected (package-name \"version-num\"), but found %S." entry)) errors))))
+  (let ((context (flycheck-package--create-context checker)))
+    (dolist (pass flycheck-package--registered-passes)
+      (condition-case-unless-debug nil
+          (flycheck-package--call-pass context pass)
+        (error)))
+    (funcall callback
+             'finished
+             (mapcar (lambda (x)
+                       (apply #'flycheck-error-new-at x))
+                     (flycheck-package--context-error-list context)))))
 
-                  (pcase-dolist (`(,package-name . ,package-version) valid-deps)
-                    (unless (or (eq 'emacs package-name)
-                                (assq package-name package-archive-contents))
-                      (push
-                       (append (flycheck-package--position-of-dependency package-name)
-                               (list 'error (format "Package %S is not installable." package-name))) errors))
-                    (unless (version-list-< package-version (list 19001201 1))
-                      (push
-                       (append (flycheck-package--position-of-dependency package-name)
-                               (list 'warning (format "Use a non-snapshot version number for dependency on \"%S\" if possible." package-name))) errors)))
-                  (when (save-excursion
-                          (goto-char (point-min))
-                          (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) t))
-                    (unless (assq 'emacs valid-deps)
-                      (push (list 0 0 'warning (format "You should depend on (emacs \"24\") if you need lexical-binding.")) errors)))))
-            (error
-             (push (list line-no 0 'error (format "Couldn't parse \"Package-Requires\" header: %s" (error-message-string err))) errors)))
-          (condition-case err
-              (package-buffer-info)
-            (error
-             ;; Try fixing up the Version header before complaining
-             (let ((contents (buffer-substring-no-properties (point-min) (point-max))))
-               (with-temp-buffer
-                 (insert contents)
-                 (flycheck-package--update-or-insert-version "0")
-                 (condition-case err
-                     (progn
-                       (package-buffer-info)
-                       (push (list 0 0 'warning "Missing a valid \"Version:\" header.") errors))
-                   (error
-                    (push (list 0 0 'error (format "package.el cannot parse this buffer: %s" (error-message-string err))) errors)))))))))
-      (funcall callback 'finished
-               (mapcar (lambda (e) (apply #'flycheck-error-new-at (append e (list :checker checker)))) errors)))))
+(defun flycheck-package--error (context line column level message)
+  (push (list line column level message
+              :checker (flycheck-package--context-checker context))
+        (flycheck-package--context-error-list context)))
+
+(defun flycheck-package--register-pass (check)
+  (cl-pushnew check flycheck-package--registered-passes :test #'eq))
+
+(eval-and-compile
+  (defun flycheck-package--expand-pass-name (name)
+    (intern (concat "flycheck-package--pass-" (symbol-name name)))))
+
+(defmacro flycheck-package--define-pass (name arglist &rest body)
+  (declare (indent defun) (debug t) (doc-string 3))
+  (let ((real-name (flycheck-package--expand-pass-name name)))
+    `(prog1 (defun ,real-name ,arglist
+              ,@body)
+       (flycheck-package--register-pass #',real-name))))
+
+(defmacro flycheck-package--require-pass (binding pass context &rest body)
+  (declare (indent 3) (debug t))
+  `(pcase-let ((,binding
+                (flycheck-package--call-pass
+                 ,context
+                 #',(flycheck-package--expand-pass-name pass))))
+     ,@body))
+
+(flycheck-package--define-pass get-dependency-list (_context)
+  (save-excursion
+    (save-restriction
+      (widen)
+      (if (flycheck-package--goto-header "Package-Requires")
+          (cons (line-number-at-pos) (match-string 1))
+        (signal 'error '("No Package-Requires found"))))))
+
+(flycheck-package--define-pass parse-dependency-list (context)
+  (flycheck-package--require-pass
+      `(,line-no . ,deps) get-dependency-list context
+    (condition-case err
+        (pcase-let ((`(,parsed-deps . ,parse-end-pos) (read-from-string deps)))
+          (unless (= parse-end-pos (length deps))
+            (flycheck-package--error
+             context line-no 0 'error
+             "More than one expression provided."))
+          (cons line-no parsed-deps))
+      (error
+       (flycheck-package--error
+        context line-no 0 'error
+        (format "Couldn't parse \"Package-Requires\" header: %s" (error-message-string err)))
+       ;; Rethrow, because there's no point in trying to recover.
+       (signal (car err) (cdr err))))))
+
+(flycheck-package--define-pass get-well-formed-dependencies (context)
+  (flycheck-package--require-pass
+      `(,line-no . ,parsed-deps) parse-dependency-list context
+    (let ((valid-deps '()))
+      (dolist (entry parsed-deps)
+        (pcase entry
+          ((and `(,package-name ,package-version)
+                (guard (symbolp package-name))
+                (guard (stringp package-version)))
+           (if (ignore-errors (version-to-list package-version))
+               (push (cons package-name
+                           (version-to-list package-version))
+                     valid-deps)
+             (flycheck-package--error
+              context line-no 0 'error
+              (format "%S is not a valid version string: see `version-to-string'."
+                      package-version))))
+          (_
+           (flycheck-package--error
+            context line-no 0 'error
+            (format "Expected (package-name \"version-num\"), but found %S." entry)))))
+      (cons line-no valid-deps))))
+
+(flycheck-package--define-pass packages-installable (context)
+  (flycheck-package--require-pass
+      `(_ . ,valid-deps) get-well-formed-dependencies context
+    (pcase-dolist (`(,package-name . ,_) valid-deps)
+      (unless (or (eq 'emacs package-name)
+                  (assq package-name package-archive-contents))
+        (pcase-let ((`(,line-no ,offset)
+                     (flycheck-package--position-of-dependency package-name)))
+          (flycheck-package--error
+           context line-no offset 'error
+           (format "Package %S is not installable." package-name)))))))
+
+(flycheck-package--define-pass deps-use-non-snapshot-version (context)
+  (flycheck-package--require-pass
+      `(_ . ,valid-deps) get-well-formed-dependencies context
+    (pcase-dolist (`(,package-name . ,package-version) valid-deps)
+      (message "%S" package-version)
+      (unless (version-list-< package-version (list 19001201 1))
+        (pcase-let ((`(,line-no ,offset)
+                     (flycheck-package--position-of-dependency package-name)))
+          (flycheck-package--error
+           context line-no offset 'warning
+           (format "Use a non-snapshot version number for dependency on \"%S\" if possible."
+                   package-name)))))))
+
+(flycheck-package--define-pass lexical-binding-requires-emacs-24 (context)
+  (when (save-excursion
+          (goto-char (point-min))
+          (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) t))
+    (flycheck-package--require-pass
+        `(,line-no . ,valid-deps) get-well-formed-dependencies context
+      (unless (assq 'emacs valid-deps)
+        (flycheck-package--error
+         context line-no 0 'warning
+         "You should depend on (emacs \"24\") if you need lexical-binding.")))))
+
+(flycheck-package--define-pass package-el-can-parse-buffer (context)
+  (flycheck-package--require-pass _ get-dependency-list context
+    (condition-case nil
+        (package-buffer-info)
+      (error
+       ;; Try fixing up the Version header before complaining
+       (let ((contents (buffer-substring-no-properties (point-min) (point-max))))
+         (with-temp-buffer
+           (insert contents)
+           (flycheck-package--update-or-insert-version "0")
+           (condition-case err
+               (progn
+                 (package-buffer-info)
+                 (flycheck-package--error
+                  context 0 0 'warning
+                  "Missing a valid \"Version:\" header."))
+             (error
+              (flycheck-package--error
+               context 0 0 'error
+               (format "package.el cannot parse this buffer: %s" (error-message-string err)))))))))))
 
 (defun flycheck-package--position-of-dependency (package-name)
   (save-excursion
@@ -138,6 +246,10 @@ header with any leading or trailing whitespace removed."
   (insert (format ";; Version: %s" version))
   (newline))
 
+(flycheck-define-generic-checker 'emacs-lisp-package
+  "A checker for \"Package-Requires\" headers."
+  :start #'flycheck-package--start
+  :modes '(emacs-lisp-mode))
 
 ;;;###autoload
 (defun flycheck-package-setup ()
@@ -145,7 +257,6 @@ header with any leading or trailing whitespace removed."
 Add `flycheck-emacs-lisp-package' to `flycheck-checkers'."
   (interactive)
   (add-to-list 'flycheck-checkers 'emacs-lisp-package))
-
 
 (provide 'flycheck-package)
 ;;; flycheck-package.el ends here
