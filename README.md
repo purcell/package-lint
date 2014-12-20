@@ -50,7 +50,6 @@ performed by other flycheck checkers:
 
 - WARN: header line formatting / length / capitalisation / use of "Emacs"
 - trailing line presence / formatting
-- Version header presence
 - URL header presence
 - WARN: suggest cl-lib vs cl
 - ERROR: don't depend on (cl-lib "1.0")
