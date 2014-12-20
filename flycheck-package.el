@@ -83,7 +83,7 @@
                       (push (list line-no 0 'warning (format "Use a non-snapshot version number for dependency on \"%S\" if possible." package-name)) errors)))
                   (when (save-excursion
                           (goto-char (point-min))
-                          (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) nil))
+                          (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) t))
                     (unless (assq 'emacs valid-deps)
                       (push (list 0 0 'warning (format "You should depend on (emacs \"24\") if you need lexical-binding.")) errors)))))
             (error
