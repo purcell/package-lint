@@ -51,21 +51,15 @@
 
 (defvar flycheck-package--registered-passes '())
 
-(defconst flycheck-package--pass-not-yet-run
-  (make-symbol "<pass-not-yet-run>"))
-
 (defun flycheck-package--call-pass (context pass)
-  (let* ((pass-results
-          (flycheck-package--context-pass-results context))
-         (result (gethash pass pass-results
-                          flycheck-package--pass-not-yet-run)))
-    (when (eq flycheck-package--pass-not-yet-run result)
-      (let ((result* (condition-case err
-                         (cons 'ok (funcall pass context))
-                       (error (cons 'error err)))))
-        (setq result result*)
-        (puthash pass result* pass-results)))
-    (pcase-let ((`(,code . ,actual-result) result))
+  (let ((pass-results (flycheck-package--context-pass-results context)))
+    (pcase-let ((`(,code . ,actual-result)
+                 (or (gethash pass pass-results)
+                     (puthash pass
+                              (condition-case err
+                                  (cons 'ok (funcall pass context))
+                                (error (cons 'error err)))
+                              pass-results))))
       (if (eq 'error code)
           (signal (car actual-result) (cdr actual-result))
         actual-result))))
