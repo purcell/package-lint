@@ -50,10 +50,7 @@
   (let (errors)
     (save-excursion
       (widen)
-      (goto-char (point-min))
-      (when (let ((case-fold-search t))
-              (re-search-forward "^;+ *Package-Requires *: *\\(.*?\\) *$" nil t))
-        (match-string 1)
+      (when (flycheck-package--goto-header "Package-Requires")
         ;; Behold this horrible code. This is why monads, folks.
         (let* ((line-no (line-number-at-pos))
                (deps (match-string 1)))
@@ -78,9 +75,13 @@
                   (pcase-dolist (`(,package-name . ,package-version) valid-deps)
                     (unless (or (eq 'emacs package-name)
                                 (assq package-name package-archive-contents))
-                      (push (list line-no 0 'error (format "Package %S is not installable." package-name)) errors))
+                      (push
+                       (append (flycheck-package--position-of-dependency package-name)
+                               (list 'error (format "Package %S is not installable." package-name))) errors))
                     (unless (version-list-< package-version (list 19001201 1))
-                      (push (list line-no 0 'warning (format "Use a non-snapshot version number for dependency on \"%S\" if possible." package-name)) errors)))
+                      (push
+                       (append (flycheck-package--position-of-dependency package-name)
+                               (list 'warning (format "Use a non-snapshot version number for dependency on \"%S\" if possible." package-name))) errors)))
                   (when (save-excursion
                           (goto-char (point-min))
                           (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) t))
@@ -105,11 +106,33 @@
       (funcall callback 'finished
                (mapcar (lambda (e) (apply #'flycheck-error-new-at (append e (list :checker checker)))) errors)))))
 
+(defun flycheck-package--position-of-dependency (package-name)
+  (save-excursion
+    (when (flycheck-package--goto-header "Package-Requires")
+      (move-beginning-of-line nil)
+      (let ((line-start (point))
+            (line-no (line-number-at-pos))
+            (pattern (format "( *%s\\(?:)\\|[^[:alnum:]_\\-].*?)\\)" package-name)))
+        (when (re-search-forward pattern (line-end-position) t)
+          (message "%S => %S" pattern (match-data))
+          (list line-no (- (1+ (match-beginning 0)) line-start)))))))
+
+(defun flycheck-package--goto-header (header-name)
+  "Move to the first occurrence of HEADER-NAME in the file.
+If the return value is non-nil, then point will be at the end of
+the file, and the first match group will contain the value of the
+header with any leading or trailing whitespace removed."
+  (let ((initial-point (point)))
+    (goto-char (point-min))
+    (let ((case-fold-search t))
+      (if (re-search-forward (concat "^;+ *" (regexp-quote header-name) " *: *\\(.*?\\) *$") nil t)
+          (point)
+        (goto-char initial-point)
+        nil))))
 
 (defun flycheck-package--update-or-insert-version (version)
   "Ensure current buffer has a \"Version: VERSION\" header."
-  (goto-char (point-min))
-  (if (let ((case-fold-search t)) (re-search-forward "^;* *Version *: *" nil t))
+  (if (flycheck-package--goto-header "Version")
       (move-beginning-of-line nil)
     (forward-line))
   (insert (format ";; Version: %s" version))
