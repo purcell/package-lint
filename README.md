@@ -89,10 +89,12 @@ See
 [COPYING](https://github.com/purcell/flycheck-package/blob/master/COPYING)
 for details.
 
-About
------
+Credits
+-------
 
-`flycheck-package` was written by [Steve Purcell](https://github.com/purcell).
+`flycheck-package` was written by
+[Steve Purcell](https://github.com/purcell) with significant
+contributions from [Fanael Linithien](https://github.com/Fanael).
 
 <hr>
 
