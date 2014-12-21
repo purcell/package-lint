@@ -51,6 +51,9 @@
 
 (defvar flycheck-package--registered-passes '())
 
+(put 'flycheck-package--failed-pass 'error-conditions
+     '(flycheck-package--failed-pass error))
+
 (defun flycheck-package--call-pass (context pass)
   (let ((pass-results (flycheck-package--context-pass-results context)))
     (pcase-let ((`(,code . ,actual-result)
@@ -58,7 +61,8 @@
                      (puthash pass
                               (condition-case err
                                   (cons 'ok (funcall pass context))
-                                (error (cons 'error err)))
+                                (flycheck-package--failed-pass
+                                 (cons 'error err)))
                               pass-results))))
       (if (eq 'error code)
           (signal (car actual-result) (cdr actual-result))
@@ -67,9 +71,9 @@
 (defun flycheck-package--start (checker callback)
   (let ((context (flycheck-package--create-context checker)))
     (dolist (pass flycheck-package--registered-passes)
-      (condition-case-unless-debug nil
+      (condition-case nil
           (flycheck-package--call-pass context pass)
-        (error)))
+        (flycheck-package--failed-pass)))
     (funcall callback
              'finished
              (mapcar (lambda (x)
@@ -109,7 +113,8 @@
       (widen)
       (if (flycheck-package--goto-header "Package-Requires")
           (cons (line-number-at-pos) (match-string 1))
-        (signal 'error '("No Package-Requires found"))))))
+        (signal 'flycheck-package--failed-pass
+                '("No Package-Requires found"))))))
 
 (flycheck-package--define-pass parse-dependency-list (context)
   (flycheck-package--require-pass
@@ -125,8 +130,7 @@
        (flycheck-package--error
         context line-no 0 'error
         (format "Couldn't parse \"Package-Requires\" header: %s" (error-message-string err)))
-       ;; Rethrow, because there's no point in trying to recover.
-       (signal (car err) (cdr err))))))
+       (signal 'flycheck-package--failed-pass err)))))
 
 (flycheck-package--define-pass get-well-formed-dependencies (context)
   (flycheck-package--require-pass
