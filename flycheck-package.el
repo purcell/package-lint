@@ -198,6 +198,20 @@
          context line-no 0 'warning
          "You should depend on (emacs \"24\") if you need lexical-binding.")))))
 
+(flycheck-package--define-pass do-not-depend-on-cl-lib-1.0 (context)
+  (flycheck-package--require-pass
+      `(,_ . ,valid-deps) get-well-formed-dependencies context
+    (let ((cl-lib-version (cdr (assq 'cl-lib valid-deps))))
+      (when (and cl-lib-version
+                 (version-list-<= '(1) cl-lib-version))
+        (pcase-let ((`(,line-no ,offset)
+                     (flycheck-package--position-of-dependency 'cl-lib)))
+          (flycheck-package--error
+           context line-no offset 'error
+           (format "Depend on the latest 0.x version of cl-lib rather than on version \"%S\".
+Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
+                   cl-lib-version)))))))
+
 (flycheck-package--define-pass package-el-can-parse-buffer (context)
   (flycheck-package--require-pass _ get-dependency-list context
     (condition-case nil
