@@ -246,7 +246,7 @@
                        (not (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) t))))
           (flycheck-package--error
            context 0 0 'error
-           "`lexical-biding' must be set in the first line."))))))
+           "`lexical-binding' must be set in the first line."))))))
 
 (flycheck-package--define-pass do-not-depend-on-cl-lib-1.0 (context)
   (flycheck-package--require-pass
