@@ -40,6 +40,9 @@
 (require 'flycheck)
 (require 'package)
 
+
+;;; Machinery
+
 (cl-defstruct (flycheck-package--context
                (:constructor nil)
                (:constructor flycheck-package--create-context (checker))
@@ -110,6 +113,9 @@
                  ,context
                  #',(flycheck-package--expand-pass-name pass))))
      ,@body))
+
+
+;;; Passes for each check
 
 (flycheck-package--define-pass get-dependency-list (_context)
   (if (flycheck-package--goto-header "Package-Requires")
@@ -281,6 +287,9 @@ Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
               (flycheck-package--error
                context 0 0 'error
                (format "package.el cannot parse this buffer: %s" (error-message-string err)))))))))))
+
+
+;;; Helpers and checker definition
 
 (defun flycheck-package--goto-header (header-name)
   "Move to the first occurrence of HEADER-NAME in the file.
