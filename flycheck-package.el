@@ -1,4 +1,4 @@
-;;; flycheck-package.el --- Flycheck checker for elisp package metadata -*- lexical-binding: t -*-
+;;; flycheck-package.el --- A Flycheck checker for elisp package authors -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2014  Steve Purcell
 
