@@ -167,7 +167,6 @@
   (flycheck-package--require-pass
       `(,_ . ,valid-deps) get-well-formed-dependencies context
     (pcase-dolist (`(,package-name . ,package-version) valid-deps)
-      (message "%S" package-version)
       (unless (version-list-< package-version (list 19001201 1))
         (pcase-let ((`(,line-no ,offset)
                      (flycheck-package--position-of-dependency package-name)))
