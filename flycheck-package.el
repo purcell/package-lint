@@ -70,11 +70,10 @@
 
 (defun flycheck-package--start (checker callback)
   (let ((context (flycheck-package--create-context checker)))
-    (save-excursion
-      (dolist (pass flycheck-package--registered-passes)
-        (condition-case nil
-            (flycheck-package--call-pass context pass)
-          (flycheck-package--failed-pass))))
+    (dolist (pass flycheck-package--registered-passes)
+      (condition-case nil
+          (flycheck-package--call-pass context pass)
+        (flycheck-package--failed-pass)))
     (funcall callback
              'finished
              (mapcar (lambda (x)
@@ -225,7 +224,10 @@ Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
 (flycheck-package--define-pass package-el-can-parse-buffer (context)
   (flycheck-package--require-pass _ get-dependency-list context
     (condition-case nil
-        (package-buffer-info)
+        (save-excursion
+          (save-restriction
+            (widen)
+            (package-buffer-info)))
       (error
        ;; Try fixing up the Version header before complaining
        (let ((contents (buffer-substring-no-properties (point-min) (point-max))))
