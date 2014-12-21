@@ -43,7 +43,6 @@ Checks to add in the short term:
 
 - WARN: Required version numbers of packages should be available for installation
 - WARN: Stable version numbers should be used in dependencies when possible
-- WARN: "0" dependency version are discouraged
 
 Further checks for a future package-lint.el, some of which are currently
 performed by other flycheck checkers:
@@ -52,7 +51,6 @@ performed by other flycheck checkers:
 - trailing line presence / formatting
 - URL header presence
 - WARN: suggest cl-lib vs cl
-- ERROR: don't depend on (cl-lib "1.0")
 - keywords separated by only spaces
 - use of non-standard keywords
 - non-use of standard keywords

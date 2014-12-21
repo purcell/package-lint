@@ -51,6 +51,9 @@
 
 (defvar flycheck-package--registered-passes '())
 
+(put 'flycheck-package--failed-pass 'error-conditions
+     '(flycheck-package--failed-pass error))
+
 (defun flycheck-package--call-pass (context pass)
   (let ((pass-results (flycheck-package--context-pass-results context)))
     (pcase-let ((`(,code . ,actual-result)
@@ -58,7 +61,8 @@
                      (puthash pass
                               (condition-case err
                                   (cons 'ok (funcall pass context))
-                                (error (cons 'error err)))
+                                (flycheck-package--failed-pass
+                                 (cons 'error err)))
                               pass-results))))
       (if (eq 'error code)
           (signal (car actual-result) (cdr actual-result))
@@ -67,9 +71,9 @@
 (defun flycheck-package--start (checker callback)
   (let ((context (flycheck-package--create-context checker)))
     (dolist (pass flycheck-package--registered-passes)
-      (condition-case-unless-debug nil
+      (condition-case nil
           (flycheck-package--call-pass context pass)
-        (error)))
+        (flycheck-package--failed-pass)))
     (funcall callback
              'finished
              (mapcar (lambda (x)
@@ -109,7 +113,8 @@
       (widen)
       (if (flycheck-package--goto-header "Package-Requires")
           (cons (line-number-at-pos) (match-string 1))
-        (signal 'error '("No Package-Requires found"))))))
+        (signal 'flycheck-package--failed-pass
+                '("No Package-Requires found"))))))
 
 (flycheck-package--define-pass parse-dependency-list (context)
   (flycheck-package--require-pass
@@ -125,8 +130,7 @@
        (flycheck-package--error
         context line-no 0 'error
         (format "Couldn't parse \"Package-Requires\" header: %s" (error-message-string err)))
-       ;; Rethrow, because there's no point in trying to recover.
-       (signal (car err) (cdr err))))))
+       (signal 'flycheck-package--failed-pass err)))))
 
 (flycheck-package--define-pass get-well-formed-dependencies (context)
   (flycheck-package--require-pass
@@ -153,7 +157,7 @@
 
 (flycheck-package--define-pass packages-installable (context)
   (flycheck-package--require-pass
-      `(_ . ,valid-deps) get-well-formed-dependencies context
+      `(,_ . ,valid-deps) get-well-formed-dependencies context
     (pcase-dolist (`(,package-name . ,_) valid-deps)
       (unless (or (eq 'emacs package-name)
                   (assq package-name package-archive-contents))
@@ -165,15 +169,26 @@
 
 (flycheck-package--define-pass deps-use-non-snapshot-version (context)
   (flycheck-package--require-pass
-      `(_ . ,valid-deps) get-well-formed-dependencies context
+      `(,_ . ,valid-deps) get-well-formed-dependencies context
     (pcase-dolist (`(,package-name . ,package-version) valid-deps)
-      (message "%S" package-version)
       (unless (version-list-< package-version (list 19001201 1))
         (pcase-let ((`(,line-no ,offset)
                      (flycheck-package--position-of-dependency package-name)))
           (flycheck-package--error
            context line-no offset 'warning
            (format "Use a non-snapshot version number for dependency on \"%S\" if possible."
+                   package-name)))))))
+
+(flycheck-package--define-pass deps-do-not-use-zero-versions (context)
+  (flycheck-package--require-pass
+      `(,_ . ,valid-deps) get-well-formed-dependencies context
+    (pcase-dolist (`(,package-name . ,package-version) valid-deps)
+      (when (equal package-version '(0))
+        (pcase-let ((`(,line-no ,offset)
+                     (flycheck-package--position-of-dependency package-name)))
+          (flycheck-package--error
+           context line-no offset 'warning
+           (format "Use a properly versioned dependency on \"%S\" if possible."
                    package-name)))))))
 
 (flycheck-package--define-pass lexical-binding-requires-emacs-24 (context)
@@ -186,6 +201,20 @@
         (flycheck-package--error
          context line-no 0 'warning
          "You should depend on (emacs \"24\") if you need lexical-binding.")))))
+
+(flycheck-package--define-pass do-not-depend-on-cl-lib-1.0 (context)
+  (flycheck-package--require-pass
+      `(,_ . ,valid-deps) get-well-formed-dependencies context
+    (let ((cl-lib-version (cdr (assq 'cl-lib valid-deps))))
+      (when (and cl-lib-version
+                 (version-list-<= '(1) cl-lib-version))
+        (pcase-let ((`(,line-no ,offset)
+                     (flycheck-package--position-of-dependency 'cl-lib)))
+          (flycheck-package--error
+           context line-no offset 'error
+           (format "Depend on the latest 0.x version of cl-lib rather than on version \"%S\".
+Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
+                   cl-lib-version)))))))
 
 (flycheck-package--define-pass package-el-can-parse-buffer (context)
   (flycheck-package--require-pass _ get-dependency-list context
