@@ -175,6 +175,18 @@
            (format "Use a non-snapshot version number for dependency on \"%S\" if possible."
                    package-name)))))))
 
+(flycheck-package--define-pass deps-do-not-use-zero-versions (context)
+  (flycheck-package--require-pass
+      `(,_ . ,valid-deps) get-well-formed-dependencies context
+    (pcase-dolist (`(,package-name . ,package-version) valid-deps)
+      (when (equal package-version '(0))
+        (pcase-let ((`(,line-no ,offset)
+                     (flycheck-package--position-of-dependency package-name)))
+          (flycheck-package--error
+           context line-no offset 'warning
+           (format "Use a properly versioned dependency on \"%S\" if possible."
+                   package-name)))))))
+
 (flycheck-package--define-pass lexical-binding-requires-emacs-24 (context)
   (when (save-excursion
           (goto-char (point-min))
