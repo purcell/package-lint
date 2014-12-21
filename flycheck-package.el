@@ -146,10 +146,12 @@
                (push (cons package-name
                            (version-to-list package-version))
                      valid-deps)
-             (flycheck-package--error
-              context line-no 0 'error
-              (format "%S is not a valid version string: see `version-to-string'."
-                      package-version))))
+             (pcase-let ((`(,line-no ,offset)
+                          (flycheck-package--position-of-dependency package-name)))
+               (flycheck-package--error
+                context line-no offset 'error
+                (format "%S is not a valid version string: see `version-to-string'."
+                        package-version)))))
           (_
            (flycheck-package--error
             context line-no 0 'error
