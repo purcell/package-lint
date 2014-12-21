@@ -96,7 +96,11 @@
   (declare (indent defun) (debug t) (doc-string 3))
   (let ((real-name (flycheck-package--expand-pass-name name)))
     `(prog1 (defun ,real-name ,arglist
-              ,@body)
+              (save-excursion
+                (save-restriction
+                  (save-match-data
+                    (widen)
+                    ,@body))))
        (flycheck-package--register-pass #',real-name))))
 
 (defmacro flycheck-package--require-pass (binding pass context &rest body)
@@ -108,13 +112,10 @@
      ,@body))
 
 (flycheck-package--define-pass get-dependency-list (_context)
-  (save-excursion
-    (save-restriction
-      (widen)
-      (if (flycheck-package--goto-header "Package-Requires")
-          (list (match-beginning 1) (line-number-at-pos) (match-string 1))
-        (signal 'flycheck-package--failed-pass
-                '("No Package-Requires found"))))))
+  (if (flycheck-package--goto-header "Package-Requires")
+      (list (match-beginning 1) (line-number-at-pos) (match-string 1))
+    (signal 'flycheck-package--failed-pass
+            '("No Package-Requires found"))))
 
 (flycheck-package--define-pass parse-dependency-list (context)
   (flycheck-package--require-pass
@@ -198,9 +199,8 @@
                  package-name))))))
 
 (flycheck-package--define-pass lexical-binding-requires-emacs-24 (context)
-  (when (save-excursion
-          (goto-char (point-min))
-          (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) t))
+  (goto-char (point-min))
+  (when (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) t)
     (flycheck-package--require-pass
         `(,line-no . ,valid-deps) get-well-formed-dependencies context
       (unless (assq 'emacs valid-deps)
@@ -224,10 +224,7 @@ Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
 (flycheck-package--define-pass package-el-can-parse-buffer (context)
   (flycheck-package--require-pass _ get-dependency-list context
     (condition-case nil
-        (save-excursion
-          (save-restriction
-            (widen)
-            (package-buffer-info)))
+        (package-buffer-info)
       (error
        ;; Try fixing up the Version header before complaining
        (let ((contents (buffer-substring-no-properties (point-min) (point-max))))
