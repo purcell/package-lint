@@ -70,10 +70,11 @@
 
 (defun flycheck-package--start (checker callback)
   (let ((context (flycheck-package--create-context checker)))
-    (dolist (pass flycheck-package--registered-passes)
-      (condition-case nil
-          (flycheck-package--call-pass context pass)
-        (flycheck-package--failed-pass)))
+    (save-excursion
+      (dolist (pass flycheck-package--registered-passes)
+        (condition-case nil
+            (flycheck-package--call-pass context pass)
+          (flycheck-package--failed-pass))))
     (funcall callback
              'finished
              (mapcar (lambda (x)
