@@ -1,4 +1,4 @@
-;;; flycheck-package.el --- Flycheck checker for elisp package metadata  -*- lexical-binding: t; -*-
+;;; flycheck-package.el --- Flycheck checker for elisp package metadata -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2014  Steve Purcell
 
@@ -207,6 +207,46 @@
         (flycheck-package--error
          context line-no 0 'warning
          "You should depend on (emacs \"24\") if you need lexical-binding.")))))
+
+(flycheck-package--define-pass lexical-binding-must-be-in-first-line (context)
+  (let ((original-buffer (current-buffer)))
+    (with-temp-buffer
+      (let ((lexical-binding-found-at-end nil)
+            (enable-local-variables t)
+            (local-enable-local-variables t))
+        (insert-buffer-substring-no-properties original-buffer)
+        (cl-letf (((symbol-function #'hack-local-variables-apply) #'ignore)
+                  ((symbol-function #'hack-local-variables-filter)
+                   (lambda (variables _dir-name)
+                     (setq file-local-variables-alist variables)))
+                  ;; Silence any messages Emacs may want to share with the user.
+                  ;; There's no user.
+                  ((symbol-function #'display-warning) #'ignore)
+                  ((symbol-function #'message) #'ignore))
+          (condition-case err
+              (progn
+                ;; HACK: this is an internal variable!
+                ;; Unfortunately, Emacsen that have this variable also have
+                ;; `hack-local-variables' that doesn't store `lexical-binding'
+                ;; in `file-local-variables-alist'.
+                (defvar hack-local-variables--warned-lexical)
+                (let ((hack-local-variables--warned-lexical nil))
+                  (hack-local-variables)
+                  (setq lexical-binding-found-at-end
+                        hack-local-variables--warned-lexical)))
+            (error
+             (flycheck-package--error context 0 0 'error (error-message-string err))
+             (signal 'flycheck-package--failed-pass (cdr err)))))
+        (goto-char (point-min))
+        (when (or lexical-binding-found-at-end
+                  ;; In case this is an Emacs from before `hack-local-variables'
+                  ;; started to warn about `lexical-binding' on a line other
+                  ;; than the first.
+                  (and (assq 'lexical-binding file-local-variables-alist)
+                       (not (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) t))))
+          (flycheck-package--error
+           context 0 0 'error
+           "`lexical-biding' must be set in the first line."))))))
 
 (flycheck-package--define-pass do-not-depend-on-cl-lib-1.0 (context)
   (flycheck-package--require-pass

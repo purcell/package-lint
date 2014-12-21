@@ -61,7 +61,6 @@ performed by other flycheck checkers:
 - files lacking a (provide ...) which matches their name
 - use of unsafe local variables
 - use of emacs version dependencies
-- `lexical-binding: t` set on a line other than the first
 - local variable set in header line
 - non-empty commentary
 - using commentary to talk about load[- ]path and installation
