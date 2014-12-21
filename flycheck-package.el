@@ -153,7 +153,7 @@
 
 (flycheck-package--define-pass packages-installable (context)
   (flycheck-package--require-pass
-      `(_ . ,valid-deps) get-well-formed-dependencies context
+      `(,_ . ,valid-deps) get-well-formed-dependencies context
     (pcase-dolist (`(,package-name . ,_) valid-deps)
       (unless (or (eq 'emacs package-name)
                   (assq package-name package-archive-contents))
@@ -165,7 +165,7 @@
 
 (flycheck-package--define-pass deps-use-non-snapshot-version (context)
   (flycheck-package--require-pass
-      `(_ . ,valid-deps) get-well-formed-dependencies context
+      `(,_ . ,valid-deps) get-well-formed-dependencies context
     (pcase-dolist (`(,package-name . ,package-version) valid-deps)
       (message "%S" package-version)
       (unless (version-list-< package-version (list 19001201 1))
