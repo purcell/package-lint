@@ -273,7 +273,8 @@ header with any leading or trailing whitespace removed."
   "Setup flycheck-package.
 Add `flycheck-emacs-lisp-package' to `flycheck-checkers'."
   (interactive)
-  (add-to-list 'flycheck-checkers 'emacs-lisp-package))
+  (add-to-list 'flycheck-checkers 'emacs-lisp-package t)
+  (flycheck-add-next-checker 'emacs-lisp 'emacs-lisp-package))
 
 (provide 'flycheck-package)
 ;;; flycheck-package.el ends here
