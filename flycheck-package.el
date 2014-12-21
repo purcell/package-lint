@@ -221,28 +221,27 @@
             (enable-local-variables t)
             (local-enable-local-variables t))
         (insert-buffer-substring-no-properties original-buffer)
-        (cl-letf (((symbol-function #'hack-local-variables-apply) #'ignore)
-                  ((symbol-function #'hack-local-variables-filter)
-                   (lambda (variables _dir-name)
-                     (setq file-local-variables-alist variables)))
-                  ;; Silence any messages Emacs may want to share with the user.
-                  ;; There's no user.
-                  ((symbol-function #'display-warning) #'ignore)
-                  ((symbol-function #'message) #'ignore))
-          (condition-case err
-              (progn
-                ;; HACK: this is an internal variable!
-                ;; Unfortunately, Emacsen that have this variable also have
-                ;; `hack-local-variables' that doesn't store `lexical-binding'
-                ;; in `file-local-variables-alist'.
-                (defvar hack-local-variables--warned-lexical)
-                (let ((hack-local-variables--warned-lexical nil))
-                  (hack-local-variables)
-                  (setq lexical-binding-found-at-end
-                        hack-local-variables--warned-lexical)))
-            (error
-             (flycheck-package--error context 0 0 'error (error-message-string err))
-             (signal 'flycheck-package--failed-pass (cdr err)))))
+        (condition-case err
+            (cl-letf (((symbol-function #'hack-local-variables-apply) #'ignore)
+                      ((symbol-function #'hack-local-variables-filter)
+                       (lambda (variables _dir-name)
+                         (setq file-local-variables-alist variables)))
+                      ;; Silence any messages Emacs may want to share with the user.
+                      ;; There's no user.
+                      ((symbol-function #'display-warning) #'ignore)
+                      ((symbol-function #'message) #'ignore))
+              ;; HACK: this is an internal variable!
+              ;; Unfortunately, Emacsen that have this variable also have
+              ;; `hack-local-variables' that doesn't store `lexical-binding'
+              ;; in `file-local-variables-alist'.
+              (defvar hack-local-variables--warned-lexical)
+              (let ((hack-local-variables--warned-lexical nil))
+                (hack-local-variables)
+                (setq lexical-binding-found-at-end
+                      hack-local-variables--warned-lexical)))
+          (error
+           (flycheck-package--error context 0 0 'error (error-message-string err))
+           (signal 'flycheck-package--failed-pass (cdr err))))
         (goto-char (point-min))
         (when (or lexical-binding-found-at-end
                   ;; In case this is an Emacs from before `hack-local-variables'
