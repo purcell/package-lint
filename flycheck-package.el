@@ -243,10 +243,10 @@ Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
       (move-beginning-of-line nil)
       (let ((line-start (point))
             (line-no (line-number-at-pos))
-            (pattern (format "( *%s\\(?:)\\|[^[:alnum:]_\\-].*?)\\)" package-name)))
+            (pattern (format "( *\\(%s\\)\\(?:)\\|[^[:alnum:]_\\-].*?)\\)" package-name)))
         (when (re-search-forward pattern (line-end-position) t)
           (message "%S => %S" pattern (match-data))
-          (list line-no (- (1+ (match-beginning 0)) line-start)))))))
+          (list line-no (- (1+ (match-beginning 1)) line-start)))))))
 
 (defun flycheck-package--goto-header (header-name)
   "Move to the first occurrence of HEADER-NAME in the file.
