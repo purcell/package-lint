@@ -314,7 +314,8 @@ header with any leading or trailing whitespace removed."
 Add `flycheck-emacs-lisp-package' to `flycheck-checkers'."
   (interactive)
   (add-to-list 'flycheck-checkers 'emacs-lisp-package t)
-  (flycheck-add-next-checker 'emacs-lisp 'emacs-lisp-package))
+  (unless (memq 'emacs-lisp-package (flycheck-checker-next-checkers 'emacs-lisp))
+    (flycheck-add-next-checker 'emacs-lisp 'emacs-lisp-package)))
 
 (provide 'flycheck-package)
 ;;; flycheck-package.el ends here
