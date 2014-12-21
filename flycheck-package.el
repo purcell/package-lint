@@ -113,20 +113,20 @@
     (save-restriction
       (widen)
       (if (flycheck-package--goto-header "Package-Requires")
-          (cons (line-number-at-pos) (match-string 1))
+          (list (match-beginning 1) (line-number-at-pos) (match-string 1))
         (signal 'flycheck-package--failed-pass
                 '("No Package-Requires found"))))))
 
 (flycheck-package--define-pass parse-dependency-list (context)
   (flycheck-package--require-pass
-      `(,line-no . ,deps) get-dependency-list context
+      `(,position ,line-no ,deps) get-dependency-list context
     (condition-case err
         (pcase-let ((`(,parsed-deps . ,parse-end-pos) (read-from-string deps)))
           (unless (= parse-end-pos (length deps))
             (flycheck-package--error
              context line-no 0 'error
              "More than one expression provided."))
-          (cons line-no parsed-deps))
+          (list position line-no parsed-deps))
       (error
        (flycheck-package--error
         context line-no 0 'error
@@ -135,19 +135,29 @@
 
 (flycheck-package--define-pass get-well-formed-dependencies (context)
   (flycheck-package--require-pass
-      `(,line-no . ,parsed-deps) parse-dependency-list context
+      `(,position ,line-no ,parsed-deps) parse-dependency-list context
     (let ((valid-deps '()))
       (dolist (entry parsed-deps)
         (pcase entry
           ((and `(,package-name ,package-version)
                 (guard (symbolp package-name))
                 (guard (stringp package-version)))
-           (if (ignore-errors (version-to-list package-version))
-               (push (cons package-name
-                           (version-to-list package-version))
-                     valid-deps)
-             (pcase-let ((`(,line-no ,offset)
-                          (flycheck-package--position-of-dependency package-name)))
+           ;; Find the column at which the dependency is declared so we can
+           ;; properly report the position of errors.
+           (let ((offset
+                  (save-excursion
+                    (goto-char position)
+                    (let ((line-start (line-beginning-position))
+                          (pattern
+                           (format "( *\\(%s\\)\\(?:)\\|[^[:alnum:]_\\-].*?)\\)" package-name)))
+                      (if (re-search-forward pattern (line-end-position) t)
+                          (- (1+ (match-beginning 1)) line-start)
+                        1)))))
+             (if (ignore-errors (version-to-list package-version))
+                 (push (list package-name
+                             (version-to-list package-version)
+                             offset)
+                       valid-deps)
                (flycheck-package--error
                 context line-no offset 'error
                 (format "%S is not a valid version string: see `version-to-string'."
@@ -160,39 +170,33 @@
 
 (flycheck-package--define-pass packages-installable (context)
   (flycheck-package--require-pass
-      `(,_ . ,valid-deps) get-well-formed-dependencies context
-    (pcase-dolist (`(,package-name . ,_) valid-deps)
+      `(,line-no . ,valid-deps) get-well-formed-dependencies context
+    (pcase-dolist (`(,package-name ,_ ,offset) valid-deps)
       (unless (or (eq 'emacs package-name)
                   (assq package-name package-archive-contents))
-        (pcase-let ((`(,line-no ,offset)
-                     (flycheck-package--position-of-dependency package-name)))
-          (flycheck-package--error
-           context line-no offset 'error
-           (format "Package %S is not installable." package-name)))))))
+        (flycheck-package--error
+         context line-no offset 'error
+         (format "Package %S is not installable." package-name))))))
 
 (flycheck-package--define-pass deps-use-non-snapshot-version (context)
   (flycheck-package--require-pass
-      `(,_ . ,valid-deps) get-well-formed-dependencies context
-    (pcase-dolist (`(,package-name . ,package-version) valid-deps)
+      `(,line-no . ,valid-deps) get-well-formed-dependencies context
+    (pcase-dolist (`(,package-name ,package-version ,offset) valid-deps)
       (unless (version-list-< package-version (list 19001201 1))
-        (pcase-let ((`(,line-no ,offset)
-                     (flycheck-package--position-of-dependency package-name)))
-          (flycheck-package--error
-           context line-no offset 'warning
-           (format "Use a non-snapshot version number for dependency on \"%S\" if possible."
-                   package-name)))))))
+        (flycheck-package--error
+         context line-no offset 'warning
+         (format "Use a non-snapshot version number for dependency on \"%S\" if possible."
+                 package-name))))))
 
 (flycheck-package--define-pass deps-do-not-use-zero-versions (context)
   (flycheck-package--require-pass
-      `(,_ . ,valid-deps) get-well-formed-dependencies context
-    (pcase-dolist (`(,package-name . ,package-version) valid-deps)
+      `(,line-no . ,valid-deps) get-well-formed-dependencies context
+    (pcase-dolist (`(,package-name ,package-version ,offset) valid-deps)
       (when (equal package-version '(0))
-        (pcase-let ((`(,line-no ,offset)
-                     (flycheck-package--position-of-dependency package-name)))
-          (flycheck-package--error
-           context line-no offset 'warning
-           (format "Use a properly versioned dependency on \"%S\" if possible."
-                   package-name)))))))
+        (flycheck-package--error
+         context line-no offset 'warning
+         (format "Use a properly versioned dependency on \"%S\" if possible."
+                 package-name))))))
 
 (flycheck-package--define-pass lexical-binding-requires-emacs-24 (context)
   (when (save-excursion
@@ -207,17 +211,16 @@
 
 (flycheck-package--define-pass do-not-depend-on-cl-lib-1.0 (context)
   (flycheck-package--require-pass
-      `(,_ . ,valid-deps) get-well-formed-dependencies context
-    (let ((cl-lib-version (cdr (assq 'cl-lib valid-deps))))
-      (when (and cl-lib-version
-                 (version-list-<= '(1) cl-lib-version))
-        (pcase-let ((`(,line-no ,offset)
-                     (flycheck-package--position-of-dependency 'cl-lib)))
-          (flycheck-package--error
-           context line-no offset 'error
-           (format "Depend on the latest 0.x version of cl-lib rather than on version \"%S\".
+      `(,line-no . ,valid-deps) get-well-formed-dependencies context
+    (let ((cl-lib-dep (assq 'cl-lib valid-deps)))
+      (when cl-lib-dep
+        (let ((cl-lib-version (nth 1 cl-lib-dep)))
+          (when (version-list-<= '(1) cl-lib-version)
+            (flycheck-package--error
+             context line-no (nth 2 cl-lib-dep) 'error
+             (format "Depend on the latest 0.x version of cl-lib rather than on version \"%S\".
 Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
-                   cl-lib-version)))))))
+                     cl-lib-version))))))))
 
 (flycheck-package--define-pass package-el-can-parse-buffer (context)
   (flycheck-package--require-pass _ get-dependency-list context
@@ -239,17 +242,6 @@ Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
               (flycheck-package--error
                context 0 0 'error
                (format "package.el cannot parse this buffer: %s" (error-message-string err)))))))))))
-
-(defun flycheck-package--position-of-dependency (package-name)
-  (save-excursion
-    (when (flycheck-package--goto-header "Package-Requires")
-      (move-beginning-of-line nil)
-      (let ((line-start (point))
-            (line-no (line-number-at-pos))
-            (pattern (format "( *\\(%s\\)\\(?:)\\|[^[:alnum:]_\\-].*?)\\)" package-name)))
-        (when (re-search-forward pattern (line-end-position) t)
-          (message "%S => %S" pattern (match-data))
-          (list line-no (- (1+ (match-beginning 1)) line-start)))))))
 
 (defun flycheck-package--goto-header (header-name)
   "Move to the first occurrence of HEADER-NAME in the file.
