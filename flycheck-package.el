@@ -266,7 +266,8 @@ If no such header is present, fail the pass."
               ;; `hack-local-variables' that doesn't store `lexical-binding'
               ;; in `file-local-variables-alist'.
               (defvar hack-local-variables--warned-lexical)
-              (let ((hack-local-variables--warned-lexical nil))
+              (let ((hack-local-variables--warned-lexical nil)
+                    (enable-dir-local-variables nil))
                 (hack-local-variables)
                 (setq lexical-binding-found-at-end
                       hack-local-variables--warned-lexical)))
