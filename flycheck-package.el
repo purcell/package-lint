@@ -246,44 +246,45 @@ If no such header is present, fail the pass."
 
 (flypkg/define-pass lexical-binding-must-be-in-first-line (context)
   "Check that any lexical-binding declaration is on the first line of the file."
-  (let ((original-buffer (current-buffer)))
-    (with-temp-buffer
-      (let ((lexical-binding-found-at-end nil)
-            (enable-local-variables t)
-            (local-enable-local-variables t))
-        (insert-buffer-substring-no-properties original-buffer)
-        (condition-case err
-            (cl-letf (((symbol-function #'hack-local-variables-apply) #'ignore)
-                      ((symbol-function #'hack-local-variables-filter)
-                       (lambda (variables _dir-name)
-                         (setq file-local-variables-alist variables)))
-                      ;; Silence any messages Emacs may want to share with the user.
-                      ;; There's no user.
-                      ((symbol-function #'display-warning) #'ignore)
-                      ((symbol-function #'message) #'ignore))
-              ;; HACK: this is an internal variable!
-              ;; Unfortunately, Emacsen that have this variable also have
-              ;; `hack-local-variables' that doesn't store `lexical-binding'
-              ;; in `file-local-variables-alist'.
-              (defvar hack-local-variables--warned-lexical)
-              (let ((hack-local-variables--warned-lexical nil)
-                    (enable-dir-local-variables nil))
-                (hack-local-variables)
-                (setq lexical-binding-found-at-end
-                      hack-local-variables--warned-lexical)))
-          (error
-           (flypkg/error context 1 1 'error (error-message-string err))
-           (signal 'flypkg/failed-pass (cdr err))))
-        (goto-char (point-min))
-        (when (or lexical-binding-found-at-end
-                  ;; In case this is an Emacs from before `hack-local-variables'
-                  ;; started to warn about `lexical-binding' on a line other
-                  ;; than the first.
-                  (and (assq 'lexical-binding file-local-variables-alist)
-                       (not (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) t))))
-          (flypkg/error
-           context 1 1 'error
-           "`lexical-binding' must be set in the first line."))))))
+  (cl-block return
+    (let ((original-buffer (current-buffer)))
+      (with-temp-buffer
+        (let ((lexical-binding-found-at-end nil)
+              (enable-local-variables t)
+              (local-enable-local-variables t))
+          (insert-buffer-substring-no-properties original-buffer)
+          (condition-case err
+              (cl-letf (((symbol-function #'hack-local-variables-apply) #'ignore)
+                        ((symbol-function #'hack-local-variables-filter)
+                         (lambda (variables _dir-name)
+                           (setq file-local-variables-alist variables)))
+                        ;; Silence any messages Emacs may want to share with the user.
+                        ;; There's no user.
+                        ((symbol-function #'display-warning) #'ignore)
+                        ((symbol-function #'message) #'ignore))
+                ;; HACK: this is an internal variable!
+                ;; Unfortunately, Emacsen that have this variable also have
+                ;; `hack-local-variables' that doesn't store `lexical-binding'
+                ;; in `file-local-variables-alist'.
+                (defvar hack-local-variables--warned-lexical)
+                (let ((hack-local-variables--warned-lexical nil)
+                      (enable-dir-local-variables nil))
+                  (hack-local-variables)
+                  (setq lexical-binding-found-at-end
+                        hack-local-variables--warned-lexical)))
+            (error
+             (flypkg/error context 1 1 'error (error-message-string err))
+             (cl-return-from return nil)))
+          (goto-char (point-min))
+          (when (or lexical-binding-found-at-end
+                    ;; In case this is an Emacs from before `hack-local-variables'
+                    ;; started to warn about `lexical-binding' on a line other
+                    ;; than the first.
+                    (and (assq 'lexical-binding file-local-variables-alist)
+                         (not (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) t))))
+            (flypkg/error
+             context 1 1 'error
+             "`lexical-binding' must be set in the first line.")))))))
 
 (flypkg/define-pass do-not-depend-on-cl-lib-1.0 (context)
   "Check that any dependency on \"cl-lib\" is on a remotely-installable version."
