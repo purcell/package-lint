@@ -174,7 +174,7 @@ If no such header is present, fail the pass."
                        valid-deps)
                (flypkg/error
                 context line-no offset 'error
-                (format "%S is not a valid version string: see `version-to-string'."
+                (format "%S is not a valid version string: see `version-to-list'."
                         package-version)))))
           (_
            (flypkg/error
