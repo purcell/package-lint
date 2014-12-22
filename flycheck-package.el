@@ -193,10 +193,17 @@ If no such header is present, fail the pass."
              context line-no offset 'error
              "You can only depend on Emacs version 24 or greater."))
         ;; Not 'emacs
-        (unless (assq package-name package-archive-contents)
-          (flypkg/error
-           context line-no offset 'error
-           (format "Package %S is not installable." package-name)))))))
+        (let ((archive-entry (assq package-name package-archive-contents)))
+          (if archive-entry
+              (let ((best-version (flypkg/lowest-installable-version-of package-name)))
+                (when (version-list-< best-version package-version)
+                  (flypkg/error
+                   context line-no offset 'warning
+                   (format "Version dependency for %s appears too high: try %s" package-name
+                           (package-version-join best-version)))))
+            (flypkg/error
+             context line-no offset 'error
+             (format "Package %S is not installable." package-name))))))))
 
 (flypkg/define-pass deps-use-non-snapshot-version (context)
   "Warn about apparent dependencies on snapshot versions of packages."
@@ -311,6 +318,14 @@ Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
 
 
 ;;; Helpers and checker definition
+
+(defun flypkg/lowest-installable-version-of (package)
+  "Return the lowest version of PACKAGE available for installation."
+  (let ((descriptors (cdr (assq package package-archive-contents))))
+    (if (fboundp 'package-desc-version)
+        (car (sort (mapcar 'package-desc-version descriptors)
+                   #'version-list-<))
+      (aref descriptors 0))))
 
 (defun flypkg/goto-header (header-name)
   "Move to the first occurrence of HEADER-NAME in the file.
