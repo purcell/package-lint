@@ -249,9 +249,7 @@ If no such header is present, fail the pass."
   (cl-block return
     (let ((original-buffer (current-buffer)))
       (with-temp-buffer
-        (let ((lexical-binding-found-at-end nil)
-              (enable-local-variables t)
-              (local-enable-local-variables t))
+        (let ((lexical-binding-found-at-end nil))
           (insert-buffer-substring-no-properties original-buffer)
           (condition-case err
               (cl-letf (((symbol-function #'hack-local-variables-apply) #'ignore)
@@ -268,7 +266,9 @@ If no such header is present, fail the pass."
                 ;; in `file-local-variables-alist'.
                 (defvar hack-local-variables--warned-lexical)
                 (let ((hack-local-variables--warned-lexical nil)
-                      (enable-dir-local-variables nil))
+                      (enable-dir-local-variables nil)
+                      (enable-local-variables t)
+                      (local-enable-local-variables t))
                   (hack-local-variables)
                   (setq lexical-binding-found-at-end
                         hack-local-variables--warned-lexical)))
