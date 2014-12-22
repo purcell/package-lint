@@ -275,13 +275,14 @@ If no such header is present, fail the pass."
             (error
              (flypkg/error context 1 1 'error (error-message-string err))
              (cl-return-from return nil)))
-          (goto-char (point-min))
           (when (or lexical-binding-found-at-end
                     ;; In case this is an Emacs from before `hack-local-variables'
                     ;; started to warn about `lexical-binding' on a line other
                     ;; than the first.
                     (and (assq 'lexical-binding file-local-variables-alist)
-                         (not (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) t))))
+                         (progn
+                           (goto-char (point-min))
+                           (not (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) t)))))
             (flypkg/error
              context 1 1 'error
              "`lexical-binding' must be set in the first line.")))))))
