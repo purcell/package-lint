@@ -303,7 +303,7 @@ Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
                  (package-buffer-info)
                  (flypkg/error
                   context 1 1 'warning
-                  "Missing a valid \"Version:\" header."))
+                  "Missing a valid \"Version:\" header. MELPA will handle this, but other archives will not."))
              (error
               (flypkg/error
                context 1 1 'error
