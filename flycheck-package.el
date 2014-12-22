@@ -206,13 +206,15 @@
 
 (flycheck-package--define-pass lexical-binding-requires-emacs-24 (context)
   (goto-char (point-min))
-  (when (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) t)
-    (flycheck-package--require-pass
-        `(,line-no . ,valid-deps) get-well-formed-dependencies context
-      (unless (assq 'emacs valid-deps)
-        (flycheck-package--error
-         context line-no 0 'warning
-         "You should depend on (emacs \"24\") if you need lexical-binding.")))))
+  (when (re-search-forward ".*-\\*\\- +\\(lexical-binding\\): +t" (line-end-position) t)
+    (let ((lexbind-line (line-number-at-pos))
+          (lexbind-col (1+ (- (match-beginning 1) (line-beginning-position)))))
+      (flycheck-package--require-pass
+          `(,line-no . ,valid-deps) get-well-formed-dependencies context
+        (unless (assq 'emacs valid-deps)
+          (flycheck-package--error
+           context lexbind-line lexbind-col 'warning
+           "You should depend on (emacs \"24\") if you need lexical-binding."))))))
 
 (flycheck-package--define-pass lexical-binding-must-be-in-first-line (context)
   (let ((original-buffer (current-buffer)))
