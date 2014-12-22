@@ -329,8 +329,7 @@ Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
         context
         1 1
         'error
-        (format "package.el cannot parse this buffer: %s" (error-message-string err)))
-       ))))
+        (format "package.el cannot parse this buffer: %s" (error-message-string err)))))))
 
 
 ;;; Helpers and checker definition
