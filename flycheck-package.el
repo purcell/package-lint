@@ -97,8 +97,11 @@
 
 (defmacro flycheck-package--define-pass (name arglist &rest body)
   (declare (indent defun) (debug t) (doc-string 3))
-  (let ((real-name (flycheck-package--expand-pass-name name)))
+  (let* ((real-name (flycheck-package--expand-pass-name name))
+         (docstring (when (stringp (car body)) (car body)))
+         (body (if docstring (cdr body) body)))
     `(prog1 (defun ,real-name ,arglist
+              ,docstring
               (save-excursion
                 (save-restriction
                   (save-match-data
@@ -118,12 +121,15 @@
 ;;; Passes for each check
 
 (flycheck-package--define-pass get-dependency-list (_context)
+  "Return position and contents of the \"Package-Requires\" header.
+If no such header is present, fail the pass."
   (if (flycheck-package--goto-header "Package-Requires")
       (list (match-beginning 1) (line-number-at-pos) (match-string 1))
     (signal 'flycheck-package--failed-pass
             '("No Package-Requires found"))))
 
 (flycheck-package--define-pass parse-dependency-list (context)
+  "Check that the \"Package-Requires\" header contains a single valid lisp expression."
   (flycheck-package--require-pass
       `(,position ,line-no ,deps) get-dependency-list context
     (condition-case err
@@ -140,6 +146,7 @@
        (signal 'flycheck-package--failed-pass err)))))
 
 (flycheck-package--define-pass get-well-formed-dependencies (context)
+  "Check that listed dependencies are in the format (name \"version\")."
   (flycheck-package--require-pass
       `(,position ,line-no ,parsed-deps) parse-dependency-list context
     (let ((valid-deps '()))
@@ -175,6 +182,7 @@
       (cons line-no valid-deps))))
 
 (flycheck-package--define-pass packages-installable (context)
+  "Check that every package listed in \"Package-Requires\" is available for installation."
   (flycheck-package--require-pass
       `(,line-no . ,valid-deps) get-well-formed-dependencies context
     (pcase-dolist (`(,package-name ,_ ,offset) valid-deps)
@@ -185,6 +193,7 @@
          (format "Package %S is not installable." package-name))))))
 
 (flycheck-package--define-pass deps-use-non-snapshot-version (context)
+  "Warn about apparent dependencies on snapshot versions of packages."
   (flycheck-package--require-pass
       `(,line-no . ,valid-deps) get-well-formed-dependencies context
     (pcase-dolist (`(,package-name ,package-version ,offset) valid-deps)
@@ -195,6 +204,7 @@
                  package-name))))))
 
 (flycheck-package--define-pass deps-do-not-use-zero-versions (context)
+  "Warn about sloppy dependencies on \"0\" versions of packages."
   (flycheck-package--require-pass
       `(,line-no . ,valid-deps) get-well-formed-dependencies context
     (pcase-dolist (`(,package-name ,package-version ,offset) valid-deps)
@@ -205,6 +215,7 @@
                  package-name))))))
 
 (flycheck-package--define-pass lexical-binding-requires-emacs-24 (context)
+  "Warn about lexical-binding without depending on Emacs 24."
   (goto-char (point-min))
   (when (re-search-forward ".*-\\*\\- +\\(lexical-binding\\): +t" (line-end-position) t)
     (let ((lexbind-line (line-number-at-pos))
@@ -217,6 +228,7 @@
            "You should depend on (emacs \"24\") if you need lexical-binding."))))))
 
 (flycheck-package--define-pass lexical-binding-must-be-in-first-line (context)
+  "Check that any lexical-binding declaration is on the first line of the file."
   (let ((original-buffer (current-buffer)))
     (with-temp-buffer
       (let ((lexical-binding-found-at-end nil)
@@ -256,6 +268,7 @@
            "`lexical-binding' must be set in the first line."))))))
 
 (flycheck-package--define-pass do-not-depend-on-cl-lib-1.0 (context)
+  "Check that any dependency on \"cl-lib\" is on a remotely-installable version."
   (flycheck-package--require-pass
       `(,line-no . ,valid-deps) get-well-formed-dependencies context
     (let ((cl-lib-dep (assq 'cl-lib valid-deps)))
@@ -269,6 +282,7 @@ Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
                      cl-lib-version))))))))
 
 (flycheck-package--define-pass package-el-can-parse-buffer (context)
+  "Check that `package-buffer-info' can read metadata from this file."
   (flycheck-package--require-pass _ get-dependency-list context
     (condition-case nil
         (package-buffer-info)
