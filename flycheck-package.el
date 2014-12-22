@@ -73,21 +73,20 @@
 
 (defun flypkg/start (checker callback)
   "Flycheck checker start function."
-  (funcall
-   callback 'finished
-   (mapcar
-    (lambda (x)
-      (apply #'flycheck-error-new-at x))
-    (condition-case err
-        (let ((context (flypkg/create-context checker)))
-          (dolist (pass flypkg/registered-passes)
-            (condition-case nil
-                (flypkg/call-pass context pass)
-              (flypkg/failed-pass)))
-          (flypkg/context-error-list context))
-      (error
-       (funcall callback 'errored (error-message-string err))
-       (signal (car err) (cdr err)))))))
+  (funcall callback
+           'finished
+           (mapcar (lambda (x)
+                     (apply #'flycheck-error-new-at x))
+                   (condition-case err
+                       (let ((context (flypkg/create-context checker)))
+                         (dolist (pass flypkg/registered-passes)
+                           (condition-case nil
+                               (flypkg/call-pass context pass)
+                             (flypkg/failed-pass)))
+                         (flypkg/context-error-list context))
+                     (error
+                      (funcall callback 'errored (error-message-string err))
+                      (signal (car err) (cdr err)))))))
 
 (defun flypkg/error (context line column level message)
   (push (list line column level message
