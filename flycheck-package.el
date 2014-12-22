@@ -107,14 +107,6 @@
                     ,@body))))
        (flypkg/register-pass #',name))))
 
-(defmacro flypkg/require-pass (binding pass context &rest body)
-  (declare (indent 3) (debug t))
-  `(pcase-let ((,binding
-                (flypkg/call-pass
-                 ,context
-                 #',pass)))
-     ,@body))
-
 
 ;;; Passes for each check
 
@@ -127,8 +119,8 @@ If no such header is present, fail the pass."
 
 (flypkg/define-pass flypkg/parse-dependency-list (context)
   "Check that the \"Package-Requires\" header contains a single valid lisp expression."
-  (flypkg/require-pass
-      `(,position ,line-no ,deps) flypkg/get-dependency-list context
+  (pcase-let ((`(,position ,line-no ,deps)
+               (flypkg/call-pass context #'flypkg/get-dependency-list)))
     (condition-case err
         (pcase-let ((`(,parsed-deps . ,parse-end-pos) (read-from-string deps)))
           (unless (= parse-end-pos (length deps))
@@ -144,8 +136,8 @@ If no such header is present, fail the pass."
 
 (flypkg/define-pass flypkg/get-well-formed-dependencies (context)
   "Check that listed dependencies are in the format (name \"version\")."
-  (flypkg/require-pass
-      `(,position ,line-no ,parsed-deps) flypkg/parse-dependency-list context
+  (pcase-let ((`(,position ,line-no ,parsed-deps)
+               (flypkg/call-pass context #'flypkg/parse-dependency-list)))
     (let ((valid-deps '()))
       (dolist (entry parsed-deps)
         (pcase entry
@@ -180,8 +172,8 @@ If no such header is present, fail the pass."
 
 (flypkg/define-pass flypkg/packages-installable (context)
   "Check that every package listed in \"Package-Requires\" is available for installation."
-  (flypkg/require-pass
-      `(,line-no . ,valid-deps) flypkg/get-well-formed-dependencies context
+  (pcase-let ((`(,line-no . ,valid-deps)
+               (flypkg/call-pass context #'flypkg/get-well-formed-dependencies)))
     (pcase-dolist (`(,package-name ,package-version ,offset) valid-deps)
       (if (eq 'emacs package-name)
           (unless (version-list-<= (list 24) package-version)
@@ -203,8 +195,8 @@ If no such header is present, fail the pass."
 
 (flypkg/define-pass flypkg/deps-use-non-snapshot-version (context)
   "Warn about apparent dependencies on snapshot versions of packages."
-  (flypkg/require-pass
-      `(,line-no . ,valid-deps) flypkg/get-well-formed-dependencies context
+  (pcase-let ((`(,line-no . ,valid-deps)
+               (flypkg/call-pass context #'flypkg/get-well-formed-dependencies)))
     (pcase-dolist (`(,package-name ,package-version ,offset) valid-deps)
       (unless (version-list-< package-version (list 19001201 1))
         (flypkg/error
@@ -214,8 +206,8 @@ If no such header is present, fail the pass."
 
 (flypkg/define-pass flypkg/deps-do-not-use-zero-versions (context)
   "Warn about sloppy dependencies on \"0\" versions of packages."
-  (flypkg/require-pass
-      `(,line-no . ,valid-deps) flypkg/get-well-formed-dependencies context
+  (pcase-let ((`(,line-no . ,valid-deps)
+               (flypkg/call-pass context #'flypkg/get-well-formed-dependencies)))
     (pcase-dolist (`(,package-name ,package-version ,offset) valid-deps)
       (when (equal package-version '(0))
         (flypkg/error
@@ -227,14 +219,14 @@ If no such header is present, fail the pass."
   "Warn about lexical-binding without depending on Emacs 24."
   (goto-char (point-min))
   (when (re-search-forward ".*-\\*\\- +\\(lexical-binding\\): +t" (line-end-position) t)
-    (let ((lexbind-line (line-number-at-pos))
-          (lexbind-col (1+ (- (match-beginning 1) (line-beginning-position)))))
-      (flypkg/require-pass
-          `(,_ . ,valid-deps) flypkg/get-well-formed-dependencies context
-        (unless (assq 'emacs valid-deps)
-          (flypkg/error
-           context lexbind-line lexbind-col 'warning
-           "You should depend on (emacs \"24\") if you need lexical-binding."))))))
+    (let* ((lexbind-line (line-number-at-pos))
+           (lexbind-col (1+ (- (match-beginning 1) (line-beginning-position))))
+           (valid-deps
+            (cdr (flypkg/call-pass context #'flypkg/get-well-formed-dependencies))))
+      (unless (assq 'emacs valid-deps)
+        (flypkg/error
+         context lexbind-line lexbind-col 'warning
+         "You should depend on (emacs \"24\") if you need lexical-binding.")))))
 
 (flypkg/define-pass flypkg/lexical-binding-must-be-in-first-line (context)
   "Check that any lexical-binding declaration is on the first line of the file."
@@ -281,8 +273,8 @@ If no such header is present, fail the pass."
 
 (flypkg/define-pass flypkg/do-not-depend-on-cl-lib-1.0 (context)
   "Check that any dependency on \"cl-lib\" is on a remotely-installable version."
-  (flypkg/require-pass
-      `(,line-no . ,valid-deps) flypkg/get-well-formed-dependencies context
+  (pcase-let ((`(,line-no . ,valid-deps)
+               (flypkg/call-pass context #'flypkg/get-well-formed-dependencies)))
     (let ((cl-lib-dep (assq 'cl-lib valid-deps)))
       (when cl-lib-dep
         (let ((cl-lib-version (nth 1 cl-lib-dep)))
@@ -295,36 +287,36 @@ Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
 
 (flypkg/define-pass flypkg/valid-package-version-present (context)
   "Check that a valid \"Version\" header is present."
-  (flypkg/require-pass _ flypkg/get-dependency-list context
-    (if (flypkg/goto-header "Version")
-        (let ((version (match-string 2)))
-          (unless (ignore-errors (version-to-list version))
-            (flypkg/error
-             context
-             (line-number-at-pos)
-             (1+ (- (match-beginning 1) (line-beginning-position)))
-             'warning
-             (format "\"%s\" is not a valid version. MELPA will handle this, but other archives will not." version))))
-      (flypkg/error
-       context 1 1 'warning
-       "\"Version:\" header is missing. MELPA will handle this, but other archives will not."))))
+  (flypkg/call-pass context #'flypkg/get-dependency-list)
+  (if (flypkg/goto-header "Version")
+      (let ((version (match-string 2)))
+        (unless (ignore-errors (version-to-list version))
+          (flypkg/error
+           context
+           (line-number-at-pos)
+           (1+ (- (match-beginning 1) (line-beginning-position)))
+           'warning
+           (format "\"%s\" is not a valid version. MELPA will handle this, but other archives will not." version))))
+    (flypkg/error
+     context 1 1 'warning
+     "\"Version:\" header is missing. MELPA will handle this, but other archives will not.")))
 
 (flypkg/define-pass flypkg/package-el-can-parse-buffer (context)
   "Check that `package-buffer-info' can read metadata from this file."
-  (flypkg/require-pass _ flypkg/valid-package-version-present context
-    (condition-case err
-        (let ((orig-buffer (current-buffer)))
-          ;; We've reported version header issues separately, so rule them out here
-          (with-temp-buffer
-            (insert-buffer-substring-no-properties orig-buffer)
-            (flypkg/update-or-insert-version "0")
-            (package-buffer-info)))
-      (error
-       (flypkg/error
-        context
-        1 1
-        'error
-        (format "package.el cannot parse this buffer: %s" (error-message-string err)))))))
+  (flypkg/call-pass context #'flypkg/valid-package-version-present)
+  (condition-case err
+      (let ((orig-buffer (current-buffer)))
+        ;; We've reported version header issues separately, so rule them out here
+        (with-temp-buffer
+          (insert-buffer-substring-no-properties orig-buffer)
+          (flypkg/update-or-insert-version "0")
+          (package-buffer-info)))
+    (error
+     (flypkg/error
+      context
+      1 1
+      'error
+      (format "package.el cannot parse this buffer: %s" (error-message-string err))))))
 
 
 ;;; Helpers and checker definition
