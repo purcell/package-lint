@@ -54,8 +54,7 @@
 
 (defvar flypkg/registered-passes '())
 
-(put 'flypkg/failed-pass 'error-conditions
-     '(flypkg/failed-pass error))
+(put 'flypkg/failed-pass 'error-conditions '(flypkg/failed-pass error))
 
 (defun flypkg/call-pass (context pass)
   (let ((pass-results (flypkg/context-pass-results context)))
@@ -89,8 +88,7 @@
                       (signal (car err) (cdr err)))))))
 
 (defun flypkg/error (context line column level message)
-  (push (list line column level message
-              :checker (flypkg/context-checker context))
+  (push (list line column level message :checker (flypkg/context-checker context))
         (flypkg/context-error-list context)))
 
 (defun flypkg/register-pass (check)
@@ -130,8 +128,7 @@
 If no such header is present, fail the pass."
   (if (flypkg/goto-header "Package-Requires")
       (list (match-beginning 2) (line-number-at-pos) (match-string 2))
-    (signal 'flypkg/failed-pass
-            '("No Package-Requires found"))))
+    (signal 'flypkg/failed-pass '("No Package-Requires found"))))
 
 (flypkg/define-pass parse-dependency-list (context)
   "Check that the \"Package-Requires\" header contains a single valid lisp expression."
