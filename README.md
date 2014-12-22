@@ -42,7 +42,6 @@ helpfully anyway.
 Checks to add in the short term:
 
 - WARN: Required version numbers of packages should be available for installation
-- WARN: Stable version numbers should be used in dependencies when possible
 
 Further checks for a future package-lint.el, some of which are currently
 performed by other flycheck checkers:
