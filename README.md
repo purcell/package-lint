@@ -39,11 +39,7 @@ Once this is more useful, the plan is to extract the checks into a separate
 MELPA -- this will probably be essential in order to check multi-file packages
 helpfully anyway.
 
-Checks to add in the short term:
-
-- WARN: Required version numbers of packages should be available for installation
-
-Further checks for a future package-lint.el, some of which are currently
+Additional checks for a future package-lint.el, some of which are currently
 performed by other flycheck checkers:
 
 - WARN: header line formatting / length / capitalisation / use of "Emacs"
