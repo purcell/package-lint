@@ -136,12 +136,12 @@ If no such header is present, fail the pass."
         (pcase-let ((`(,parsed-deps . ,parse-end-pos) (read-from-string deps)))
           (unless (= parse-end-pos (length deps))
             (flycheck-package--error
-             context line-no 0 'error
+             context line-no 1 'error
              "More than one expression provided."))
           (list position line-no parsed-deps))
       (error
        (flycheck-package--error
-        context line-no 0 'error
+        context line-no 1 'error
         (format "Couldn't parse \"Package-Requires\" header: %s" (error-message-string err)))
        (signal 'flycheck-package--failed-pass err)))))
 
@@ -177,7 +177,7 @@ If no such header is present, fail the pass."
                         package-version)))))
           (_
            (flycheck-package--error
-            context line-no 0 'error
+            context line-no 1 'error
             (format "Expected (package-name \"version-num\"), but found %S." entry)))))
       (cons line-no valid-deps))))
 
@@ -254,7 +254,7 @@ If no such header is present, fail the pass."
                 (setq lexical-binding-found-at-end
                       hack-local-variables--warned-lexical)))
           (error
-           (flycheck-package--error context 0 0 'error (error-message-string err))
+           (flycheck-package--error context 1 1 'error (error-message-string err))
            (signal 'flycheck-package--failed-pass (cdr err))))
         (goto-char (point-min))
         (when (or lexical-binding-found-at-end
@@ -264,7 +264,7 @@ If no such header is present, fail the pass."
                   (and (assq 'lexical-binding file-local-variables-alist)
                        (not (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) t))))
           (flycheck-package--error
-           context 0 0 'error
+           context 1 1 'error
            "`lexical-binding' must be set in the first line."))))))
 
 (flycheck-package--define-pass do-not-depend-on-cl-lib-1.0 (context)
@@ -296,11 +296,11 @@ Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
                (progn
                  (package-buffer-info)
                  (flycheck-package--error
-                  context 0 0 'warning
+                  context 1 1 'warning
                   "Missing a valid \"Version:\" header."))
              (error
               (flycheck-package--error
-               context 0 0 'error
+               context 1 1 'error
                (format "package.el cannot parse this buffer: %s" (error-message-string err)))))))))))
 
 
