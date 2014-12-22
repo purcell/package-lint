@@ -186,12 +186,17 @@ If no such header is present, fail the pass."
   "Check that every package listed in \"Package-Requires\" is available for installation."
   (flypkg/require-pass
       `(,line-no . ,valid-deps) get-well-formed-dependencies context
-    (pcase-dolist (`(,package-name ,_ ,offset) valid-deps)
-      (unless (or (eq 'emacs package-name)
-                  (assq package-name package-archive-contents))
-        (flypkg/error
-         context line-no offset 'error
-         (format "Package %S is not installable." package-name))))))
+    (pcase-dolist (`(,package-name ,package-version ,offset) valid-deps)
+      (if (eq 'emacs package-name)
+          (unless (version-list-<= (list 24) package-version)
+            (flypkg/error
+             context line-no offset 'error
+             "You can only depend on Emacs version 24 or greater."))
+        ;; Not 'emacs
+        (unless (assq package-name package-archive-contents)
+          (flypkg/error
+           context line-no offset 'error
+           (format "Package %S is not installable." package-name)))))))
 
 (flypkg/define-pass deps-use-non-snapshot-version (context)
   "Warn about apparent dependencies on snapshot versions of packages."
