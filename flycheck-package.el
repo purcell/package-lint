@@ -43,61 +43,62 @@
 
 ;;; Machinery
 
-(cl-defstruct (flycheck-package--context
+(cl-defstruct (flypkg/context
                (:constructor nil)
-               (:constructor flycheck-package--create-context (checker))
+               (:constructor flypkg/create-context (checker))
                (:copier nil)
                (:predicate nil))
   (checker nil :read-only t)
   (error-list nil)
   (pass-results (make-hash-table :test #'eq) :read-only t))
 
-(defvar flycheck-package--registered-passes '())
+(defvar flypkg/registered-passes '())
 
-(put 'flycheck-package--failed-pass 'error-conditions
-     '(flycheck-package--failed-pass error))
+(put 'flypkg/failed-pass 'error-conditions
+     '(flypkg/failed-pass error))
 
-(defun flycheck-package--call-pass (context pass)
-  (let ((pass-results (flycheck-package--context-pass-results context)))
+(defun flypkg/call-pass (context pass)
+  (let ((pass-results (flypkg/context-pass-results context)))
     (pcase-let ((`(,code . ,actual-result)
                  (or (gethash pass pass-results)
                      (puthash pass
                               (condition-case err
                                   (cons 'ok (funcall pass context))
-                                (flycheck-package--failed-pass
+                                (flypkg/failed-pass
                                  (cons 'error err)))
                               pass-results))))
       (if (eq 'error code)
           (signal (car actual-result) (cdr actual-result))
         actual-result))))
 
-(defun flycheck-package--start (checker callback)
-  (let ((context (flycheck-package--create-context checker)))
-    (dolist (pass flycheck-package--registered-passes)
+(defun flypkg/start (checker callback)
+  "Flycheck checker start function."
+  (let ((context (flypkg/create-context checker)))
+    (dolist (pass flypkg/registered-passes)
       (condition-case nil
-          (flycheck-package--call-pass context pass)
-        (flycheck-package--failed-pass)))
+          (flypkg/call-pass context pass)
+        (flypkg/failed-pass)))
     (funcall callback
              'finished
              (mapcar (lambda (x)
                        (apply #'flycheck-error-new-at x))
-                     (flycheck-package--context-error-list context)))))
+                     (flypkg/context-error-list context)))))
 
-(defun flycheck-package--error (context line column level message)
+(defun flypkg/error (context line column level message)
   (push (list line column level message
-              :checker (flycheck-package--context-checker context))
-        (flycheck-package--context-error-list context)))
+              :checker (flypkg/context-checker context))
+        (flypkg/context-error-list context)))
 
-(defun flycheck-package--register-pass (check)
-  (cl-pushnew check flycheck-package--registered-passes :test #'eq))
+(defun flypkg/register-pass (check)
+  (add-to-list 'flypkg/registered-passes check))
 
 (eval-and-compile
-  (defun flycheck-package--expand-pass-name (name)
-    (intern (concat "flycheck-package--pass-" (symbol-name name)))))
+  (defun flypkg/expand-pass-name (name)
+    (intern (concat "flypkg/pass-" (symbol-name name)))))
 
-(defmacro flycheck-package--define-pass (name arglist &rest body)
+(defmacro flypkg/define-pass (name arglist &rest body)
   (declare (indent defun) (debug t) (doc-string 3))
-  (let* ((real-name (flycheck-package--expand-pass-name name))
+  (let* ((real-name (flypkg/expand-pass-name name))
          (docstring (when (stringp (car body)) (car body)))
          (body (if docstring (cdr body) body)))
     `(prog1 (defun ,real-name ,arglist
@@ -107,47 +108,47 @@
                   (save-match-data
                     (widen)
                     ,@body))))
-       (flycheck-package--register-pass #',real-name))))
+       (flypkg/register-pass #',real-name))))
 
-(defmacro flycheck-package--require-pass (binding pass context &rest body)
+(defmacro flypkg/require-pass (binding pass context &rest body)
   (declare (indent 3) (debug t))
   `(pcase-let ((,binding
-                (flycheck-package--call-pass
+                (flypkg/call-pass
                  ,context
-                 #',(flycheck-package--expand-pass-name pass))))
+                 #',(flypkg/expand-pass-name pass))))
      ,@body))
 
 
 ;;; Passes for each check
 
-(flycheck-package--define-pass get-dependency-list (_context)
+(flypkg/define-pass get-dependency-list (_context)
   "Return position and contents of the \"Package-Requires\" header.
 If no such header is present, fail the pass."
-  (if (flycheck-package--goto-header "Package-Requires")
+  (if (flypkg/goto-header "Package-Requires")
       (list (match-beginning 1) (line-number-at-pos) (match-string 1))
-    (signal 'flycheck-package--failed-pass
+    (signal 'flypkg/failed-pass
             '("No Package-Requires found"))))
 
-(flycheck-package--define-pass parse-dependency-list (context)
+(flypkg/define-pass parse-dependency-list (context)
   "Check that the \"Package-Requires\" header contains a single valid lisp expression."
-  (flycheck-package--require-pass
+  (flypkg/require-pass
       `(,position ,line-no ,deps) get-dependency-list context
     (condition-case err
         (pcase-let ((`(,parsed-deps . ,parse-end-pos) (read-from-string deps)))
           (unless (= parse-end-pos (length deps))
-            (flycheck-package--error
+            (flypkg/error
              context line-no 1 'error
              "More than one expression provided."))
           (list position line-no parsed-deps))
       (error
-       (flycheck-package--error
+       (flypkg/error
         context line-no 1 'error
         (format "Couldn't parse \"Package-Requires\" header: %s" (error-message-string err)))
-       (signal 'flycheck-package--failed-pass err)))))
+       (signal 'flypkg/failed-pass err)))))
 
-(flycheck-package--define-pass get-well-formed-dependencies (context)
+(flypkg/define-pass get-well-formed-dependencies (context)
   "Check that listed dependencies are in the format (name \"version\")."
-  (flycheck-package--require-pass
+  (flypkg/require-pass
       `(,position ,line-no ,parsed-deps) parse-dependency-list context
     (let ((valid-deps '()))
       (dolist (entry parsed-deps)
@@ -171,63 +172,63 @@ If no such header is present, fail the pass."
                              (version-to-list package-version)
                              offset)
                        valid-deps)
-               (flycheck-package--error
+               (flypkg/error
                 context line-no offset 'error
                 (format "%S is not a valid version string: see `version-to-string'."
                         package-version)))))
           (_
-           (flycheck-package--error
+           (flypkg/error
             context line-no 1 'error
             (format "Expected (package-name \"version-num\"), but found %S." entry)))))
       (cons line-no valid-deps))))
 
-(flycheck-package--define-pass packages-installable (context)
+(flypkg/define-pass packages-installable (context)
   "Check that every package listed in \"Package-Requires\" is available for installation."
-  (flycheck-package--require-pass
+  (flypkg/require-pass
       `(,line-no . ,valid-deps) get-well-formed-dependencies context
     (pcase-dolist (`(,package-name ,_ ,offset) valid-deps)
       (unless (or (eq 'emacs package-name)
                   (assq package-name package-archive-contents))
-        (flycheck-package--error
+        (flypkg/error
          context line-no offset 'error
          (format "Package %S is not installable." package-name))))))
 
-(flycheck-package--define-pass deps-use-non-snapshot-version (context)
+(flypkg/define-pass deps-use-non-snapshot-version (context)
   "Warn about apparent dependencies on snapshot versions of packages."
-  (flycheck-package--require-pass
+  (flypkg/require-pass
       `(,line-no . ,valid-deps) get-well-formed-dependencies context
     (pcase-dolist (`(,package-name ,package-version ,offset) valid-deps)
       (unless (version-list-< package-version (list 19001201 1))
-        (flycheck-package--error
+        (flypkg/error
          context line-no offset 'warning
          (format "Use a non-snapshot version number for dependency on \"%S\" if possible."
                  package-name))))))
 
-(flycheck-package--define-pass deps-do-not-use-zero-versions (context)
+(flypkg/define-pass deps-do-not-use-zero-versions (context)
   "Warn about sloppy dependencies on \"0\" versions of packages."
-  (flycheck-package--require-pass
+  (flypkg/require-pass
       `(,line-no . ,valid-deps) get-well-formed-dependencies context
     (pcase-dolist (`(,package-name ,package-version ,offset) valid-deps)
       (when (equal package-version '(0))
-        (flycheck-package--error
+        (flypkg/error
          context line-no offset 'warning
          (format "Use a properly versioned dependency on \"%S\" if possible."
                  package-name))))))
 
-(flycheck-package--define-pass lexical-binding-requires-emacs-24 (context)
+(flypkg/define-pass lexical-binding-requires-emacs-24 (context)
   "Warn about lexical-binding without depending on Emacs 24."
   (goto-char (point-min))
   (when (re-search-forward ".*-\\*\\- +\\(lexical-binding\\): +t" (line-end-position) t)
     (let ((lexbind-line (line-number-at-pos))
           (lexbind-col (1+ (- (match-beginning 1) (line-beginning-position)))))
-      (flycheck-package--require-pass
+      (flypkg/require-pass
           `(,line-no . ,valid-deps) get-well-formed-dependencies context
         (unless (assq 'emacs valid-deps)
-          (flycheck-package--error
+          (flypkg/error
            context lexbind-line lexbind-col 'warning
            "You should depend on (emacs \"24\") if you need lexical-binding."))))))
 
-(flycheck-package--define-pass lexical-binding-must-be-in-first-line (context)
+(flypkg/define-pass lexical-binding-must-be-in-first-line (context)
   "Check that any lexical-binding declaration is on the first line of the file."
   (let ((original-buffer (current-buffer)))
     (with-temp-buffer
@@ -254,8 +255,8 @@ If no such header is present, fail the pass."
                 (setq lexical-binding-found-at-end
                       hack-local-variables--warned-lexical)))
           (error
-           (flycheck-package--error context 1 1 'error (error-message-string err))
-           (signal 'flycheck-package--failed-pass (cdr err))))
+           (flypkg/error context 1 1 'error (error-message-string err))
+           (signal 'flypkg/failed-pass (cdr err))))
         (goto-char (point-min))
         (when (or lexical-binding-found-at-end
                   ;; In case this is an Emacs from before `hack-local-variables'
@@ -263,27 +264,27 @@ If no such header is present, fail the pass."
                   ;; than the first.
                   (and (assq 'lexical-binding file-local-variables-alist)
                        (not (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) t))))
-          (flycheck-package--error
+          (flypkg/error
            context 1 1 'error
            "`lexical-binding' must be set in the first line."))))))
 
-(flycheck-package--define-pass do-not-depend-on-cl-lib-1.0 (context)
+(flypkg/define-pass do-not-depend-on-cl-lib-1.0 (context)
   "Check that any dependency on \"cl-lib\" is on a remotely-installable version."
-  (flycheck-package--require-pass
+  (flypkg/require-pass
       `(,line-no . ,valid-deps) get-well-formed-dependencies context
     (let ((cl-lib-dep (assq 'cl-lib valid-deps)))
       (when cl-lib-dep
         (let ((cl-lib-version (nth 1 cl-lib-dep)))
           (when (version-list-<= '(1) cl-lib-version)
-            (flycheck-package--error
+            (flypkg/error
              context line-no (nth 2 cl-lib-dep) 'error
              (format "Depend on the latest 0.x version of cl-lib rather than on version \"%S\".
 Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
                      cl-lib-version))))))))
 
-(flycheck-package--define-pass package-el-can-parse-buffer (context)
+(flypkg/define-pass package-el-can-parse-buffer (context)
   "Check that `package-buffer-info' can read metadata from this file."
-  (flycheck-package--require-pass _ get-dependency-list context
+  (flypkg/require-pass _ get-dependency-list context
     (condition-case nil
         (package-buffer-info)
       (error
@@ -291,22 +292,22 @@ Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
        (let ((contents (buffer-substring-no-properties (point-min) (point-max))))
          (with-temp-buffer
            (insert contents)
-           (flycheck-package--update-or-insert-version "0")
+           (flypkg/update-or-insert-version "0")
            (condition-case err
                (progn
                  (package-buffer-info)
-                 (flycheck-package--error
+                 (flypkg/error
                   context 1 1 'warning
                   "Missing a valid \"Version:\" header."))
              (error
-              (flycheck-package--error
+              (flypkg/error
                context 1 1 'error
                (format "package.el cannot parse this buffer: %s" (error-message-string err)))))))))))
 
 
 ;;; Helpers and checker definition
 
-(defun flycheck-package--goto-header (header-name)
+(defun flypkg/goto-header (header-name)
   "Move to the first occurrence of HEADER-NAME in the file.
 If the return value is non-nil, then point will be at the end of
 the file, and the first match group will contain the value of the
@@ -319,9 +320,9 @@ header with any leading or trailing whitespace removed."
         (goto-char initial-point)
         nil))))
 
-(defun flycheck-package--update-or-insert-version (version)
+(defun flypkg/update-or-insert-version (version)
   "Ensure current buffer has a \"Version: VERSION\" header."
-  (if (flycheck-package--goto-header "Version")
+  (if (flypkg/goto-header "Version")
       (move-beginning-of-line nil)
     (forward-line))
   (insert (format ";; Version: %s" version))
@@ -329,7 +330,7 @@ header with any leading or trailing whitespace removed."
 
 (flycheck-define-generic-checker 'emacs-lisp-package
   "A checker for \"Package-Requires\" headers."
-  :start #'flycheck-package--start
+  :start #'flypkg/start
   :modes '(emacs-lisp-mode))
 
 ;;;###autoload
