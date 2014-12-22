@@ -222,7 +222,7 @@ If no such header is present, fail the pass."
     (let ((lexbind-line (line-number-at-pos))
           (lexbind-col (1+ (- (match-beginning 1) (line-beginning-position)))))
       (flypkg/require-pass
-          `(,line-no . ,valid-deps) get-well-formed-dependencies context
+          `(,_ . ,valid-deps) get-well-formed-dependencies context
         (unless (assq 'emacs valid-deps)
           (flypkg/error
            context lexbind-line lexbind-col 'warning
