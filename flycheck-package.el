@@ -125,7 +125,7 @@
   "Return position and contents of the \"Package-Requires\" header.
 If no such header is present, fail the pass."
   (if (flypkg/goto-header "Package-Requires")
-      (list (match-beginning 1) (line-number-at-pos) (match-string 1))
+      (list (match-beginning 2) (line-number-at-pos) (match-string 2))
     (signal 'flypkg/failed-pass
             '("No Package-Requires found"))))
 
@@ -294,27 +294,39 @@ If no such header is present, fail the pass."
 Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
                      cl-lib-version))))))))
 
+(flypkg/define-pass valid-package-version-present (context)
+  "Check that a valid \"Version\" header is present."
+  (flypkg/require-pass _ get-dependency-list context
+    (if (flypkg/goto-header "Version")
+        (let ((version (match-string 2)))
+          (unless (ignore-errors (version-to-list version))
+            (flypkg/error
+             context
+             (line-number-at-pos)
+             (1+ (- (match-beginning 1) (line-beginning-position)))
+             'warning
+             (format "\"%s\" is not a valid version. MELPA will handle this, but other archives will not." version))))
+      (flypkg/error
+       context 1 1 'warning
+       "\"Version:\" header is missing. MELPA will handle this, but other archives will not."))))
+
 (flypkg/define-pass package-el-can-parse-buffer (context)
   "Check that `package-buffer-info' can read metadata from this file."
-  (flypkg/require-pass _ get-dependency-list context
-    (condition-case nil
-        (package-buffer-info)
+  (flypkg/require-pass _ valid-package-version-present context
+    (condition-case err
+        (let ((orig-buffer (current-buffer)))
+          ;; We've reported version header issues separately, so rule them out here
+          (with-temp-buffer
+            (insert-buffer-substring-no-properties orig-buffer)
+            (flypkg/update-or-insert-version "0")
+            (package-buffer-info)))
       (error
-       ;; Try fixing up the Version header before complaining
-       (let ((contents (buffer-substring-no-properties (point-min) (point-max))))
-         (with-temp-buffer
-           (insert contents)
-           (flypkg/update-or-insert-version "0")
-           (condition-case err
-               (progn
-                 (package-buffer-info)
-                 (flypkg/error
-                  context 1 1 'warning
-                  "Missing a valid \"Version:\" header. MELPA will handle this, but other archives will not."))
-             (error
-              (flypkg/error
-               context 1 1 'error
-               (format "package.el cannot parse this buffer: %s" (error-message-string err)))))))))))
+       (flypkg/error
+        context
+        1 1
+        'error
+        (format "package.el cannot parse this buffer: %s" (error-message-string err)))
+       ))))
 
 
 ;;; Helpers and checker definition
@@ -330,12 +342,12 @@ Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
 (defun flypkg/goto-header (header-name)
   "Move to the first occurrence of HEADER-NAME in the file.
 If the return value is non-nil, then point will be at the end of
-the file, and the first match group will contain the value of the
-header with any leading or trailing whitespace removed."
+the file, and the first and second match groups will contain the name and
+value of the header with any leading or trailing whitespace removed."
   (let ((initial-point (point)))
     (goto-char (point-min))
     (let ((case-fold-search t))
-      (if (re-search-forward (concat "^;+ *" (regexp-quote header-name) " *: *\\(.*?\\) *$") nil t)
+      (if (re-search-forward (concat "^;+ *\\(" (regexp-quote header-name) "\\) *: *\\(.*?\\) *$") nil t)
           (point)
         (goto-char initial-point)
         nil))))
