@@ -219,7 +219,7 @@ If no such header is present, fail the pass."
 (flypkg/define-pass flypkg/lexical-binding-requires-emacs-24 (context)
   "Warn about lexical-binding without depending on Emacs 24."
   (goto-char (point-min))
-  (when (cdr (assq 'lexical-binding (flypkg/get-header-line-file-local-variables)))
+  (when (flypkg/lexical-binding-declared-in-header-line-p)
     (let* ((lexbind-line (line-number-at-pos))
            (lexbind-col (1+ (- (match-beginning 1) (line-beginning-position))))
            (valid-deps
@@ -264,8 +264,8 @@ If no such header is present, fail the pass."
                     ;; In case this is an Emacs from before `hack-local-variables'
                     ;; started to warn about `lexical-binding' on a line other
                     ;; than the first.
-                    (and (assq 'lexical-binding file-local-variables-alist)
-                         (null (cdr (assq 'lexical-binding (flypkg/get-header-line-file-local-variables))))))
+                    (and (cdr (assq 'lexical-binding file-local-variables-alist))
+                         (not (flypkg/lexical-binding-declared-in-header-line-p))))
             (flypkg/error
              context 1 1 'error
              "`lexical-binding' must be set in the first line.")))))))
@@ -359,6 +359,13 @@ For details, see `hack-local-variables-prop-line'."
     (goto-char (point-min))
     (cl-letf (((symbol-function #'message) #'ignore))
       (hack-local-variables-prop-line))))
+
+(defun flypkg/lexical-binding-declared-in-header-line-p ()
+  "Test if `lexical-binding' is declared in the -*- line."
+  ;; Test the `cdr' to see if it's actually true, because
+  ;; -*- lexical-binding: nil -*-
+  ;; is legal, if silly.
+  (cdr (assq 'lexical-binding (flypkg/get-header-line-file-local-variables))))
 
 (flycheck-define-generic-checker 'emacs-lisp-package
   "A checker for \"Package-Requires\" headers."
