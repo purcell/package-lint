@@ -355,10 +355,8 @@ Returns an alist of elements (VAR . VAL), where VAR is a variable
 and VAL is the specified value.
 
 For details, see `hack-local-variables-prop-line'."
-  (save-excursion
-    (goto-char (point-min))
-    (cl-letf (((symbol-function #'message) #'ignore))
-      (hack-local-variables-prop-line))))
+  (cl-letf (((symbol-function #'message) #'ignore))
+    (hack-local-variables-prop-line)))
 
 (defun flypkg/lexical-binding-declared-in-header-line-p ()
   "Test if `lexical-binding' is declared in the -*- line."
