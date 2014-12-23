@@ -39,6 +39,7 @@
 (eval-when-compile (require 'cl-lib))
 (require 'flycheck)
 (require 'package)
+(require 'lisp-mnt)
 
 
 ;;; Machinery
@@ -288,18 +289,18 @@ Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
 (flypkg/define-pass flypkg/valid-package-version-present (context)
   "Check that a valid \"Version\" header is present."
   (flypkg/call-pass context #'flypkg/get-dependency-list)
-  (if (flypkg/goto-header "Version")
-      (let ((version (match-string 2)))
+  (let ((version (lm-header (rx (? "Package-") "Version"))))
+    (if version
         (unless (ignore-errors (version-to-list version))
           (flypkg/error
            context
            (line-number-at-pos)
            (1+ (- (match-beginning 1) (line-beginning-position)))
            'warning
-           (format "\"%s\" is not a valid version. MELPA will handle this, but other archives will not." version))))
-    (flypkg/error
-     context 1 1 'warning
-     "\"Version:\" header is missing. MELPA will handle this, but other archives will not.")))
+           (format "\"%s\" is not a valid version. MELPA will handle this, but other archives will not." version)))
+      (flypkg/error
+       context 1 1 'warning
+       "\"Version:\" or \"Package-Version:\" header is missing. MELPA will handle this, but other archives will not."))))
 
 (flypkg/define-pass flypkg/package-el-can-parse-buffer (context)
   "Check that `package-buffer-info' can read metadata from this file."
