@@ -115,7 +115,7 @@
   "Return position and contents of the \"Package-Requires\" header.
 If no such header is present, fail the pass."
   (if (flypkg/goto-header "Package-Requires")
-      (list (match-beginning 2) (line-number-at-pos) (match-string 2))
+      (list (match-beginning 3) (line-number-at-pos) (match-string 3))
     (signal 'flypkg/failed-pass '("No Package-Requires found"))))
 
 (flypkg/define-pass flypkg/parse-dependency-list (context)
@@ -333,12 +333,12 @@ Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
 (defun flypkg/goto-header (header-name)
   "Move to the first occurrence of HEADER-NAME in the file.
 If the return value is non-nil, then point will be at the end of
-the file, and the first and second match groups will contain the name and
+the file, and the second and third match groups will contain the name and
 value of the header with any leading or trailing whitespace removed."
   (let ((initial-point (point)))
     (goto-char (point-min))
     (let ((case-fold-search t))
-      (if (re-search-forward (concat "^;+ *\\(" (regexp-quote header-name) "\\) *: *\\(.*?\\) *$") nil t)
+      (if (re-search-forward (concat (lm-get-header-re header-name) "\\(.*?\\) *$") nil t)
           (point)
         (goto-char initial-point)
         nil))))
