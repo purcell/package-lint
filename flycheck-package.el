@@ -219,7 +219,7 @@ If no such header is present, fail the pass."
 (flypkg/define-pass flypkg/lexical-binding-requires-emacs-24 (context)
   "Warn about lexical-binding without depending on Emacs 24."
   (goto-char (point-min))
-  (when (re-search-forward ".*-\\*\\- +\\(lexical-binding\\): +t" (line-end-position) t)
+  (when (cdr (assq 'lexical-binding (flypkg/get-header-line-file-local-variables)))
     (let* ((lexbind-line (line-number-at-pos))
            (lexbind-col (1+ (- (match-beginning 1) (line-beginning-position))))
            (valid-deps
@@ -265,9 +265,7 @@ If no such header is present, fail the pass."
                     ;; started to warn about `lexical-binding' on a line other
                     ;; than the first.
                     (and (assq 'lexical-binding file-local-variables-alist)
-                         (progn
-                           (goto-char (point-min))
-                           (not (re-search-forward ".*-\\*\\- +lexical-binding: +t" (line-end-position) t)))))
+                         (null (cdr (assq 'lexical-binding (flypkg/get-header-line-file-local-variables))))))
             (flypkg/error
              context 1 1 'error
              "`lexical-binding' must be set in the first line.")))))))
@@ -350,6 +348,17 @@ value of the header with any leading or trailing whitespace removed."
     (forward-line))
   (insert (format ";; Version: %s" version))
   (newline))
+
+(defun flypkg/get-header-line-file-local-variables ()
+  "Return local variables specified in the -*- line.
+Returns an alist of elements (VAR . VAL), where VAR is a variable
+and VAL is the specified value.
+
+For details, see `hack-local-variables-prop-line'."
+  (save-excursion
+    (goto-char (point-min))
+    (cl-letf (((symbol-function #'message) #'ignore))
+      (hack-local-variables-prop-line))))
 
 (flycheck-define-generic-checker 'emacs-lisp-package
   "A checker for \"Package-Requires\" headers."
