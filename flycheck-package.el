@@ -340,7 +340,7 @@ value of the header with any leading or trailing whitespace removed."
     (goto-char (point-min))
     (let ((case-fold-search t))
       (if (re-search-forward (concat (lm-get-header-re header-name) "\\(.*?\\) *$") nil t)
-          (point)
+          (substring-no-properties (match-string 3))
         (goto-char initial-point)
         nil))))
 
