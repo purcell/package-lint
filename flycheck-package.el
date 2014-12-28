@@ -111,6 +111,9 @@
 
 ;;; Passes for each check
 
+(flypkg/define-pass flypkg/looks-like-a-package (_context)
+  (or (lm-header (regexp-opt '("Package-Version" "Package-Requires")))))
+
 (flypkg/define-pass flypkg/get-dependency-list (_context)
   "Return position and contents of the \"Package-Requires\" header.
 If no such header is present, fail the pass."
@@ -286,7 +289,7 @@ Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
 
 (flypkg/define-pass flypkg/valid-package-version-present (context)
   "Check that a valid \"Version\" header is present."
-  (flypkg/call-pass context #'flypkg/get-dependency-list)
+  (flypkg/call-pass context #'flypkg/looks-like-a-package)
   (let ((version (flypkg/goto-header (rx (? "Package-") "Version"))))
     (if version
         (unless (ignore-errors (version-to-list version))
