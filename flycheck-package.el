@@ -112,7 +112,7 @@
 ;;; Passes for each check
 
 (flypkg/define-pass flypkg/looks-like-a-package (_context)
-  (or (lm-header (regexp-opt '("Package-Version" "Package-Requires")))))
+  (lm-header (regexp-opt '("Package-Version" "Package-Requires"))))
 
 (flypkg/define-pass flypkg/get-dependency-list (_context)
   "Return position and contents of the \"Package-Requires\" header.
