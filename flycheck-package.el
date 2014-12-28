@@ -287,13 +287,13 @@ Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
 (flypkg/define-pass flypkg/valid-package-version-present (context)
   "Check that a valid \"Version\" header is present."
   (flypkg/call-pass context #'flypkg/get-dependency-list)
-  (let ((version (lm-header (rx (? "Package-") "Version"))))
+  (let ((version (flypkg/goto-header (rx (? "Package-") "Version"))))
     (if version
         (unless (ignore-errors (version-to-list version))
           (flypkg/error
            context
            (line-number-at-pos)
-           (1+ (- (match-beginning 1) (line-beginning-position)))
+           (1+ (- (match-beginning 3) (line-beginning-position)))
            'warning
            (format "\"%s\" is not a valid version. MELPA will handle this, but other archives will not." version)))
       (flypkg/error
