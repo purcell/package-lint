@@ -7,9 +7,9 @@ flycheck-package
 This library provides a [flycheck][] checker for the metadata in
 Emacs Lisp files which are intended to be packages.
 
-Currently these checks are only activated if a `Package-Requires`
-header is present in the file, and checks center on the validity of
-the data in that header.
+Currently these checks are only activated if a `Package-Requires` or
+`Package-Version` header is present in the file, and checks center on
+the validity of the data in that header.
 
 Installation
 ------------

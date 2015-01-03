@@ -30,8 +30,8 @@
 ;;    (eval-after-load 'flycheck
 ;;      '(flycheck-package-setup))
 
-;; Checks will currently be enabled only if a "Package-Requires:" header
-;; is present in the file.
+;; Checks will currently be enabled only if a "Package-Requires:" or
+;; "Package-Version:" header is present in the file.
 
 ;;; Code:
 
