@@ -339,12 +339,12 @@ If it can, return the read metadata."
        1 1
        'warning
        "Package should have a non-empty summary."))
-     ((> (length summary) 80)
+     ((> (length summary) 50)
       (flypkg/error
        context
        1 1
        'warning
-       "The package summary is too long. It should be at most 80 characters.")))))
+       "The package summary is too long. It should be at most 50 characters.")))))
 
 
 ;;; Helpers and checker definition
