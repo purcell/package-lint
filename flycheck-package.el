@@ -327,24 +327,26 @@ If it can, return the read metadata."
       context
       1 1
       'error
-      (format "package.el cannot parse this buffer: %s" (error-message-string err))))))
+      (format "package.el cannot parse this buffer: %s" (error-message-string err)))
+     nil)))
 
 (flypkg/define-pass flypkg/package-has-summary (context)
-  (let* ((desc (flypkg/call-pass context #'flypkg/package-el-can-parse-buffer))
-         (summary (package-desc-summary desc)))
-    (cond
-     ((string-empty-p summary)
-      (flypkg/error
-       context
-       1 1
-       'warning
-       "Package should have a non-empty summary."))
-     ((> (length summary) 50)
-      (flypkg/error
-       context
-       1 1
-       'warning
-       "The package summary is too long. It should be at most 50 characters.")))))
+  (let ((desc (flypkg/call-pass context #'flypkg/package-el-can-parse-buffer)))
+    (when desc
+      (let ((summary (package-desc-summary desc)))
+        (cond
+         ((string-empty-p summary)
+          (flypkg/error
+           context
+           1 1
+           'warning
+           "Package should have a non-empty summary."))
+         ((> (length summary) 50)
+          (flypkg/error
+           context
+           1 1
+           'warning
+           "The package summary is too long. It should be at most 50 characters.")))))))
 
 
 ;;; Helpers and checker definition
