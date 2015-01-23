@@ -52,18 +52,23 @@
            (mapcar (lambda (x)
                      (apply #'flycheck-error-new-at x))
                    (condition-case err
-                       (flypkg/check-all)
+                       (flypkg/check-all checker)
                      (error
                       (funcall callback 'errored (error-message-string err))
                       (signal (car err) (cdr err)))))))
 
-(defvar flypkg-errors nil
+(defvar flypkg/flycheck-checker nil
+  "The name of Flycheck checker to report errors as.")
+
+(defvar flypkg/errors nil
   "List of errors and warnings for the current buffer.
 This is bound dynamically while the checks run.")
 
-(defun flypkg/check-all ()
-  "Return a list of errors/warnings for the current buffer."
-  (let (flypkg-errors)
+(defun flypkg/check-all (checker)
+  "Return a list of errors/warnings for the current buffer.
+CHECKER is the same as the CHECKER argument of `flypkg/start'."
+  (let ((flypkg/errors '())
+        (flypkg/flycheck-checker checker))
     (save-excursion
       (save-restriction
         (widen)
@@ -74,11 +79,11 @@ This is bound dynamically while the checks run.")
             (when desc
               (flypkg/check-package-summary desc)))
           (flypkg/check-dependency-list))))
-    flypkg-errors))
+    flypkg/errors))
 
 (defun flypkg/error (line col type message)
   "Construct a datum for error at LINE and COL with TYPE and MESSAGE."
-  (push (list line col type message) flypkg-errors))
+  (push (list line col type message :checker flypkg/flycheck-checker) flypkg/errors))
 
 
 ;;; Checks
