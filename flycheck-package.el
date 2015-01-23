@@ -64,16 +64,17 @@ This is bound dynamically while the checks run.")
 (defun flypkg/check-all ()
   "Return a list of errors/warnings for the current buffer."
   (let ((flypkg/errors '()))
-    (save-excursion
-      (save-restriction
-        (widen)
-        (when (flypkg/looks-like-a-package)
-          (flypkg/check-package-version-present)
-          (flypkg/check-lexical-binding-is-on-first-line)
-          (let ((desc (flypkg/check-package-el-can-parse)))
-            (when desc
-              (flypkg/check-package-summary desc)))
-          (flypkg/check-dependency-list))))
+    (save-match-data
+      (save-excursion
+        (save-restriction
+          (widen)
+          (when (flypkg/looks-like-a-package)
+            (flypkg/check-package-version-present)
+            (flypkg/check-lexical-binding-is-on-first-line)
+            (let ((desc (flypkg/check-package-el-can-parse)))
+              (when desc
+                (flypkg/check-package-summary desc)))
+            (flypkg/check-dependency-list)))))
     flypkg/errors))
 
 (defun flypkg/error (line col type message)
