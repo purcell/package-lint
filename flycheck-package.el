@@ -51,7 +51,11 @@
            'finished
            (mapcar (lambda (x)
                      (apply #'flycheck-error-new-at x))
-                   (flypkg/check-all))))
+                   (condition-case err
+                       (flypkg/check-all)
+                     (error
+                      (funcall callback 'errored (error-message-string err))
+                      (signal (car err) (cdr err)))))))
 
 (defvar flypkg-errors nil
   "List of errors and warnings for the current buffer.
