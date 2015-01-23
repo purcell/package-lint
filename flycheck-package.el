@@ -86,7 +86,7 @@ This is bound dynamically while the checks run.")
           (line-no (line-number-at-pos))
           (deps (match-string 3)))
       (condition-case err
-          (cl-destructuring-bind (parsed-deps . parse-end-pos) (read-from-string deps)
+          (pcase-let ((`(,parsed-deps . ,parse-end-pos) (read-from-string deps)))
             (unless (= parse-end-pos (length deps))
               (flypkg/error
                line-no 1 'error
