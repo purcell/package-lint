@@ -42,7 +42,7 @@ helpfully anyway.
 Additional checks for a future package-lint.el, some of which are currently
 performed by other flycheck checkers:
 
-- WARN: header line formatting / length / capitalisation / use of "Emacs"
+- WARN: header line formatting / capitalisation
 - trailing line presence / formatting
 - URL header presence
 - WARN: suggest cl-lib vs cl

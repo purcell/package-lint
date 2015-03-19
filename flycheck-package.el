@@ -294,7 +294,12 @@ DESC is a struct as returned by `package-buffer-info'."
       (flypkg/error
        1 1
        'warning
-       "The package summary is too long. It should be at most 50 characters.")))))
+       "The package summary is too long. It should be at most 50 characters.")))
+    (when (string-match-p "\\<[Ee]macs\\>" summary)
+      (flypkg/error
+       1 1
+       'warning
+       "Including \"Emacs\" in the package description is usually redundant."))))
 
 
 ;;; Helpers and checker definition
