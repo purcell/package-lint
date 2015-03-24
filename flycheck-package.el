@@ -295,7 +295,10 @@ DESC is a struct as returned by `package-buffer-info'."
        1 1
        'warning
        "The package summary is too long. It should be at most 50 characters.")))
-    (when (string-match-p "\\<[Ee]macs\\>" summary)
+    (when (save-match-data
+            (let ((case-fold-search t))
+              (and (string-match "\\<emacs\\>" summary)
+                   (not (string-match-p "[[:space:]]+lisp" summary (match-end 0))))))
       (flypkg/error
        1 1
        'warning
