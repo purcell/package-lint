@@ -43,6 +43,12 @@
 (require 'lisp-mnt)
 
 
+;;; Compatibility
+
+(unless (fboundp 'package-desc-summary)
+  (defalias 'package-desc-summary 'package-desc-doc))
+
+
 ;;; Machinery
 
 (defun flypkg/start (checker callback)
