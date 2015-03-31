@@ -45,8 +45,10 @@
 
 ;;; Compatibility
 
-(unless (fboundp 'package-desc-summary)
-  (defalias 'package-desc-summary 'package-desc-doc))
+(defalias 'flypkg/package-desc-summary
+  (if (fboundp 'package-desc-summary)
+      'package-desc-summary
+    'package-desc-doc))
 
 
 ;;; Machinery
@@ -289,7 +291,7 @@ If it can, return the read metadata."
 (defun flypkg/check-package-summary (desc)
   "Check the summary for package with descriptor DESC.
 DESC is a struct as returned by `package-buffer-info'."
-  (let ((summary (package-desc-summary desc)))
+  (let ((summary (flypkg/package-desc-summary desc)))
     (cond
      ((string-empty-p summary)
       (flypkg/error
