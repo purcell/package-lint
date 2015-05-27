@@ -45,6 +45,8 @@ performed by other flycheck checkers:
 - WARN: header line formatting / capitalisation
 - trailing line presence / formatting
 - URL header presence
+- URL header value is a single valid http(s) URL
+- WARN: library is called *-mode but doesn't provide a major mode
 - WARN: suggest cl-lib vs cl
 - keywords separated by only spaces
 - use of non-standard keywords
