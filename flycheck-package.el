@@ -134,7 +134,8 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
                   (goto-char position)
                   (let ((line-start (line-beginning-position))
                         (pattern
-                         (format "( *\\(%s\\)\\(?:)\\|[^[:alnum:]_\\-].*?)\\)" package-name)))
+                         (format "( *\\(%s\\)\\(?:)\\|[^[:alnum:]_\\-].*?)\\)"
+                                 (regexp-quote (symbol-name package-name)))))
                     (if (re-search-forward pattern (line-end-position) t)
                         (- (1+ (match-beginning 1)) line-start)
                       1)))))
