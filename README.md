@@ -59,6 +59,7 @@ performed by other flycheck checkers:
 - use of unsafe local variables
 - use of emacs version dependencies
 - local variable set in header line
+- use of nadvice.el without depending on Emacs 24.4
 - non-empty commentary
 - using commentary to talk about load[- ]path and installation
 - lack of autoloads
