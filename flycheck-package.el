@@ -320,7 +320,9 @@ DESC is a struct as returned by `package-buffer-info'."
   "Return non-nil if this buffer appears to be intended as a package."
   (save-excursion
     (goto-char (point-min))
-    (re-search-forward (concat lm-header-prefix (regexp-opt '("Package-Version" "Package-Requires"))))))
+    (re-search-forward
+     (concat lm-header-prefix (regexp-opt '("Package-Version" "Package-Requires")))
+     nil t)))
 
 (defun flycheck-package--lowest-installable-version-of (package)
   "Return the lowest version of PACKAGE available for installation."
