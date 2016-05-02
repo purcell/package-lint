@@ -255,7 +255,7 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
           (flycheck-package--error
            (nth 2 cl-lib-dep) (nth 3 cl-lib-dep) 'error
            (format "Depend on the latest 0.x version of cl-lib rather than on version \"%S\".
-Alternatively, depend on Emacs 24.3, which introduced cl-lib 1.0."
+Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled."
                    cl-lib-version)))))))
 
 (defun flycheck-package--check-package-version-present ()
