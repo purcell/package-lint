@@ -1,6 +1,6 @@
 ;;; flycheck-package.el --- A Flycheck checker for elisp package authors
 
-;; Copyright (C) 2014-2015  Steve Purcell, Fanael Linithien
+;; Copyright (C) 2014-2016  Steve Purcell, Fanael Linithien
 
 ;; Author: Steve Purcell <steve@sanityinc.com>
 ;;         Fanael Linithien <fanael4@gmail.com>
@@ -321,7 +321,7 @@ DESC is a struct as returned by `package-buffer-info'."
   (save-excursion
     (goto-char (point-min))
     (re-search-forward
-     (concat lm-header-prefix (regexp-opt '("Package-Version" "Package-Requires")))
+     (concat lm-header-prefix (rx (or "Package-Version" "Package-Requires")))
      nil t)))
 
 (defun flycheck-package--lowest-installable-version-of (package)
