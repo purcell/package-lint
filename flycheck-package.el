@@ -105,12 +105,11 @@ This is bound dynamically while the checks run.")
                line-no 1 'error
                "More than one expression provided."))
             (let ((deps (flycheck-package--check-well-formed-dependencies position line-no parsed-deps)))
-              (when deps
-                (flycheck-package--check-packages-installable deps)
-                (flycheck-package--check-deps-use-non-snapshot-version deps)
-                (flycheck-package--check-deps-do-not-use-zero-versions deps)
-                (flycheck-package--check-lexical-binding-requires-emacs-24 deps)
-                (flycheck-package--check-do-not-depend-on-cl-lib-1.0 deps))))
+              (flycheck-package--check-packages-installable deps)
+              (flycheck-package--check-deps-use-non-snapshot-version deps)
+              (flycheck-package--check-deps-do-not-use-zero-versions deps)
+              (flycheck-package--check-lexical-binding-requires-emacs-24 deps)
+              (flycheck-package--check-do-not-depend-on-cl-lib-1.0 deps)))
         (error
          (flycheck-package--error
           line-no 1 'error
