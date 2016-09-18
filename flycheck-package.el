@@ -213,8 +213,8 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
   "Warn about use of `setq-local' and `defvar-local' when Emacs 24.3 is not
 among VALID-DEPS."
   (goto-char (point-min))
-  (let ((emacs-version (or (cadr (assq 'emacs valid-deps)) '(0))))
-    (when (version-list-< emacs-version '(24 3))
+  (let ((emacs-version-dep (or (cadr (assq 'emacs valid-deps)) '(0))))
+    (when (version-list-< emacs-version-dep '(24 3))
       (while (re-search-forward
               (rx "(" (*? white)
                   (group (or "setq-local" "defvar-local")) symbol-end)
