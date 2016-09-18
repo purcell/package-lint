@@ -84,7 +84,7 @@ This is bound dynamically while the checks run.")
                 (flycheck-package--check-package-summary desc)))
             (let ((deps (flycheck-package--check-dependency-list)))
               (flycheck-package--check-lexical-binding-requires-emacs-24 deps)
-              (flycheck-package--check-setq-local-requires-emacs-24.3 deps))))))
+              (flycheck-package--check-macros-requiring-emacs-24.3 deps))))))
     flycheck-package--errors))
 
 (defun flycheck-package--error (line col type message)
@@ -209,13 +209,15 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
          lexbind-line lexbind-col 'warning
          "You should depend on (emacs \"24\") if you need lexical-binding.")))))
 
-(defun flycheck-package--check-setq-local-requires-emacs-24.3 (valid-deps)
-  "Warn about use of `setq-local' when Emacs 24.3 is not among VALID-DEPS."
+(defun flycheck-package--check-macros-requiring-emacs-24.3 (valid-deps)
+  "Warn about use of `setq-local' and `defvar-local' when Emacs 24.3 is not
+among VALID-DEPS."
   (goto-char (point-min))
   (let ((emacs-version (or (cadr (assq 'emacs valid-deps)) '(0))))
     (when (version-list-< emacs-version '(24 3))
       (while (re-search-forward
-              (rx "(" (*? white) "setq-local" symbol-end)
+              (rx "(" (*? white)
+                  (group (or "setq-local" "defvar-local")) symbol-end)
               nil
               t)
         (unless (let ((ppss (syntax-ppss)))
@@ -224,7 +226,8 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
            (line-number-at-pos)
            (current-column)
            'warning
-           "You should depend on (emacs \"24.3\") if you need setq-local."))))))
+           (format "You should depend on (emacs \"24.3\") if you need `%s'."
+                   (buffer-substring-no-properties (match-beginning 1) (match-end 1)))))))))
 
 (defun flycheck-package--check-lexical-binding-is-on-first-line ()
   "Check that any `lexical-binding' declaration is on the first line of the file."
