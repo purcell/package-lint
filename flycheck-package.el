@@ -212,14 +212,13 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
 (defun flycheck-package--check-setq-local-requires-emacs-24.3 (valid-deps)
   "Warn about use of `setq-local' when Emacs 24.3 is not among VALID-DEPS."
   (goto-char (point-min))
-  (while (re-search-forward (rx "(setq-local" symbol-end)
-                            (point-max)
-                            t)
-    (when (and (null (nth 3 (syntax-ppss)))     ;; not a string
-               (null (nth 4 (syntax-ppss))))    ;; not a comment
-      (let ((emacs-version (cadr (assq 'emacs valid-deps))))
-        (when (or (null emacs-version)
-                  (version-list-< emacs-version (version-to-list "24.3")))
+  (let ((emacs-version (or (cadr (assq 'emacs valid-deps)) '(0))))
+    (when (version-list-< emacs-version '(24 3))
+      (while (re-search-forward (rx "(setq-local" symbol-end)
+                                (point-max)
+                                t)
+        (when (and (null (nth 3 (syntax-ppss)))     ;; not a string
+                   (null (nth 4 (syntax-ppss))))    ;; not a comment
           (flycheck-package--error
            (line-number-at-pos)
            (current-column)
