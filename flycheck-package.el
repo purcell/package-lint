@@ -214,9 +214,10 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
   (goto-char (point-min))
   (let ((emacs-version (or (cadr (assq 'emacs valid-deps)) '(0))))
     (when (version-list-< emacs-version '(24 3))
-      (while (re-search-forward (rx "(setq-local" symbol-end)
-                                (point-max)
-                                t)
+      (while (re-search-forward
+              (rx "(" (*? white) "setq-local" symbol-end)
+              nil
+              t)
         (unless (let ((ppss (syntax-ppss)))
                   (or (nth 3 ppss) (nth 4 ppss)))
           (flycheck-package--error
