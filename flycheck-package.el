@@ -217,8 +217,8 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
       (while (re-search-forward (rx "(setq-local" symbol-end)
                                 (point-max)
                                 t)
-        (when (and (null (nth 3 (syntax-ppss)))     ;; not a string
-                   (null (nth 4 (syntax-ppss))))    ;; not a comment
+        (unless (let ((ppss (syntax-ppss)))
+                  (or (nth 3 ppss) (nth 4 ppss)))
           (flycheck-package--error
            (line-number-at-pos)
            (current-column)
