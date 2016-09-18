@@ -83,7 +83,8 @@ This is bound dynamically while the checks run.")
               (when desc
                 (flycheck-package--check-package-summary desc)))
             (let ((deps (flycheck-package--check-dependency-list)))
-              (flycheck-package--check-lexical-binding-requires-emacs-24 deps))))))
+              (flycheck-package--check-lexical-binding-requires-emacs-24 deps)
+              (flycheck-package--check-setq-local-requires-emacs-24.3 deps))))))
     flycheck-package--errors))
 
 (defun flycheck-package--error (line col type message)
@@ -207,6 +208,23 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
         (flycheck-package--error
          lexbind-line lexbind-col 'warning
          "You should depend on (emacs \"24\") if you need lexical-binding.")))))
+
+(defun flycheck-package--check-setq-local-requires-emacs-24.3 (valid-deps)
+  "Warn about use of `setq-local' when Emacs 24.3 is not among VALID-DEPS."
+  (goto-char (point-min))
+  (while (re-search-forward (rx "(setq-local" symbol-end)
+                            (point-max)
+                            t)
+    (when (and (null (nth 3 (syntax-ppss)))     ;; not a string
+               (null (nth 4 (syntax-ppss))))    ;; not a comment
+      (let ((emacs-version (cadr (assq 'emacs valid-deps))))
+        (when (or (null emacs-version)
+                  (version-list-< emacs-version (version-to-list "24.3")))
+          (flycheck-package--error
+           (line-number-at-pos)
+           (current-column)
+           'warning
+           "You should depend on (emacs \"24.3\") if you need setq-local."))))))
 
 (defun flycheck-package--check-lexical-binding-is-on-first-line ()
   "Check that any `lexical-binding' declaration is on the first line of the file."
