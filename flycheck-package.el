@@ -218,7 +218,7 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
   "Check that all VALID-DEPS are available for installation."
   (pcase-dolist (`(,package-name ,package-version ,line-no ,offset) valid-deps)
     (if (eq 'emacs package-name)
-        (unless (version-list-<= (list 24) package-version)
+        (unless (version-list-<= '(24) package-version)
           (flycheck-package--error
            line-no offset 'error
            "You can only depend on Emacs version 24 or greater."))
@@ -238,7 +238,7 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
 (defun flycheck-package--check-deps-use-non-snapshot-version (valid-deps)
   "Warn about any VALID-DEPS on snapshot versions of packages."
   (pcase-dolist (`(,package-name ,package-version ,line-no ,offset) valid-deps)
-    (unless (version-list-< package-version (list 19001201 1))
+    (unless (version-list-< package-version '(19001201 1))
       (flycheck-package--error
        line-no offset 'warning
        (format "Use a non-snapshot version number for dependency on \"%S\" if possible."
