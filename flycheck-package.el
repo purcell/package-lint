@@ -279,7 +279,7 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
              'warning
              (format "You should depend on (emacs \"%s\") if you need `%s'."
                      (mapconcat #'number-to-string added-in-version ".")
-                     (buffer-substring-no-properties (match-beginning 1) (match-end 1))))))))))
+                     (match-string-no-properties 1)))))))))
 
 (defun flycheck-package--check-lexical-binding-is-on-first-line ()
   "Check that any `lexical-binding' declaration is on the first line of the file."
@@ -417,7 +417,7 @@ value of the header with any leading or trailing whitespace removed."
     (goto-char (point-min))
     (let ((case-fold-search t))
       (if (re-search-forward (concat (lm-get-header-re header-name) "\\(.*?\\) *$") nil t)
-          (substring-no-properties (match-string 3))
+          (match-string-no-properties 3)
         (goto-char initial-point)
         nil))))
 
