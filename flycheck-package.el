@@ -41,6 +41,7 @@
 (require 'flycheck)
 (require 'package)
 (require 'lisp-mnt)
+(require 'finder)
 
 
 ;;; Compatibility
