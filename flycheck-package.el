@@ -132,6 +132,7 @@ This is bound dynamically while the checks run.")
         (save-restriction
           (widen)
           (when (flycheck-package--looks-like-a-package)
+            (flycheck-package--check-keywords-list)
             (flycheck-package--check-package-version-present)
             (flycheck-package--check-lexical-binding-is-on-first-line)
             (let ((desc (flycheck-package--check-package-el-can-parse)))
@@ -148,6 +149,23 @@ This is bound dynamically while the checks run.")
 
 
 ;;; Checks
+
+(defun flycheck-package--check-keywords-list ()
+  "Verify that package keywords are listed in `finder-known-keywords'."
+  (when (flycheck-package--goto-header "Keywords")
+    (let ((position (match-beginning 3))
+          (line-no (line-number-at-pos))
+          (keywords (split-string (match-string-no-properties 3))))
+      (condition-case err
+          (dolist (keyword keywords)
+            (unless (assoc (intern keyword) finder-known-keywords)
+              (flycheck-package--error
+               line-no 1 'error
+               (format "\"%s\" is not a standard package keyword: see `finder-known-keywords'." keyword))))
+        (error
+         (flycheck-package--error
+          line-no 1 'error
+          (format "Couldn't parse \"Keywords\" header: %s" (error-message-string err))))))))
 
 (defun flycheck-package--check-dependency-list ()
   "Check the contents of the \"Package-Requires\" header.
