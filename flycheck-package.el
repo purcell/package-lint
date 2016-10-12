@@ -156,13 +156,19 @@ This is bound dynamically while the checks run.")
   (when (flycheck-package--goto-header "Keywords")
     (let ((position (match-beginning 3))
           (line-no (line-number-at-pos))
-          (keywords (split-string (match-string-no-properties 3))))
+          (keywords (mapcar
+                     #'flycheck-package--trim-string
+                     (split-string (match-string-no-properties 3) ","))))
       (condition-case err
           (dolist (keyword keywords)
             (unless (assoc (intern keyword) finder-known-keywords)
               (flycheck-package--error
                line-no 1 'error
-               (format "\"%s\" is not a standard package keyword: see `finder-known-keywords'." keyword))))
+               (format
+                (if (string-match-p "[ \t]" keyword)
+                    "\"%s\" is not a valid package keyword: keywords should be separated with commas"
+                  "\"%s\" is not a standard package keyword: see `finder-known-keywords'.")
+                keyword))))
         (error
          (flycheck-package--error
           line-no 1 'error
@@ -463,6 +469,14 @@ For details, see `hack-local-variables-prop-line'."
   ;; -*- lexical-binding: nil -*-
   ;; is legal, if silly.
   (cdr (assq 'lexical-binding (flycheck-package--get-header-line-file-local-variables))))
+
+(defun flycheck-package--trim-string (string)
+  "Trim spaces and tabs at both sides of STRING."
+  (when (string-match "\\`[ \t]+" string)
+    (setq string (replace-match "" t t string)))
+  (when (string-match "[ \t]+\\'" string)
+    (setq string (replace-match "" t t string)))
+  string)
 
 (flycheck-define-generic-checker 'emacs-lisp-package
   "A checker for \"Package-Requires\" headers."
