@@ -157,16 +157,11 @@ This is bound dynamically while the checks run.")
     (let ((position (match-beginning 3))
           (line-no (line-number-at-pos))
           (keywords (lm-keywords-list)))
-      (condition-case err
-          (dolist (keyword keywords)
-            (unless (assoc (intern keyword) finder-known-keywords)
-              (flycheck-package--error
-               line-no 1 'error
-               (format "\"%s\" is not a standard package keyword: see `finder-known-keywords'." keyword))))
-        (error
-         (flycheck-package--error
-          line-no 1 'error
-          (format "Couldn't parse \"Keywords\" header: %s" (error-message-string err))))))))
+      (dolist (keyword keywords)
+        (unless (assoc (intern keyword) finder-known-keywords)
+          (flycheck-package--error
+           line-no 1 'error
+           (format "\"%s\" is not a standard package keyword: see `finder-known-keywords'." keyword)))))))
 
 (defun flycheck-package--check-dependency-list ()
   "Check the contents of the \"Package-Requires\" header.
