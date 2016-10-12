@@ -43,6 +43,7 @@
 (require 'lisp-mnt)
 (require 'finder)
 (require 'semantic/bovine/el)
+(require 's)
 
 
 ;;; Compatibility
@@ -138,6 +139,7 @@ This is bound dynamically while the checks run.")
         (save-restriction
           (widen)
           (when (flycheck-package--looks-like-a-package)
+            (flycheck-package--check-defs-for-prefix)
             (flycheck-package--check-symbol-characters)
             (flycheck-package--check-keywords-list)
             (flycheck-package--check-package-version-present)
@@ -156,6 +158,24 @@ This is bound dynamically while the checks run.")
 
 
 ;;; Checks
+
+(defun flycheck-package--check-defs-for-prefix ()
+  "Verify that defs start with package prefix."
+  (condition-case err
+      (let* ((prefix (flycheck-package--get-package-prefix))
+             (prefix-re (rx-to-string `(seq string-start ,prefix "-"))))
+        (dolist (def (flycheck-package--list-defs))
+          (unless (string-match prefix-re (cadr def))
+            (let ((line-no (car def))
+                  (defname (cadr def)))
+              (flycheck-package--error
+               line-no 1 'error
+               (format "\"%s\" doesn't start with package's prefix \"%s\"."
+                       defname prefix))))))
+    (error
+     (flycheck-package--error
+      line-no 1 'error
+      (format "Couldn't check defs for prefixes: %s" (error-message-string err))))))
 
 (defun flycheck-package--check-symbol-characters ()
   "Check symbols for forbidden characters."
@@ -438,6 +458,32 @@ DESC is a struct as returned by `package-buffer-info'."
 
 
 ;;; Helpers and checker definition
+
+(defun flycheck-package--list-defs ()
+  "Return list of defs (e.g. defun, defvar, etc.) with line numbers.
+
+Returned list has format (LINE-NUMBER STRING)."
+  (save-excursion
+    (save-restriction
+      (widen)
+      (goto-char (point-min))
+      (let (result)
+        (while (re-search-forward (rx (syntax open-parenthesis)
+                                      (or "defun" "defvar" "defconst" "defgroup" "defmacro" "defmethod" "defstruct")
+                                      space (group (1+ (or (syntax word)(syntax symbol)))))
+                                  (point-max) t)
+          (add-to-list 'result (list (line-number-at-pos (match-beginning 0)) (match-string-no-properties 1))))
+        result))))
+
+(defun flycheck-package--get-package-prefix ()
+  "Return package prefix string (i.e. the symbol the package `provide's)."
+  (save-excursion
+    (save-restriction
+      (widen)
+      (goto-char (point-max))
+      (when (re-search-backward (rx (syntax open-parenthesis) "provide '"
+                                    (group (1+ (or (syntax word)(syntax symbol))))))
+        (s-chop-suffix "-mode" (match-string-no-properties 1))))))
 
 (defun flycheck-package--looks-like-a-package ()
   "Return non-nil if this buffer appears to be intended as a package."
