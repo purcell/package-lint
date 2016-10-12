@@ -42,6 +42,7 @@
 (require 'package)
 (require 'lisp-mnt)
 (require 'finder)
+(require 'imenu)
 
 
 ;;; Compatibility
@@ -403,7 +404,7 @@ DESC is a struct as returned by `package-buffer-info'."
        "Including \"Emacs\" in the package description is usually redundant."))))
 
 
-;;; Helpers and checker definition
+;;; Helpers
 
 (defun flycheck-package--looks-like-a-package ()
   "Return non-nil if this buffer appears to be intended as a package."
@@ -457,6 +458,38 @@ For details, see `hack-local-variables-prop-line'."
   ;; -*- lexical-binding: nil -*-
   ;; is legal, if silly.
   (cdr (assq 'lexical-binding (flycheck-package--get-header-line-file-local-variables))))
+
+(defun flycheck-package--get-defs ()
+  "Return a list of all variables and functions defined in the current buffer.
+
+The returned list is of the form (SYMBOL-NAME . POSITION)."
+  ;; We probably could use Semantic instead, but it's a *global* minor mode and
+  ;; it tends to be quite heavy, so use Imenu instead; if the user has Semantic
+  ;; enabled, Imenu will use its index anyway.
+  (save-excursion
+    (let ((result '())
+          (index
+           ;; In case it's actually Semantic, tell it not to decorate symbol
+           ;; names.
+           (let ((semantic-imenu-summary-function 'semantic-format-tag-name))
+             (funcall imenu-create-index-function))))
+      (dolist (entry index)
+        (pcase entry
+          ((and `(,submenu-name . ,submenu-elements)
+                (guard (consp submenu-elements)))
+           (when (member submenu-name '("Variables" "Defuns"))
+             (setq result (nconc (reverse submenu-elements) result))))
+          (_
+           (push entry result))))
+      ;; If it's Semantic, then it returns overlays, not positions. Convert
+      ;; them.
+      (dolist (entry result)
+        (when (overlayp (cdr entry))
+          (setcdr entry (overlay-start (cdr entry)))))
+      (nreverse result))))
+
+
+;;; Checker definition
 
 (flycheck-define-generic-checker 'emacs-lisp-package
   "A checker for \"Package-Requires\" headers."
