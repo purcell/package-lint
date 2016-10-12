@@ -73,7 +73,7 @@ This is bound dynamically while the checks run.")
 (defconst flycheck-package--functions-and-macros-added-alist
   (eval-when-compile
     (list
-     (cons '(24 1)
+     (cons '(24)
            (regexp-opt
             '("bidi-string-mark-left-to-right" "condition-case-unless-debug"
               "current-bidi-paragraph-direction" "file-selinux-context" "letrec"
@@ -102,7 +102,7 @@ This is bound dynamically while the checks run.")
               "window-right-divider-width" "window-scroll-bar-width"
               "window-text-pixel-size" "with-eval-after-load"
               "zlib-decompress-region")))
-     (cons '(25 1)
+     (cons '(25)
            (regexp-opt
             '("alist-get" "backward-word-strictly"
               "bidi-find-overridden-directionality"
