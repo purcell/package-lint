@@ -142,7 +142,9 @@ This is bound dynamically while the checks run.")
                 (flycheck-package--check-package-summary desc)))
             (let ((deps (flycheck-package--check-dependency-list)))
               (flycheck-package--check-lexical-binding-requires-emacs-24 deps)
-              (flycheck-package--check-macros-functions-available-in-emacs deps))))))
+              (flycheck-package--check-macros-functions-available-in-emacs deps))
+            (let ((definitions (flycheck-package--get-defs)))
+              (flycheck-package--check-symbol-separators definitions))))))
     flycheck-package--errors))
 
 (defun flycheck-package--error (line col type message)
@@ -402,6 +404,20 @@ DESC is a struct as returned by `package-buffer-info'."
        1 1
        'warning
        "Including \"Emacs\" in the package description is usually redundant."))))
+
+(defun flycheck-package--check-symbol-separators (definitions)
+  "Check that symbol DEFINITIONS don't contain non-standard separators."
+  (pcase-dolist (`(,name . ,position) definitions)
+    (when (string-match "[:/]" name)
+      (let ((match-pos (match-beginning 0)))
+        ;; As a special case, allow `/=' when at the end of a symbol.
+        (when (or (not (string-match (rx "/=" string-end) name))
+                  (/= match-pos (match-beginning 0)))
+          (goto-char position)
+          (flycheck-package--error
+           (line-number-at-pos) 1 'error
+           (format "`%s' contains a non-standard separator `%s', use hyphens instead."
+                   name (substring-no-properties name match-pos (1+ match-pos)))))))))
 
 
 ;;; Helpers
