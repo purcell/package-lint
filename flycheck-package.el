@@ -42,6 +42,7 @@
 (require 'package)
 (require 'lisp-mnt)
 (require 'finder)
+(require 'semantic/bovine/el)
 
 
 ;;; Compatibility
@@ -125,6 +126,10 @@ This is bound dynamically while the checks run.")
               "with-file-modes")))))
   "An alist of function/macro names and when they were added to Emacs.")
 
+(defconst flycheck-package--forbidden-symbol-chars-regexp
+  (rx (or "/" ":"))
+  "Regexp matching characters which are not allowed in symbol names.")
+
 (defun flycheck-package--check-all ()
   "Return a list of errors/warnings for the current buffer."
   (let ((flycheck-package--errors '()))
@@ -133,6 +138,7 @@ This is bound dynamically while the checks run.")
         (save-restriction
           (widen)
           (when (flycheck-package--looks-like-a-package)
+            (flycheck-package--check-symbol-characters)
             (flycheck-package--check-keywords-list)
             (flycheck-package--check-package-version-present)
             (flycheck-package--check-lexical-binding-is-on-first-line)
@@ -150,6 +156,22 @@ This is bound dynamically while the checks run.")
 
 
 ;;; Checks
+
+(defun flycheck-package--check-symbol-characters ()
+  "Check symbols for forbidden characters."
+  (condition-case err
+      (dolist (symbol (semantic-fetch-tags))
+        (when (string-match flycheck-package--forbidden-symbol-chars-regexp (car symbol))
+          (let ((line-no (line-number-at-pos (overlay-start (car (last symbol)))))
+                (symbol-name (car symbol)))
+            (flycheck-package--error
+             line-no 1 'error
+             (format "\"%s\" contains a \"%s\": please use only \"-\" as separators in symbols."
+                     symbol-name (match-string-no-properties 0 symbol-name))))))
+    (error
+     (flycheck-package--error
+      line-no 1 'error
+      (format "Couldn't check symbols for forbidden characters: %s" (error-message-string err))))))
 
 (defun flycheck-package--check-keywords-list ()
   "Verify that package keywords are listed in `finder-known-keywords'."
@@ -470,7 +492,8 @@ Add `flycheck-emacs-lisp-package' to `flycheck-checkers'."
   (interactive)
   (add-to-list 'flycheck-checkers 'emacs-lisp-package t)
   (flycheck-add-next-checker 'emacs-lisp 'emacs-lisp-package t)
-  (flycheck-add-next-checker 'emacs-lisp-checkdoc 'emacs-lisp-package t))
+  (flycheck-add-next-checker 'emacs-lisp-checkdoc 'emacs-lisp-package t)
+  (semantic-mode))
 
 (provide 'flycheck-package)
 ;;; flycheck-package.el ends here
