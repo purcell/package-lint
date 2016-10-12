@@ -48,7 +48,6 @@ performed by other flycheck checkers:
 - URL header value is a single valid http(s) URL
 - WARN: library is called *-mode but doesn't provide a major mode
 - WARN: suggest cl-lib vs cl
-- keywords separated by only spaces
 - non-use of standard keywords
 - checkdoc failures for interactive functions / defcustoms
 - presence of :group for each defcustom / defgroup
