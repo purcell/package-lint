@@ -42,6 +42,8 @@
 (require 'package)
 (require 'lisp-mnt)
 (require 'finder)
+(require 'semantic/bovine/el)
+(require 's)
 
 
 ;;; Compatibility
@@ -125,6 +127,10 @@ This is bound dynamically while the checks run.")
               "with-file-modes")))))
   "An alist of function/macro names and when they were added to Emacs.")
 
+(defconst flycheck-package--forbidden-symbol-chars-regexp
+  (rx (or "/" ":"))
+  "Regexp matching characters which are not allowed in symbol names.")
+
 (defun flycheck-package--check-all ()
   "Return a list of errors/warnings for the current buffer."
   (let ((flycheck-package--errors '()))
@@ -133,6 +139,8 @@ This is bound dynamically while the checks run.")
         (save-restriction
           (widen)
           (when (flycheck-package--looks-like-a-package)
+            (flycheck-package--check-defs-for-prefix)
+            (flycheck-package--check-symbol-characters)
             (flycheck-package--check-keywords-list)
             (flycheck-package--check-package-version-present)
             (flycheck-package--check-lexical-binding-is-on-first-line)
@@ -150,6 +158,40 @@ This is bound dynamically while the checks run.")
 
 
 ;;; Checks
+
+(defun flycheck-package--check-defs-for-prefix ()
+  "Verify that defs start with package prefix."
+  (condition-case err
+      (let* ((prefix (flycheck-package--get-package-prefix))
+             (prefix-re (rx-to-string `(seq string-start ,prefix "-"))))
+        (dolist (def (flycheck-package--list-defs))
+          (unless (string-match prefix-re (cadr def))
+            (let ((line-no (car def))
+                  (defname (cadr def)))
+              (flycheck-package--error
+               line-no 1 'error
+               (format "\"%s\" doesn't start with package's prefix \"%s\"."
+                       defname prefix))))))
+    (error
+     (flycheck-package--error
+      line-no 1 'error
+      (format "Couldn't check defs for prefixes: %s" (error-message-string err))))))
+
+(defun flycheck-package--check-symbol-characters ()
+  "Check symbols for forbidden characters."
+  (condition-case err
+      (dolist (symbol (semantic-fetch-tags))
+        (when (string-match flycheck-package--forbidden-symbol-chars-regexp (car symbol))
+          (let ((line-no (line-number-at-pos (overlay-start (car (last symbol)))))
+                (symbol-name (car symbol)))
+            (flycheck-package--error
+             line-no 1 'error
+             (format "\"%s\" contains a \"%s\": please use only \"-\" as separators in symbols."
+                     symbol-name (match-string-no-properties 0 symbol-name))))))
+    (error
+     (flycheck-package--error
+      line-no 1 'error
+      (format "Couldn't check symbols for forbidden characters: %s" (error-message-string err))))))
 
 (defun flycheck-package--check-keywords-list ()
   "Verify that package keywords are listed in `finder-known-keywords'."
@@ -411,6 +453,32 @@ DESC is a struct as returned by `package-buffer-info'."
 
 ;;; Helpers and checker definition
 
+(defun flycheck-package--list-defs ()
+  "Return list of defs (e.g. defun, defvar, etc.) with line numbers.
+
+Returned list has format (LINE-NUMBER STRING)."
+  (save-excursion
+    (save-restriction
+      (widen)
+      (goto-char (point-min))
+      (let (result)
+        (while (re-search-forward (rx (syntax open-parenthesis)
+                                      (or "defun" "defvar" "defconst" "defgroup" "defmacro" "defmethod" "defstruct")
+                                      space (group (1+ (or (syntax word)(syntax symbol)))))
+                                  (point-max) t)
+          (add-to-list 'result (list (line-number-at-pos (match-beginning 0)) (match-string-no-properties 1))))
+        result))))
+
+(defun flycheck-package--get-package-prefix ()
+  "Return package prefix string (i.e. the symbol the package `provide's)."
+  (save-excursion
+    (save-restriction
+      (widen)
+      (goto-char (point-max))
+      (when (re-search-backward (rx (syntax open-parenthesis) "provide '"
+                                    (group (1+ (or (syntax word)(syntax symbol))))))
+        (s-chop-suffix "-mode" (match-string-no-properties 1))))))
+
 (defun flycheck-package--looks-like-a-package ()
   "Return non-nil if this buffer appears to be intended as a package."
   (save-excursion
@@ -476,7 +544,8 @@ Add `flycheck-emacs-lisp-package' to `flycheck-checkers'."
   (interactive)
   (add-to-list 'flycheck-checkers 'emacs-lisp-package t)
   (flycheck-add-next-checker 'emacs-lisp 'emacs-lisp-package t)
-  (flycheck-add-next-checker 'emacs-lisp-checkdoc 'emacs-lisp-package t))
+  (flycheck-add-next-checker 'emacs-lisp-checkdoc 'emacs-lisp-package t)
+  (semantic-mode))
 
 (provide 'flycheck-package)
 ;;; flycheck-package.el ends here
