@@ -426,7 +426,7 @@ DESC is a struct as returned by `package-buffer-info'."
          (prefix-re (concat "\\`" prefix "-")))
     (when prefix
       (pcase-dolist (`(,name . ,position) definitions)
-        (unless (string-match prefix-re name)
+        (unless (string-match-p prefix-re name)
           (let ((line-no (line-number-at-pos position)))
             (flycheck-package--error
              line-no 1 'error
