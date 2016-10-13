@@ -523,7 +523,7 @@ The returned list is of the form (SYMBOL-NAME . POSITION)."
 Prefix is returned without any `-mode' suffix."
   (goto-char (point-max))
   (when (re-search-backward (rx "(provide '" (group (1+ (or (syntax word) (syntax symbol))))) nil t)
-    (replace-regexp-in-string "-mode$" "" (match-string-no-properties 1))))
+    (replace-regexp-in-string "-mode\\'" "" (match-string-no-properties 1))))
 
 
 ;;; Checker definition
