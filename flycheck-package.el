@@ -144,6 +144,7 @@ This is bound dynamically while the checks run.")
               (flycheck-package--check-lexical-binding-requires-emacs-24 deps)
               (flycheck-package--check-macros-functions-available-in-emacs deps))
             (let ((definitions (flycheck-package--get-defs)))
+              (flycheck-package--check-defs-prefix definitions)
               (flycheck-package--check-symbol-separators definitions))))))
     flycheck-package--errors))
 
@@ -419,6 +420,19 @@ DESC is a struct as returned by `package-buffer-info'."
            (format "`%s' contains a non-standard separator `%s', use hyphens instead."
                    name (substring-no-properties name match-pos (1+ match-pos)))))))))
 
+(defun flycheck-package--check-defs-prefix (definitions)
+  "Verify that symbol DEFINITIONS start with package prefix."
+  (let* ((prefix (flycheck-package--get-package-prefix))
+         (prefix-re (concat "\\`" prefix "-")))
+    (when prefix
+      (pcase-dolist (`(,name . ,position) definitions)
+        (unless (string-match prefix-re name)
+          (let ((line-no (line-number-at-pos position)))
+            (flycheck-package--error
+             line-no 1 'error
+             (format "\"%s\" doesn't start with package's prefix \"%s\"."
+                     name prefix))))))))
+
 
 ;;; Helpers
 
@@ -503,6 +517,13 @@ The returned list is of the form (SYMBOL-NAME . POSITION)."
         (when (overlayp (cdr entry))
           (setcdr entry (overlay-start (cdr entry)))))
       (nreverse result))))
+
+(defun flycheck-package--get-package-prefix ()
+  "Return package prefix string (i.e. the symbol the package `provide's).
+Prefix is returned without any `-mode' suffix."
+  (goto-char (point-max))
+  (when (re-search-backward (rx "(provide '" (group (1+ (or (syntax word) (syntax symbol))))) nil t)
+    (replace-regexp-in-string "-mode$" "" (match-string-no-properties 1))))
 
 
 ;;; Checker definition
