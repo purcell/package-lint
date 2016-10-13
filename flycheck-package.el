@@ -162,7 +162,7 @@ This is bound dynamically while the checks run.")
       (dolist (keyword keywords)
         (unless (assoc (intern keyword) finder-known-keywords)
           (flycheck-package--error
-           line-no 1 'error
+           line-no 1 'warning
            (format "\"%s\" is not a standard package keyword: see `finder-known-keywords'." keyword)))))))
 
 (defun flycheck-package--check-dependency-list ()
