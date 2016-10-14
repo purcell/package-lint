@@ -423,7 +423,7 @@ DESC is a struct as returned by `package-buffer-info'."
 (defun flycheck-package--check-defs-prefix (definitions)
   "Verify that symbol DEFINITIONS start with package prefix."
   (let* ((prefix (flycheck-package--get-package-prefix))
-         (prefix-re (concat "\\`" prefix "-")))
+         (prefix-re (rx-to-string `(seq string-start ,prefix (or "-" string-end)))))
     (when prefix
       (pcase-dolist (`(,name . ,position) definitions)
         (unless (string-match-p prefix-re name)
