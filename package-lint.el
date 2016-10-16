@@ -371,7 +371,7 @@ If it can, return the read metadata."
 DESC is a struct as returned by `package-buffer-info'."
   (let ((summary (package-lint--package-desc-summary desc)))
     (cond
-     ((string-empty-p summary)
+     ((string= summary "")
       (package-lint--error
        1 1
        'warning
