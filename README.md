@@ -1,28 +1,31 @@
-[![Melpa Status](http://melpa.org/packages/flycheck-package-badge.svg)](http://melpa.org/#/flycheck-package)
-[![Melpa Stable Status](http://stable.melpa.org/packages/flycheck-package-badge.svg)](http://stable.melpa.org/#/flycheck-package)
+[![Melpa Status](http://melpa.org/packages/package-lint-badge.svg)](http://melpa.org/#/package-lint)
+[![Melpa Stable Status](http://stable.melpa.org/packages/package-lint-badge.svg)](http://stable.melpa.org/#/package-lint)
 
-flycheck-package
-===============
+package-lint
+============
 
-This library provides a [flycheck][] checker for the metadata in
+This library provides a [linter][] checker for the metadata in
 Emacs Lisp files which are intended to be packages.
 
 Currently these checks are only activated if a `Package-Requires` or
 `Package-Version` header is present in the file, and checks center on
 the validity of the data in that header.
 
+See [flycheck-package](https://github.com/purcell/flycheck-package),
+which uses this code to conveniently display packaging errors while
+writing elisp packages.
+
 Installation
 ------------
 
-You'll need Emacs 24 for `flycheck`, so the recommended way to get
-`flycheck-package` is as a package from the [MELPA][melpa]
-repository. The version of `flycheck-package` there will always be
+The recommended way to get
+`package-lint` is as a package from the [MELPA][melpa]
+repository. The version of `package-lint` there will always be
 up-to-date. There are also packages in [MELPA Stable][melpa-stable], which
 track the [latest numbered tag][tags].
 
-If you insist on doing things the hard way, first ensure `flycheck` is
-installed, then download this code and add the directory to your Emacs
-`load-path`.
+If you insist on doing things the hard way, first download this code
+and add the directory to your Emacs `load-path`.
 
 Then, in your `init.el`:
 
@@ -34,13 +37,12 @@ Then, in your `init.el`:
 Roadmap
 -------
 
-Once this is more useful, the plan is to extract the checks into a separate
-`package-lint.el`, which can then be used by this checker and also by
-MELPA -- this will probably be essential in order to check multi-file packages
-helpfully anyway.
+This code was extracted from `flycheck-package.el`. We eventually want
+to use it for MELPA -- it will need to learn how to check multi-file
+packages, which was always going to be out of scope for
+`flycheck-package`.
 
-Additional checks for a future package-lint.el, some of which are currently
-performed by other flycheck checkers:
+Additional checks for future versions:
 
 - WARN: header line formatting / capitalisation
 - trailing line presence / formatting
