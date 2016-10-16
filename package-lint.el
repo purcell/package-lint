@@ -482,27 +482,27 @@ The returned list is of the form (SYMBOL-NAME . POSITION)."
   ;; We probably could use Semantic instead, but it's a *global* minor mode and
   ;; it tends to be quite heavy, so use Imenu instead; if the user has Semantic
   ;; enabled, Imenu will use its index anyway.
-  (save-excursion
-    (let ((result '())
-          (index
-           ;; In case it's actually Semantic, tell it not to decorate symbol
-           ;; names.
+  (let ((result '())
+        (index
+         ;; In case it's actually Semantic, tell it not to decorate symbol
+         ;; names.
+         (save-excursion
            (let ((semantic-imenu-summary-function 'semantic-format-tag-name))
-             (funcall imenu-create-index-function))))
-      (dolist (entry index)
-        (pcase entry
-          ((and `(,submenu-name . ,submenu-elements)
-                (guard (consp submenu-elements)))
-           (when (member submenu-name '("Variables" "Defuns"))
-             (setq result (nconc (reverse submenu-elements) result))))
-          (_
-           (push entry result))))
-      ;; If it's Semantic, then it returns overlays, not positions. Convert
-      ;; them.
-      (dolist (entry result)
-        (when (overlayp (cdr entry))
-          (setcdr entry (overlay-start (cdr entry)))))
-      (nreverse result))))
+             (funcall imenu-create-index-function)))))
+    (dolist (entry index)
+      (pcase entry
+        ((and `(,submenu-name . ,submenu-elements)
+              (guard (consp submenu-elements)))
+         (when (member submenu-name '("Variables" "Defuns"))
+           (setq result (nconc (reverse submenu-elements) result))))
+        (_
+         (push entry result))))
+    ;; If it's Semantic, then it returns overlays, not positions. Convert
+    ;; them.
+    (dolist (entry result)
+      (when (overlayp (cdr entry))
+        (setcdr entry (overlay-start (cdr entry)))))
+    (nreverse result)))
 
 (defun package-lint--get-package-prefix ()
   "Return package prefix string (i.e. the symbol the package `provide's).
