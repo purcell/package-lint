@@ -51,18 +51,6 @@
 
 ;;; Machinery
 
-(defun package-lint--start (checker callback)
-  "Flycheck start function for CHECKER, invoking CALLBACK."
-  (funcall callback
-           'finished
-           (mapcar (lambda (x)
-                     (apply #'flycheck-error-new-at `(,@x :checker ,checker)))
-                   (condition-case err
-                       (package-lint--check-all)
-                     (error
-                      (funcall callback 'errored (error-message-string err))
-                      (signal (car err) (cdr err)))))))
-
 (defvar package-lint--errors nil
   "List of errors and warnings for the current buffer.
 This is bound dynamically while the checks run.")
