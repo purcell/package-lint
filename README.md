@@ -28,16 +28,6 @@ repository. The version of `package-lint` there will always be
 up-to-date. There are also packages in [MELPA Stable][melpa-stable], which
 track the [latest numbered tag][tags].
 
-If you insist on doing things the hard way, first download this code
-and add the directory to your Emacs `load-path`.
-
-Then, in your `init.el`:
-
-```lisp
-(eval-after-load 'flycheck
-  '(flycheck-package-setup))
-```
-
 Roadmap
 -------
 
