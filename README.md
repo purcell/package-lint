@@ -4,8 +4,8 @@
 package-lint
 ============
 
-This library provides a [linter][] checker for the metadata in
-Emacs Lisp files which are intended to be packages.
+This library provides a linter for the metadata in Emacs Lisp files
+which are intended to be packages.
 
 Currently these checks are only activated if a `Package-Requires` or
 `Package-Version` header is present in the file, and checks center on
@@ -13,7 +13,11 @@ the validity of the data in that header.
 
 See [flycheck-package](https://github.com/purcell/flycheck-package),
 which uses this code to conveniently display packaging errors while
-writing elisp packages.
+writing elisp packages. This code was extracted from
+`flycheck-package.el`. We eventually want to use it for MELPA -- it
+will need to learn how to check multi-file packages, which was always
+going to be out of scope for `flycheck-package`.
+
 
 Installation
 ------------
@@ -36,11 +40,6 @@ Then, in your `init.el`:
 
 Roadmap
 -------
-
-This code was extracted from `flycheck-package.el`. We eventually want
-to use it for MELPA -- it will need to learn how to check multi-file
-packages, which was always going to be out of scope for
-`flycheck-package`.
 
 Additional checks for future versions:
 
