@@ -513,7 +513,7 @@ Prefix is returned without any `-mode' suffix."
 ;;; Public interface
 
 ;;;###autoload
-(defun package-lint-buffer (buffer)
+(defun package-lint-buffer (&optional buffer)
   "Get linter errors and warnings for BUFFER.
 
 Returns a list, each element of which is list of
