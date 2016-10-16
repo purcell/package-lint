@@ -473,6 +473,8 @@ For details, see `hack-local-variables-prop-line'."
   ;; is legal, if silly.
   (cdr (assq 'lexical-binding (package-lint--get-header-line-file-local-variables))))
 
+(defvar semantic-imenu-summary-function)
+
 (defun package-lint--get-defs ()
   "Return a list of all variables and functions defined in the current buffer.
 
