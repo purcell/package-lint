@@ -545,9 +545,9 @@ otherwise."
         (emacs-lisp-mode)
         (let ((checking-result (package-lint-buffer)))
           (when checking-result
+            (setq success nil)
             (message "In `%s':" file)
             (pcase-dolist (`(,line ,col ,type ,message) checking-result)
-              (setq success nil)
               (message "  at %d:%d: %s: %s" line col type message))))))
     (kill-emacs (if success 0 1))))
 
