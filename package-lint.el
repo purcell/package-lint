@@ -528,5 +528,29 @@ Current buffer is used if none is specified."
   (with-current-buffer (or buffer (current-buffer))
     (package-lint--check-all)))
 
+(defun package-lint-batch-and-exit ()
+  "Run `package-lint-buffer' on the files remaining on the command line.
+Use this only with -batch, it won't work interactively.
+
+When done, exit Emacs with status 0 if there were no errors nor warnings or 1
+otherwise."
+  (unless noninteractive
+    (error "`package-lint-batch-and-exit' is to be used only with -batch"))
+  ;;; Make sure package.el is initialized so we can query its database.
+  (package-initialize)
+  (let ((success t))
+    (dolist (file command-line-args-left)
+      (let ((full-file-name (expand-file-name file ".")))
+        (with-temp-buffer
+          (insert-file-contents full-file-name t)
+          (emacs-lisp-mode)
+          (let ((checking-result (package-lint-buffer)))
+            (when checking-result
+              (message "In `%s':" file)
+              (pcase-dolist (`(,line ,col ,type ,message) checking-result)
+                (setq success nil)
+                (message "  at %d:%d: %s: %s" line col type message)))))))
+    (kill-emacs (if success 0 1))))
+
 (provide 'package-lint)
 ;;; package-lint.el ends here
