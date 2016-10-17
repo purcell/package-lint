@@ -540,16 +540,15 @@ otherwise."
   (package-initialize)
   (let ((success t))
     (dolist (file command-line-args-left)
-      (let ((full-file-name (expand-file-name file ".")))
-        (with-temp-buffer
-          (insert-file-contents full-file-name t)
-          (emacs-lisp-mode)
-          (let ((checking-result (package-lint-buffer)))
-            (when checking-result
-              (message "In `%s':" file)
-              (pcase-dolist (`(,line ,col ,type ,message) checking-result)
-                (setq success nil)
-                (message "  at %d:%d: %s: %s" line col type message)))))))
+      (with-temp-buffer
+        (insert-file-contents file t)
+        (emacs-lisp-mode)
+        (let ((checking-result (package-lint-buffer)))
+          (when checking-result
+            (message "In `%s':" file)
+            (pcase-dolist (`(,line ,col ,type ,message) checking-result)
+              (setq success nil)
+              (message "  at %d:%d: %s: %s" line col type message))))))
     (kill-emacs (if success 0 1))))
 
 (provide 'package-lint)
