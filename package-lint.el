@@ -406,16 +406,16 @@ DESC is a struct as returned by `package-buffer-info'."
 
 (defun package-lint--check-defs-prefix (definitions)
   "Verify that symbol DEFINITIONS start with package prefix."
-  (let* ((prefix (package-lint--get-package-prefix))
-         (prefix-re (rx-to-string `(seq string-start ,prefix (or "-" string-end)))))
+  (let ((prefix (package-lint--get-package-prefix)))
     (when prefix
-      (pcase-dolist (`(,name . ,position) definitions)
-        (unless (string-match-p prefix-re name)
-          (let ((line-no (line-number-at-pos position)))
-            (package-lint--error
-             line-no 1 'error
-             (format "\"%s\" doesn't start with package's prefix \"%s\"."
-                     name prefix))))))))
+      (let ((prefix-re (rx-to-string `(seq string-start ,prefix (or "-" string-end)))))
+        (pcase-dolist (`(,name . ,position) definitions)
+          (unless (string-match-p prefix-re name)
+            (let ((line-no (line-number-at-pos position)))
+              (package-lint--error
+               line-no 1 'error
+               (format "\"%s\" doesn't start with package's prefix \"%s\"."
+                       name prefix)))))))))
 
 
 ;;; Helpers
