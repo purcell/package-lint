@@ -536,7 +536,7 @@ When done, exit Emacs with status 0 if there were no errors nor warnings or 1
 otherwise."
   (unless noninteractive
     (error "`package-lint-batch-and-exit' is to be used only with -batch"))
-  ;;; Make sure package.el is initialized so we can query its database.
+  ;; Make sure package.el is initialized so we can query its database.
   (package-initialize)
   (let ((success t))
     (dolist (file command-line-args-left)
