@@ -1,5 +1,6 @@
 [![Melpa Status](http://melpa.org/packages/package-lint-badge.svg)](http://melpa.org/#/package-lint)
 [![Melpa Stable Status](http://stable.melpa.org/packages/package-lint-badge.svg)](http://stable.melpa.org/#/package-lint)
+[![Build Status](https://travis-ci.org/purcell/package-lint.png?branch=master)](https://travis-ci.org/purcell/package-lint)
 
 package-lint
 ============

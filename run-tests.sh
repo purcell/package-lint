@@ -1,9 +1,6 @@
-#!/bin/sh
-set -o errexit
+#!/bin/sh -e
 
-if [ -z "${EMACS+x}" ]; then
-    EMACS=emacs
-fi
+EMACS="${EMACS:=emacs}"
 
 INIT_PACKAGE_EL="(progn
   (require 'package)
