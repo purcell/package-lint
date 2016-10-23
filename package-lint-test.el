@@ -37,7 +37,7 @@ when it's nil, the default is used."
     (insert (or header ";;; test.el --- A test\n"))
     (insert (or version ";; Package-Version: 0\n"))
     (insert contents)
-    (insert (or footer "\n;;; test.el ends here\n"))
+    (insert (or footer "\n\n;;; test.el ends here\n"))
     (let ((buffer-file-name "test.el"))
       (package-lint-buffer))))
 
