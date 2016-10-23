@@ -68,7 +68,7 @@ when it's nil, the default is used."
     (package-lint-test--run ";; Package-Requires: ((example \"0\"))" nil ""))))
 
 (ert-deftest package-lint-test-accept-valid-version ()
-  (should (equal '() (package-lint-test--run "" nil ";; Package-Version: 1.2.3-rc"))))
+  (should (equal '() (package-lint-test--run "" nil ";; Package-Version: 1.2.3-cvs"))))
 
 (ert-deftest package-lint-test-error-lexical-binding-not-at-end ()
   (should
