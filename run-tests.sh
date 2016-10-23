@@ -12,7 +12,7 @@ INIT_PACKAGE_EL="(progn
 "$EMACS" -Q -batch \
          --eval "$INIT_PACKAGE_EL" \
          --eval '(package-refresh-contents)' \
-         --eval "(package-install 'cl-lib)"
+         --eval "(unless (package-installed-p 'cl-lib) (package-install 'cl-lib))"
 # Byte compile, failing on byte compiler warnings or errors
 "$EMACS" -Q -batch \
          --eval "$INIT_PACKAGE_EL" \
