@@ -272,7 +272,7 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
       (when (version-list-< emacs-version-dep added-in-version)
         (goto-char (point-min))
         (while (re-search-forward (concat "(\\s-*?\\(" regexp "\\)\\_>") nil t)
-          (unless (let ((ppss (syntax-ppss)))
+          (unless (let ((ppss (save-match-data (syntax-ppss))))
                     (or (nth 3 ppss) (nth 4 ppss)))
             (package-lint--error
              (line-number-at-pos)
