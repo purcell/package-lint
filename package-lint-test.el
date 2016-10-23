@@ -120,8 +120,8 @@ when it's nil, the default is used."
 
 (ert-deftest package-lint-test-error-invalid-dependency ()
   (should
-   (equal
-    '((3 1 error "Expected (package-name \"version-num\"), but found invalid."))
+   (member
+    '(3 1 error "Expected (package-name \"version-num\"), but found invalid.")
     (package-lint-test--run ";; Package-Requires: (invalid)")))
   (should
    (member
