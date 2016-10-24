@@ -28,7 +28,7 @@ INIT_PACKAGE_EL="(progn
          --eval "$INIT_PACKAGE_EL" \
          -l package-lint.el \
          -f package-lint-batch-and-exit \
-         package-lint.el package-lint-test.el || ! [ -z ${EMACS_LINT_IGNORE+x} ]
+         package-lint.el package-lint-test.el || [ -n "${EMACS_LINT_IGNORE+x}" ]
 # Finally, run the testsuite
 "$EMACS" -Q -batch \
          --eval "$INIT_PACKAGE_EL" \
