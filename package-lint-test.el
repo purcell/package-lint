@@ -1,4 +1,4 @@
-;;; package-lint-test.el --- package-lint test suite -*- lexical-binding: t -*-
+;;; package-lint-test.el --- package-lint test suite
 
 ;; Copyright (C) 2016  Steve Purcell, Fanael Linithien
 
