@@ -1,4 +1,4 @@
-;;; package-lint.el --- A linting library for elisp package authors
+;;; package-lint.el --- A linting library for elisp package authors -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2014-2016  Steve Purcell, Fanael Linithien
 
