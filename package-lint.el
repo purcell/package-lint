@@ -55,6 +55,14 @@
   "List of errors and warnings for the current buffer.
 This is bound dynamically while the checks run.")
 
+(defconst package-lint--libraries-added-alist
+  (eval-when-compile
+    (list (cons '(24 4)
+                (regexp-opt
+                 (mapcar 'symbol-name
+                         '(nadvice subr-x))))))
+  "An alist of library names and when they were added to Emacs.")
+
 (defconst package-lint--functions-and-macros-added-alist
   (eval-when-compile
     (list
@@ -131,6 +139,7 @@ This is bound dynamically while the checks run.")
                 (package-lint--check-package-summary desc)))
             (let ((deps (package-lint--check-dependency-list)))
               (package-lint--check-lexical-binding-requires-emacs-24 deps)
+              (package-lint--check-libraries-available-in-emacs deps)
               (package-lint--check-macros-functions-available-in-emacs deps))
             (let ((definitions (package-lint--get-defs)))
               (package-lint--check-defs-prefix definitions)
@@ -269,6 +278,23 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
         (package-lint--error
          lexbind-line lexbind-col 'warning
          "You should depend on (emacs \"24\") if you need lexical-binding.")))))
+
+(defun package-lint--check-libraries-available-in-emacs (valid-deps)
+  "Warn about use of libraries that are not available in the Emacs version in VALID-DEPS."
+  (let ((emacs-version-dep (or (cadr (assq 'emacs valid-deps)) '(0))))
+    (pcase-dolist (`(,added-in-version . ,regexp) package-lint--libraries-added-alist)
+      (when (version-list-< emacs-version-dep added-in-version)
+        (goto-char (point-min))
+        (while (re-search-forward (concat "(\\s-*?require\\s-*?'\\(" regexp "\\)\\_>") nil t)
+          (unless (let ((ppss (save-match-data (syntax-ppss))))
+                    (or (nth 3 ppss) (nth 4 ppss)))
+            (package-lint--error
+             (line-number-at-pos)
+             (current-column)
+             'warning
+             (format "You should depend on (emacs \"%s\") if you need `%s'."
+                     (mapconcat #'number-to-string added-in-version ".")
+                     (match-string-no-properties 1)))))))))
 
 (defun package-lint--check-macros-functions-available-in-emacs (valid-deps)
   "Warn about use of functions/macros that are not available in the Emacs version in VALID-DEPS."
