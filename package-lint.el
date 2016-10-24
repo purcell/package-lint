@@ -305,7 +305,11 @@ REGEXP is (concat RX-START REGEXP* RX-END) for each REGEXP*."
    valid-deps
    package-lint--libraries-added-alist
    "(\\s-*?require\\s-*?'\\("
-   "\\)\\_>"))
+   ;; Match the ending paren so we can be sure it's a single argument
+   ;; `require'. If there are additional arguments, we don't want to warn,
+   ;; because (require 'foo nil t) indicates an optional dependency and
+   ;; (require 'foo "filename") is very uncommon.
+   "\\)\\_>\\s-*?)"))
 
 (defun package-lint--check-macros-functions-available-in-emacs (valid-deps)
   "Warn about use of functions/macros that are not available in the Emacs version in VALID-DEPS."
