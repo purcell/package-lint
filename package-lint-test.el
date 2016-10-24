@@ -202,5 +202,15 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should (equal '() (package-lint-test--run
                       "(defun test-foo ())\n(defun test ())\n(provide 'test)"))))
 
+(ert-deftest package-lint-test-warn-new-libraries ()
+  (should
+   (equal
+    '((3 17 warning "You should depend on (emacs \"24.4\") if you need `nadvice'."))
+    (package-lint-test--run "(require 'nadvice)"))))
+
+(ert-deftest package-lint-test-accept-new-libraries-with-dep ()
+  (should (equal '() (package-lint-test--run
+                      ";; Package-Requires: ((emacs \"24.4\"))\n(require 'nadvice)"))))
+
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
