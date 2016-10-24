@@ -339,6 +339,7 @@ REGEXP is (concat RX-START REGEXP* RX-END) for each REGEXP*."
                 ;; Unfortunately, Emacsen that have this variable also have
                 ;; `hack-local-variables' that doesn't store `lexical-binding'
                 ;; in `file-local-variables-alist'.
+                (defvar enable-dir-local-variables)
                 (defvar hack-local-variables--warned-lexical)
                 (let ((hack-local-variables--warned-lexical nil)
                       (enable-dir-local-variables nil)
