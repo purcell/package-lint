@@ -75,7 +75,12 @@ This is bound dynamically while the checks run.")
               "with-temp-buffer-window")))
      (cons '(24 4)
            (regexp-opt
-            '("add-face-text-property" "cl-tagbody"
+            '("add-function" "remove-function" "advice-add" "advice-remove"
+              "hash-table-keys" "hash-table-values" "string-empty-p" "string-join"
+              "string-join" "string-reverse" "string-trim-left"
+              "string-trim-right" "string-trim" "string-blank-p"
+              "string-remove-prefix" "string-remove-suffix"
+              "add-face-text-property" "cl-tagbody"
               "completion-table-with-cache" "completion-table-merge"
               "define-alternative" "define-error"
               "display-monitor-attributes-list" "file-acl"
