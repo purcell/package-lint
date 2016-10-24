@@ -131,7 +131,7 @@ when it's nil, the default is used."
 (ert-deftest package-lint-test-error-emacs-23-dep ()
   (should
    (equal
-    '((3 24 error "You can only depend on Emacs version 24 or greater."))
+    '((3 24 error "You can only depend on Emacs version 24 or greater: package.el for Emacs 23 does not support the \"emacs\" pseudopackage."))
     (package-lint-test--run ";; Package-Requires: ((emacs \"23\"))"))))
 
 (ert-deftest package-lint-test-accept-emacs-24+-dep ()

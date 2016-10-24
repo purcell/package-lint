@@ -222,7 +222,7 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
         (unless (version-list-<= '(24) package-version)
           (package-lint--error
            line-no offset 'error
-           "You can only depend on Emacs version 24 or greater."))
+           "You can only depend on Emacs version 24 or greater: package.el for Emacs 23 does not support the \"emacs\" pseudopackage."))
       ;; Not 'emacs
       (let ((archive-entry (assq package-name package-archive-contents)))
         (if archive-entry
