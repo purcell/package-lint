@@ -57,7 +57,7 @@ This is bound dynamically while the checks run.")
 
 (defmacro package-lint--match-symbols (&rest symbols)
   "Return a regexp matching the string names of all given SYMBOLS."
-  (regexp-opt (mapcar 'symbol-name symbols)))
+  (regexp-opt (mapcar #'symbol-name symbols)))
 
 (defconst package-lint--libraries-added-alist
   (list (cons '(24 4)
