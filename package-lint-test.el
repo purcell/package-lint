@@ -170,7 +170,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-warn-new-functions ()
   (should
    (equal
-    '((3 9 warning "You should depend on (emacs \"25\") if you need `when-let'."))
+    '((3 1 warning "You should depend on (emacs \"25\") if you need `when-let'."))
     (package-lint-test--run
      "(when-let ((foo (bar))) (message \"ok\"))"))))
 
@@ -212,7 +212,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-warn-new-libraries ()
   (should
    (equal
-    '((3 17 warning "You should depend on (emacs \"24.4\") if you need `nadvice'."))
+    '((3 10 warning "You should depend on (emacs \"24.4\") if you need `nadvice'."))
     (package-lint-test--run "(require 'nadvice)"))))
 
 (ert-deftest package-lint-test-accept-new-libraries-with-dep ()
