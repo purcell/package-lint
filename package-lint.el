@@ -55,72 +55,73 @@
   "List of errors and warnings for the current buffer.
 This is bound dynamically while the checks run.")
 
+(defmacro package-lint--match-symbols (&rest symbols)
+  "Return a regexp matching the string names of all given SYMBOLS."
+  (regexp-opt (mapcar 'symbol-name symbols)))
+
 (defconst package-lint--libraries-added-alist
-  (eval-when-compile
-    (list (cons '(24 4)
-                (regexp-opt
-                 (mapcar 'symbol-name
-                         '(nadvice subr-x))))))
+  (list (cons '(24 4)
+              (package-lint--match-symbols
+               nadvice subr-x)))
   "An alist of library names and when they were added to Emacs.")
 
 (defconst package-lint--functions-and-macros-added-alist
-  (eval-when-compile
-    (list
-     (cons '(24)
-           (regexp-opt
-            '("bidi-string-mark-left-to-right" "condition-case-unless-debug"
-              "current-bidi-paragraph-direction" "file-selinux-context" "letrec"
-              "make-composed-keymap" "read-char-choice" "run-hook-wrapped"
-              "set-file-selinux-context" "server-eval-at" "special-variable-p"
-              "string-prefix-p" "url-queue-retrieve" "window-body-height"
-              "window-stage-get" "window-stage-put" "window-total-width"
-              "window-valid-p" "with-wrapper-hook")))
-     (cons '(24 3)
-           (regexp-opt
-            '("autoloadp" "autoload-do-load" "buffer-narrowed-p" "defvar-local"
-              "file-name-base" "function-get" "posnp" "setq-local"
-              "system-groups" "system-users" "url-encode-url"
-              "with-temp-buffer-window")))
-     (cons '(24 4)
-           (regexp-opt
-            '("add-function" "remove-function" "advice-add" "advice-remove"
-              "hash-table-keys" "hash-table-values" "string-empty-p" "string-join"
-              "string-join" "string-reverse" "string-trim-left"
-              "string-trim-right" "string-trim" "string-blank-p"
-              "string-remove-prefix" "string-remove-suffix"
-              "add-face-text-property" "cl-tagbody"
-              "completion-table-with-cache" "completion-table-merge"
-              "define-alternative" "define-error"
-              "display-monitor-attributes-list" "file-acl"
-              "file-extended-attributes" "fill-single-char-nobreak-p"
-              "frame-monitor-attributes" "group-gid" "group-real-gid"
-              "get-pos-property" "macrop" "set-file-acl" "special-form-p"
-              "string-suffix-p" "window-bottom-divider-width"
-              "window-header-line-height" "window-mode-line-height"
-              "window-right-divider-width" "window-scroll-bar-width"
-              "window-text-pixel-size" "with-eval-after-load"
-              "zlib-decompress-region")))
-     (cons '(25)
-           (regexp-opt
-            '("alist-get" "backward-word-strictly"
-              "bidi-find-overridden-directionality"
-              "buffer-substring-with-bidi-context" "bufferpos-to-filepos"
-              "checkdoc-file" "char-fold-to-regexp" "cl-digit-char-p"
-              "cl-fresh-line" "cl-parse-integer" "default-font-width"
-              "define-advice" "define-inline" "directory-name-p"
-              "directory-files-recursively" "file-notify-valid-p"
-              "filepos-to-bufferpos" "forward-word-strictly" "format-message"
-              "frame-edges" "frame-geometry" "frame-scroll-bar-height"
-              "funcall-interactively" "function-put"
-              "horizontal-scroll-bars-available-p" "if-let" "macroexpand-1"
-              "make-process" "mouse-absolute-pixel-position" "set-binary-mode"
-              "set-mouse-absolute-pixel-position" "string-collate-equalp"
-              "string-collate-lessp" "string-greaterp" "thread-first"
-              "thread-last" "toggle-horizontal-scroll-bar" "when-let"
-              "window-absolute-pixel-position" "window-font-height"
-              "window-font-width" "window-max-chars-per-line"
-              "window-preserve-size" "window-scroll-bar-height"
-              "with-file-modes")))))
+  (list
+   (cons '(24)
+         (package-lint--match-symbols
+          bidi-string-mark-left-to-right condition-case-unless-debug
+          current-bidi-paragraph-direction file-selinux-context letrec
+          make-composed-keymap read-char-choice run-hook-wrapped
+          set-file-selinux-context server-eval-at special-variable-p
+          string-prefix-p url-queue-retrieve window-body-height
+          window-stage-get window-stage-put window-total-width
+          window-valid-p with-wrapper-hook))
+   (cons '(24 3)
+         (package-lint--match-symbols
+          autoloadp autoload-do-load buffer-narrowed-p defvar-local
+          file-name-base function-get posnp setq-local
+          system-groups system-users url-encode-url
+          with-temp-buffer-window))
+   (cons '(24 4)
+         (package-lint--match-symbols
+          add-function remove-function advice-add advice-remove
+          hash-table-keys hash-table-values string-empty-p string-join
+          string-join string-reverse string-trim-left
+          string-trim-right string-trim string-blank-p
+          string-remove-prefix string-remove-suffix
+          add-face-text-property cl-tagbody
+          completion-table-with-cache completion-table-merge
+          define-alternative define-error
+          display-monitor-attributes-list file-acl
+          file-extended-attributes fill-single-char-nobreak-p
+          frame-monitor-attributes group-gid group-real-gid
+          get-pos-property macrop set-file-acl special-form-p
+          string-suffix-p window-bottom-divider-width
+          window-header-line-height window-mode-line-height
+          window-right-divider-width window-scroll-bar-width
+          window-text-pixel-size with-eval-after-load
+          zlib-decompress-region))
+   (cons '(25)
+         (package-lint--match-symbols
+          alist-get backward-word-strictly
+          bidi-find-overridden-directionality
+          buffer-substring-with-bidi-context bufferpos-to-filepos
+          checkdoc-file char-fold-to-regexp cl-digit-char-p
+          cl-fresh-line cl-parse-integer default-font-width
+          define-advice define-inline directory-name-p
+          directory-files-recursively file-notify-valid-p
+          filepos-to-bufferpos forward-word-strictly format-message
+          frame-edges frame-geometry frame-scroll-bar-height
+          funcall-interactively function-put
+          horizontal-scroll-bars-available-p if-let macroexpand-1
+          make-process mouse-absolute-pixel-position set-binary-mode
+          set-mouse-absolute-pixel-position string-collate-equalp
+          string-collate-lessp string-greaterp thread-first
+          thread-last toggle-horizontal-scroll-bar when-let
+          window-absolute-pixel-position window-font-height
+          window-font-width window-max-chars-per-line
+          window-preserve-size window-scroll-bar-height
+          with-file-modes)))
   "An alist of function/macro names and when they were added to Emacs.")
 
 (defun package-lint--check-all ()
