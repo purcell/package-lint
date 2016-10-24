@@ -329,7 +329,7 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
              "`lexical-binding' must be set in the first line.")))))))
 
 (defun package-lint--check-do-not-depend-on-cl-lib-1.0 (valid-deps)
-  "Check that any dependency on \"cl-lib\" is on a remotely-installable version."
+  "Check that any dependency in VALID-DEPS on \"cl-lib\" is on a remotely-installable version."
   (let ((cl-lib-dep (assq 'cl-lib valid-deps)))
     (when cl-lib-dep
       (let ((cl-lib-version (nth 1 cl-lib-dep)))
