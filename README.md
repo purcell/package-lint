@@ -9,8 +9,9 @@ This library provides a linter for the metadata in Emacs Lisp files
 which are intended to be packages.
 
 Currently these checks are only activated if a `Package-Requires` or
-`Package-Version` header is present in the file, and checks center on
-the validity of the data in that header.
+`Package-Version` header is present in the file, or if non-nil `force`
+is passed to `package-lint-buffer`, and checks center on the validity of
+the data in that header.
 
 See [flycheck-package](https://github.com/purcell/flycheck-package),
 which uses this code to conveniently display packaging errors while

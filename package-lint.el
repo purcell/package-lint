@@ -124,14 +124,17 @@ This is bound dynamically while the checks run.")
           with-file-modes)))
   "An alist of function/macro names and when they were added to Emacs.")
 
-(defun package-lint--check-all ()
-  "Return a list of errors/warnings for the current buffer."
+(defun package-lint--check-all (force)
+  "Return a list of errors/warnings for the current buffer.
+
+With FORCE non-nil, lint the buffer even if neither Package-Requires nor
+Package-Version headers are present."
   (let ((package-lint--errors '()))
     (save-match-data
       (save-excursion
         (save-restriction
           (widen)
-          (when (package-lint--looks-like-a-package)
+          (when (or (package-lint--looks-like-a-package) force)
             (package-lint--check-keywords-list)
             (package-lint--check-package-version-present)
             (package-lint--check-lexical-binding-is-on-first-line)
@@ -553,8 +556,11 @@ Prefix is returned without any `-mode' suffix."
 ;;; Public interface
 
 ;;;###autoload
-(defun package-lint-buffer (&optional buffer)
+(defun package-lint-buffer (&optional buffer force)
   "Get linter errors and warnings for BUFFER.
+
+With FORCE non-nil, lint the buffer even if neither Package-Requires nor
+Package-Version headers are present.
 
 Returns a list, each element of which is list of
 
@@ -564,7 +570,7 @@ where TYPE is either 'warning or 'error.
 
 Current buffer is used if none is specified."
   (with-current-buffer (or buffer (current-buffer))
-    (package-lint--check-all)))
+    (package-lint--check-all force)))
 
 (defun package-lint-batch-and-exit ()
   "Run `package-lint-buffer' on the files remaining on the command line.

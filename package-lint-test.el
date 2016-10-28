@@ -26,12 +26,14 @@
 (require 'package-lint)
 (require 'ert)
 
-(defun package-lint-test--run (contents &optional header version footer)
+(defun package-lint-test--run (contents &optional header version footer force)
   "Run `package-lint-buffer' on a temporary buffer with given CONTENTS.
 
 HEADER, VERSION and FOOTER can be either strings or nil; when one is a string,
 the corresponding package boilerplate part is replaced with the passed string,
-when it's nil, the default is used."
+when it's nil, the default is used.
+
+FORCE is passed directly to `package-lint-buffer', which see."
   (with-temp-buffer
     (emacs-lisp-mode)
     (insert (or header ";;; test.el --- A test\n"))
@@ -39,7 +41,7 @@ when it's nil, the default is used."
     (insert contents)
     (insert (or footer "\n\n;;; test.el ends here\n"))
     (let ((buffer-file-name "test.el"))
-      (package-lint-buffer))))
+      (package-lint-buffer nil force))))
 
 (ert-deftest package-lint-test-accept-non-package ()
   (should (equal '() (package-lint-test--run "(defun bad/name ())" "" "" ""))))
@@ -214,6 +216,12 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 
 (ert-deftest package-lint-test-accept-new-libraries-with-optional-require ()
   (should (equal '() (package-lint-test--run "(require 'nadvice nil t)"))))
+
+(ert-deftest package-lint-test-error-nonstandard-separator-non-package-with-force ()
+  (should
+   (equal
+    '((3 1 error "`foo/bar' contains a non-standard separator `/', use hyphens instead."))
+    (package-lint-test--run "(defun foo/bar ())\n" nil ";; Version: 0\n" nil t))))
 
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
