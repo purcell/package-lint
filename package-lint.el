@@ -75,7 +75,8 @@ This is bound dynamically while the checks run.")
           set-file-selinux-context server-eval-at special-variable-p
           string-prefix-p url-queue-retrieve window-body-height
           window-stage-get window-stage-put window-total-width
-          window-valid-p with-wrapper-hook))
+          window-valid-p with-wrapper-hook pcase pcase-let* pcase-let
+          pcase-dolist))
    (cons '(24 3)
          (package-lint--match-symbols
           autoloadp autoload-do-load buffer-narrowed-p defvar-local
@@ -121,7 +122,7 @@ This is bound dynamically while the checks run.")
           window-absolute-pixel-position window-font-height
           window-font-width window-max-chars-per-line
           window-preserve-size window-scroll-bar-height
-          with-file-modes)))
+          with-file-modes pcase-exhaustive pcase-lambda pcase-defmacro)))
   "An alist of function/macro names and when they were added to Emacs.")
 
 (defun package-lint--check-all (force)
