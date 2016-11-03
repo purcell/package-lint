@@ -80,7 +80,7 @@ This is bound dynamically while the checks run.")
    (cons '(24 3)
          (package-lint--match-symbols
           autoloadp autoload-do-load buffer-narrowed-p defvar-local
-          file-name-base function-get posnp setq-local
+          file-name-base function-get posnp setq-local user-error
           system-groups system-users url-encode-url
           with-temp-buffer-window))
    (cons '(24 4)
