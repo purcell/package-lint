@@ -51,11 +51,15 @@ FORCE is passed directly to `package-lint-buffer', which see."
   (should (equal '() (package-lint-test--run ";; Keywords: lisp convenience")))
   (should (equal '() (package-lint-test--run ";; Keywords: lisp, convenience"))))
 
-(ert-deftest package-lint-test-warn-nonstandard-keyword ()
+(ert-deftest package-lint-test-warn-no-standard-keyword ()
   (should
    (equal
-    '((3 1 warning "\"foo\" is not a standard package keyword: see `finder-known-keywords'."))
+    '((3 1 warning "You should include standard keywords: see `finder-known-keywords'."))
     (package-lint-test--run ";; Keywords: foo"))))
+
+(ert-deftest package-lint-test-no-warning-if-at-least-one-standard-keyword ()
+  (should
+   (equal nil (package-lint-test--run ";; Keywords: lisp foo"))))
 
 (ert-deftest package-lint-test-warn-invalid-version ()
   (should

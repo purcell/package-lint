@@ -34,7 +34,7 @@
 ;;; Code:
 
 (eval-when-compile (require 'pcase))    ; `pcase-dolist' is not autoloaded
-(eval-when-compile (require 'cl-lib))
+(require 'cl-lib)
 (require 'package)
 (require 'lisp-mnt)
 (require 'finder)
@@ -163,11 +163,10 @@ Package-Version headers are present."
   (when (package-lint--goto-header "Keywords")
     (let ((line-no (line-number-at-pos))
           (keywords (lm-keywords-list)))
-      (dolist (keyword keywords)
-        (unless (assoc (intern keyword) finder-known-keywords)
-          (package-lint--error
-           line-no 1 'warning
-           (format "\"%s\" is not a standard package keyword: see `finder-known-keywords'." keyword)))))))
+      (unless (cl-some (lambda (keyword) (assoc (intern keyword) finder-known-keywords)) keywords)
+        (package-lint--error
+         line-no 1 'warning
+         (format "You should include standard keywords: see `finder-known-keywords'."))))))
 
 (defun package-lint--check-dependency-list ()
   "Check the contents of the \"Package-Requires\" header.
