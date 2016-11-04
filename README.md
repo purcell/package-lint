@@ -80,7 +80,7 @@ for details.
 Credits
 -------
 
-`flycheck-package` was written by
+`package-lint` was written by
 [Steve Purcell](https://github.com/purcell) with significant
 contributions from [Fanael Linithien](https://github.com/Fanael).
 
