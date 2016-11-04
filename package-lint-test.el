@@ -23,7 +23,9 @@
 ;;
 
 ;;; Code:
-(require 'package-lint)
+(when (require 'undercover nil t)
+  (undercover "package-lint.el"))
+(load-file "package-lint.el")
 (require 'ert)
 
 (defun package-lint-test--run (contents &optional header version footer force)
