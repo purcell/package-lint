@@ -596,4 +596,13 @@ otherwise."
     (kill-emacs (if success 0 1))))
 
 (provide 'package-lint)
+
+
+;; We suppress cl-function warnings, which arise when using cl-some
+;; via cl-lib in Emacs < 24.3.
+;;
+;; Local Variables:
+;; byte-compile-warnings: (quote (not cl-functions))
+;; End:
+
 ;;; package-lint.el ends here
