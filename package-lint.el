@@ -466,7 +466,7 @@ DESC is a struct as returned by `package-buffer-info'."
   (save-excursion
     (goto-char (point-min))
     (re-search-forward
-     (concat lm-header-prefix (rx (or "Package-Version" "Package-Requires")))
+     (concat lm-header-prefix (rx (or "Version" "Package-Version" "Package-Requires")))
      nil t)))
 
 (defun package-lint--lowest-installable-version-of (package)
