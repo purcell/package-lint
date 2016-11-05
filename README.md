@@ -6,7 +6,8 @@ package-lint
 ============
 
 This library provides a linter for the metadata in Emacs Lisp files
-which are intended to be packages.
+which are intended to be packages. You can integrate it into your
+build process.
 
 Currently these checks are only activated if a `Package-Requires` or
 `Package-Version` header is present in the file, or if non-nil `force`
@@ -29,6 +30,16 @@ The recommended way to get
 repository. The version of `package-lint` there will always be
 up-to-date. There are also packages in [MELPA Stable][melpa-stable], which
 track the [latest numbered tag][tags].
+
+
+Build integration
+-----------------
+
+If you're a package author, you can include `package-lint` in your
+build process by ensuring that the package is installed, and then
+using the function `package-lint-batch-and-exit` to lint your files --
+see `run-tests.sh` in this repo for an example.
+
 
 Roadmap
 -------
