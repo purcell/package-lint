@@ -31,9 +31,11 @@ repository. The version of `package-lint` there will always be
 up-to-date. There are also packages in [MELPA Stable][melpa-stable], which
 track the [latest numbered tag][tags].
 
+Usage
+-----
 
-Build integration
------------------
+Use the command `package-lint-current-buffer` interactively, or use
+`package-lint-buffer` if linting programmatically.
 
 If you're a package author, you can include `package-lint` in your
 build process by ensuring that the package is installed, and then
