@@ -578,13 +578,14 @@ Current buffer is used if none is specified."
   (interactive)
   (let ((errs (package-lint-buffer nil t))
         (buf "*Package-Lint*"))
-    (with-displayed-buffer-window
-     buf nil nil
-     (with-current-buffer buf
-       (pcase-dolist (`(,line ,col ,type ,message) errs)
-         (insert (format "%d:%d: %s: %s\n" line col type message)))
-       (special-mode)
-       (view-mode 1)))))
+    (with-current-buffer (get-buffer-create buf)
+      (let ((buffer-read-only nil))
+        (delete-region (point-min) (point-max))
+        (pcase-dolist (`(,line ,col ,type ,message) errs)
+          (insert (format "%d:%d: %s: %s\n" line col type message))))
+      (special-mode)
+      (view-mode 1))
+    (display-buffer buf)))
 
 (defun package-lint-batch-and-exit ()
   "Run `package-lint-buffer' on the files remaining on the command line.
