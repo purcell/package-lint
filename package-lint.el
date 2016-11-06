@@ -122,7 +122,8 @@ This is bound dynamically while the checks run.")
           window-absolute-pixel-position window-font-height
           window-font-width window-max-chars-per-line
           window-preserve-size window-scroll-bar-height
-          with-file-modes pcase-exhaustive pcase-lambda pcase-defmacro)))
+          with-file-modes pcase-exhaustive pcase-lambda pcase-defmacro
+          with-displayed-buffer-window)))
   "An alist of function/macro names and when they were added to Emacs.")
 
 (defun package-lint--check-all (force)
