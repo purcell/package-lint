@@ -603,7 +603,7 @@ otherwise."
       (with-temp-buffer
         (insert-file-contents file t)
         (emacs-lisp-mode)
-        (let ((checking-result (package-lint-buffer)))
+        (let ((checking-result (package-lint-buffer nil t)))
           (when checking-result
             (setq success nil)
             (message "In `%s':" file)
