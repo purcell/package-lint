@@ -158,6 +158,20 @@ Package-Version headers are present."
 
 ;;; Checks
 
+(defun package-lint--list-known-keywords ()
+  "List the known valid keywords for for the Keyword header.
+Takes the keywords from `finder-known-keywords' and formats them for displaying."
+  (let ((good-known-keywords finder-known-keywords)
+	(formatted-valid-keywords ""))
+    (while good-known-keywords
+      (setq formatted-valid-keywords
+	    (concat formatted-valid-keywords
+		    (format "%11s - %s\n"
+			    (caar good-known-keywords)
+			    (cdr (car good-known-keywords)))))
+      (setq good-known-keywords (cdr good-known-keywords)))
+    formatted-valid-keywords))
+
 (defun package-lint--check-keywords-list ()
   "Verify that package keywords are listed in `finder-known-keywords'."
   (when (package-lint--goto-header "Keywords")
@@ -167,7 +181,9 @@ Package-Version headers are present."
         (unless (assoc (intern keyword) finder-known-keywords)
           (package-lint--error
            line-no 1 'warning
-           (format "\"%s\" is not a standard package keyword: see `finder-known-keywords'." keyword)))))))
+	   (format "\"%s\" is not a standard package keyword, use one of the following:\n%s"
+	   	   keyword
+	   	   (package-lint--list-known-keywords))))))))
 
 (defun package-lint--check-dependency-list ()
   "Check the contents of the \"Package-Requires\" header.
