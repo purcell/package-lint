@@ -581,7 +581,7 @@ Current buffer is used if none is specified."
         (buf "*Package-Lint*"))
     (with-current-buffer (get-buffer-create buf)
       (let ((buffer-read-only nil))
-        (delete-region (point-min) (point-max))
+        (erase-buffer)
         (pcase-dolist (`(,line ,col ,type ,message) errs)
           (insert (format "%d:%d: %s: %s\n" line col type message))))
       (special-mode)
