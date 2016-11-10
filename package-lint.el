@@ -161,10 +161,10 @@ Package-Version headers are present."
 (defun package-lint--list-known-keywords ()
   "List the known valid keywords for for the Keyword header.
 Takes the keywords from `finder-known-keywords' and formats them for displaying."
-  (mapconcat
-   (lambda (valid-keyword)
-     (format "%11s - %s\n" (car valid-keyword) (cdr valid-keyword)))
-   finder-known-keywords ""))
+  (replace-regexp-in-string ", $" "."
+			    (mapconcat
+			     (lambda (valid-keyword)
+			       (format "%s, " (car valid-keyword))) finder-known-keywords "")))
 
 (defun package-lint--check-keywords-list ()
   "Verify that package keywords are listed in `finder-known-keywords'."
@@ -175,7 +175,7 @@ Takes the keywords from `finder-known-keywords' and formats them for displaying.
         (unless (assoc (intern keyword) finder-known-keywords)
           (package-lint--error
            line-no 1 'warning
-	   (format "\"%s\" is not a standard package keyword, use one of the following:\n%s"
+	   (format "\"%s\" is not a standard package keyword, use one of the following: %s"
 	   	   keyword
 	   	   (package-lint--list-known-keywords))))))))
 

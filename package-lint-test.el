@@ -54,45 +54,8 @@ FORCE is passed directly to `package-lint-buffer', which see."
 (ert-deftest package-lint-test-warn-nonstandard-keyword ()
   (should
    (equal
-    '((3 1 warning "\"foo\" is not a standard package keyword, use one of the following:
-     abbrev - abbreviation handling, typing shortcuts, and macros
-        bib - bibliography processors
-          c - C and related programming languages
-   calendar - calendar and time management tools
-       comm - communications, networking, and remote file access
-convenience - convenience features for faster editing
-       data - editing data (non-text) files
-       docs - Emacs documentation facilities
- emulations - emulations of other editors
- extensions - Emacs Lisp language extensions
-      faces - fonts and colors for text
-      files - file editing and manipulation
-     frames - Emacs frames and window systems
-      games - games, jokes and amusements
-   hardware - interfacing with system hardware
-       help - Emacs help systems
- hypermedia - links between text or other media types
-       i18n - internationalization and character-set support
-   internal - code for Emacs internals, build process, defaults
-  languages - specialized modes for editing programming languages
-       lisp - Lisp support, including Emacs Lisp
-      local - code local to your site
-      maint - Emacs development tools and aids
-       mail - email reading and posting
-   matching - searching, matching, and sorting
-      mouse - mouse support
- multimedia - images and sound
-       news - USENET news reading and posting
-   outlines - hierarchical outlining and note taking
-  processes - processes, subshells, and compilation
-  terminals - text terminals (ttys)
-        tex - the TeX document formatter
-      tools - programming tools
-       unix - UNIX feature interfaces and emulators
-         vc - version control
-         wp - word processing
-"))
-    (package-lint-test--run ";; Keywords: foo"))))
+    '((3 1 warning "\"foo\" is not a standard package keyword, use one of the following: abbrev, bib, c, calendar, comm, convenience, data, docs, emulations, extensions, faces, files, frames, games, hardware, help, hypermedia, i18n, internal, languages, lisp, local, maint, mail, matching, mouse, multimedia, news, outlines, processes, terminals, tex, tools, unix, vc, wp."))
+   (package-lint-test--run ";; Keywords: foo"))))
 
 (ert-deftest package-lint-test-warn-invalid-version ()
   (should
