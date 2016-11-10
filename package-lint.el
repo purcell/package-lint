@@ -161,16 +161,10 @@ Package-Version headers are present."
 (defun package-lint--list-known-keywords ()
   "List the known valid keywords for for the Keyword header.
 Takes the keywords from `finder-known-keywords' and formats them for displaying."
-  (let ((good-known-keywords finder-known-keywords)
-	(formatted-valid-keywords ""))
-    (while good-known-keywords
-      (setq formatted-valid-keywords
-	    (concat formatted-valid-keywords
-		    (format "%11s - %s\n"
-			    (caar good-known-keywords)
-			    (cdr (car good-known-keywords)))))
-      (setq good-known-keywords (cdr good-known-keywords)))
-    formatted-valid-keywords))
+  (mapconcat
+   (lambda (valid-keyword)
+     (format "%11s - %s\n" (car valid-keyword) (cdr valid-keyword)))
+   finder-known-keywords ""))
 
 (defun package-lint--check-keywords-list ()
   "Verify that package keywords are listed in `finder-known-keywords'."
