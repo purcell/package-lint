@@ -167,7 +167,7 @@ Package-Version headers are present."
       (unless (cl-some (lambda (keyword) (assoc (intern keyword) finder-known-keywords)) keywords)
         (package-lint--error
          line-no 1 'warning
-         (format "You should include standard keywords: see `finder-known-keywords'."))))))
+         (format "You should include standard keywords: see the variable `finder-known-keywords'."))))))
 
 (defun package-lint--check-dependency-list ()
   "Check the contents of the \"Package-Requires\" header.

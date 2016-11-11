@@ -55,7 +55,7 @@ FORCE is passed directly to `package-lint-buffer', which see."
 (ert-deftest package-lint-test-warn-no-standard-keyword ()
   (should
    (equal
-    '((3 1 warning "You should include standard keywords: see `finder-known-keywords'."))
+    '((3 1 warning "You should include standard keywords: see the variable `finder-known-keywords'."))
     (package-lint-test--run ";; Keywords: foo"))))
 
 (ert-deftest package-lint-test-no-warning-if-at-least-one-standard-keyword ()
