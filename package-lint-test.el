@@ -27,14 +27,12 @@
 (require 'package-lint)
 (require 'ert)
 
-(defun package-lint-test--run (contents &optional header version footer force)
+(defun package-lint-test--run (contents &optional header version footer)
   "Run `package-lint-buffer' on a temporary buffer with given CONTENTS.
 
 HEADER, VERSION and FOOTER can be either strings or nil; when one is a string,
 the corresponding package boilerplate part is replaced with the passed string,
-when it's nil, the default is used.
-
-FORCE is passed directly to `package-lint-buffer', which see."
+when it's nil, the default is used."
   (with-temp-buffer
     (emacs-lisp-mode)
     (insert (or header ";;; test.el --- A test\n"))
@@ -42,10 +40,7 @@ FORCE is passed directly to `package-lint-buffer', which see."
     (insert contents)
     (insert (or footer "\n\n;;; test.el ends here\n"))
     (let ((buffer-file-name "test.el"))
-      (package-lint-buffer nil force))))
-
-(ert-deftest package-lint-test-accept-non-package ()
-  (should (equal '() (package-lint-test--run "(defun bad/name ())" "" "" ""))))
+      (package-lint-buffer))))
 
 (ert-deftest package-lint-test-accept-standard-keywords ()
   ;; Test comma- and space-separated keywords, as both are commonly used.
@@ -222,11 +217,24 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-accept-new-libraries-with-optional-require ()
   (should (equal '() (package-lint-test--run "(require 'nadvice nil t)"))))
 
-(ert-deftest package-lint-test-error-nonstandard-separator-non-package-with-force ()
+(ert-deftest package-lint-test-looks-like-a-package-p-works ()
   (should
-   (equal
-    '((3 1 error "`foo/bar' contains a non-standard separator `/', use hyphens instead."))
-    (package-lint-test--run "(defun foo/bar ())\n" nil ";; Version: 0\n" nil t))))
+   (with-temp-buffer
+     (insert ";; Package-Version: 0\n")
+     (package-lint-looks-like-a-package-p)))
+  (should
+   (with-temp-buffer
+     (insert ";; Package-Requires: ((foo \"1\"))\n")
+     (package-lint-looks-like-a-package-p)))
+  (should
+   (with-temp-buffer
+     (insert ";; Version: 0\n")
+     (package-lint-looks-like-a-package-p)))
+  (should-not (with-temp-buffer (package-lint-looks-like-a-package-p)))
+  (should-not
+   (with-temp-buffer
+     (insert ";; Dummy-Header: dummy-value\n")
+     (package-lint-looks-like-a-package-p))))
 
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
