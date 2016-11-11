@@ -588,6 +588,7 @@ Current buffer is used if none is specified."
       (view-mode 1))
     (display-buffer buf)))
 
+;;;###autoload
 (defun package-lint-batch-and-exit ()
   "Run `package-lint-buffer' on the files remaining on the command line.
 Use this only with -batch, it won't work interactively.
