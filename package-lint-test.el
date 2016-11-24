@@ -204,6 +204,10 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should (equal '() (package-lint-test--run
                       "(defun test-foo ())\n(defun test ())\n(provide 'test)"))))
 
+(ert-deftest package-lint-test-accept-sane-prefixed-definitions ()
+  (should (equal '() (package-lint-test--run
+                      "(defun org-dblock-write:test ())\n(provide 'test)"))))
+
 (ert-deftest package-lint-test-warn-new-libraries ()
   (should
    (equal
