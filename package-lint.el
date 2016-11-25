@@ -127,10 +127,13 @@ This is bound dynamically while the checks run.")
   "An alist of function/macro names and when they were added to Emacs.")
 
 (defconst package-lint--sane-prefixes
-  '("org-dblock-write:"
+  (rx
+   string-start
+   (or
+    "org-dblock-write:"
     "org-babel-execute:"
-    "org-babel-default-header-args:")
-  "A list of sane prefixes.")
+    "org-babel-default-header-args:"))
+  "A regexp matching whitelisted non-standard symbol prefixes.")
 
 (defun package-lint--check-all ()
   "Return a list of errors/warnings for the current buffer."
@@ -437,8 +440,8 @@ DESC is a struct as returned by `package-buffer-info'."
 (defun package-lint--check-symbol-separators (definitions)
   "Check that symbol DEFINITIONS don't contain non-standard separators."
   (pcase-dolist (`(,name . ,position) definitions)
-    (when (and (not (string-match-p (rx-to-string `(seq string-start (or ,@package-lint--sane-prefixes))) name))
-               (string-match "[:/]" name))
+    (when (and (string-match "[:/]" name)
+               (not (string-match-p package-lint--sane-prefixes name)))
       (let ((match-pos (match-beginning 0)))
         ;; As a special case, allow `/=' when at the end of a symbol.
         (when (or (not (string-match (rx "/=" string-end) name))
@@ -453,10 +456,10 @@ DESC is a struct as returned by `package-buffer-info'."
   "Verify that symbol DEFINITIONS start with package prefix."
   (let ((prefix (package-lint--get-package-prefix)))
     (when prefix
-      (let ((prefix-re (rx-to-string `(or (seq string-start (or ,@package-lint--sane-prefixes))
-                                          (seq string-start ,prefix (or "-" string-end))))))
+      (let ((prefix-re (rx-to-string `(seq string-start ,prefix (or "-" string-end)))))
         (pcase-dolist (`(,name . ,position) definitions)
-          (unless (string-match-p prefix-re name)
+          (unless (or (string-match-p prefix-re name)
+                      (string-match-p package-lint--sane-prefixes name))
             (let ((line-no (line-number-at-pos position)))
               (package-lint--error
                line-no 1 'error
