@@ -169,10 +169,10 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should (equal '() (package-lint-test--run
                       ";; Package-Requires: ((package-lint \"0.2\") (cl-lib \"0.5\"))"))))
 
-(ert-deftest package-lint-test-warn-new-functions ()
+(ert-deftest package-lint-test-error-new-functions ()
   (should
    (equal
-    '((3 1 warning "You should depend on (emacs \"25\") if you need `when-let'."))
+    '((3 1 error "You should depend on (emacs \"25\") if you need `when-let'."))
     (package-lint-test--run
      "(when-let ((foo (bar))) (message \"ok\"))"))))
 
@@ -208,10 +208,10 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should (equal '() (package-lint-test--run
                       "(defun org-dblock-write:test ())\n(provide 'test)"))))
 
-(ert-deftest package-lint-test-warn-new-libraries ()
+(ert-deftest package-lint-test-error-new-libraries ()
   (should
    (equal
-    '((3 10 warning "You should depend on (emacs \"24.4\") if you need `nadvice'."))
+    '((3 10 error "You should depend on (emacs \"24.4\") if you need `nadvice'."))
     (package-lint-test--run "(require 'nadvice)"))))
 
 (ert-deftest package-lint-test-accept-new-libraries-with-dep ()

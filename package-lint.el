@@ -306,7 +306,7 @@ REGEXP is (concat RX-START REGEXP* RX-END) for each REGEXP*."
             (package-lint--error
              (line-number-at-pos)
              (save-excursion (goto-char (match-beginning 1)) (current-column))
-             'warning
+             'error
              (format "You should depend on (emacs \"%s\") if you need `%s'."
                      (mapconcat #'number-to-string added-in-version ".")
                      (match-string-no-properties 1)))))))))
