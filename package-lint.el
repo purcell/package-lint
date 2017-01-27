@@ -62,7 +62,10 @@ This is bound dynamically while the checks run.")
 (defconst package-lint--libraries-added-alist
   (list (cons '(24 4)
               (package-lint--match-symbols
-               nadvice subr-x)))
+               nadvice subr-x))
+        (cons '(25 1)
+              (package-lint--match-symbols
+               pinentry cl-generic map thunk js-jsx-mode)))
   "An alist of library names and when they were added to Emacs.")
 
 (defconst package-lint--functions-and-macros-added-alist
@@ -81,7 +84,7 @@ This is bound dynamically while the checks run.")
          (package-lint--match-symbols
           autoloadp autoload-do-load buffer-narrowed-p defvar-local
           file-name-base function-get posnp setq-local user-error
-          system-groups system-users url-encode-url
+          system-groups system-users url-encode-url tty-top-frame
           with-temp-buffer-window))
    (cons '(24 4)
          (package-lint--match-symbols
