@@ -581,6 +581,10 @@ Current buffer is used if none is specified."
     (with-current-buffer (get-buffer-create buf)
       (let ((buffer-read-only nil))
         (erase-buffer)
+        (cond
+         ((null errs) (insert "No issues found."))
+         ((null (cdr errs)) (insert "1 issue found:\n\n"))
+         (t (insert (format "%d issues found:\n\n" (length errs)))))
         (pcase-dolist (`(,line ,col ,type ,message) errs)
           (insert (format "%d:%d: %s: %s\n" line col type message))))
       (special-mode)
