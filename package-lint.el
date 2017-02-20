@@ -61,12 +61,18 @@ This is bound dynamically while the checks run.")
   (regexp-opt (mapcar #'symbol-name symbols)))
 
 (defconst package-lint--libraries-added-alist
-  (list (cons '(24 4)
-              (package-lint--match-symbols
-               nadvice subr-x))
-        (cons '(25 1)
-              (package-lint--match-symbols
-               pinentry cl-generic map thunk js-jsx-mode)))
+  (list
+   (cons '(24 4)
+         (package-lint--match-symbols
+          nadvice
+          subr-x))
+   (cons '(25 1)
+         (package-lint--match-symbols
+          cl-generic
+          js-jsx-mode
+          map
+          pinentry
+          thunk)))
   "An alist of library names and when they were added to Emacs.")
 
 (defconst package-lint--functions-and-macros-added-alist
