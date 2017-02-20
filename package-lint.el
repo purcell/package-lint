@@ -90,7 +90,7 @@ This is bound dynamically while the checks run.")
    (cons '(24 4)
          (package-lint--match-symbols
           add-function remove-function advice-add advice-remove
-          hash-table-keys hash-table-values string-empty-p string-join
+          hash-table-keys hash-table-values string-empty-p
           string-join string-reverse string-trim-left
           string-trim-right string-trim string-blank-p
           string-remove-prefix string-remove-suffix
