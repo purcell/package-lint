@@ -72,62 +72,136 @@ This is bound dynamically while the checks run.")
 (defconst package-lint--functions-and-macros-added-alist
   (list
    (cons '(24)
-         (package-lint--match-symbols
-          bidi-string-mark-left-to-right condition-case-unless-debug
-          current-bidi-paragraph-direction file-selinux-context letrec
-          make-composed-keymap read-char-choice run-hook-wrapped
-          set-file-selinux-context server-eval-at special-variable-p
-          string-prefix-p url-queue-retrieve window-body-height
-          window-stage-get window-stage-put window-total-width
-          window-valid-p with-wrapper-hook pcase pcase-let* pcase-let
-          pcase-dolist))
+         (package-lint--match-symbols bidi-string-mark-left-to-right
+                                      condition-case-unless-debug
+                                      current-bidi-paragraph-direction
+                                      file-selinux-context
+                                      letrec
+                                      make-composed-keymap
+                                      pcase
+                                      pcase-dolist
+                                      pcase-let
+                                      pcase-let*
+                                      read-char-choice
+                                      run-hook-wrapped
+                                      server-eval-at
+                                      set-file-selinux-context
+                                      special-variable-p
+                                      string-prefix-p
+                                      url-queue-retrieve
+                                      window-body-height
+                                      window-stage-get
+                                      window-stage-put
+                                      window-total-width
+                                      window-valid-p
+                                      with-wrapper-hook))
    (cons '(24 3)
-         (package-lint--match-symbols
-          autoloadp autoload-do-load buffer-narrowed-p defvar-local
-          file-name-base function-get posnp setq-local user-error
-          system-groups system-users url-encode-url tty-top-frame
-          with-temp-buffer-window))
+         (package-lint--match-symbols autoload-do-load
+                                      autoloadp
+                                      buffer-narrowed-p
+                                      defvar-local
+                                      file-name-base
+                                      function-get
+                                      posnp
+                                      setq-local
+                                      system-groups
+                                      system-users
+                                      tty-top-frame
+                                      url-encode-url
+                                      user-error
+                                      with-temp-buffer-window))
    (cons '(24 4)
-         (package-lint--match-symbols
-          add-function remove-function advice-add advice-remove
-          hash-table-keys hash-table-values string-empty-p
-          string-join string-reverse string-trim-left
-          string-trim-right string-trim string-blank-p
-          string-remove-prefix string-remove-suffix
-          add-face-text-property cl-tagbody
-          completion-table-with-cache completion-table-merge
-          define-alternative define-error
-          display-monitor-attributes-list file-acl
-          file-extended-attributes fill-single-char-nobreak-p
-          frame-monitor-attributes group-gid group-real-gid
-          get-pos-property macrop set-file-acl special-form-p
-          string-suffix-p window-bottom-divider-width
-          window-header-line-height window-mode-line-height
-          window-right-divider-width window-scroll-bar-width
-          window-text-pixel-size with-eval-after-load
-          zlib-decompress-region))
+         (package-lint--match-symbols add-face-text-property
+                                      add-function
+                                      advice-add
+                                      advice-remove
+                                      cl-tagbody
+                                      completion-table-merge
+                                      completion-table-with-cache
+                                      define-alternative
+                                      define-error
+                                      display-monitor-attributes-list
+                                      file-acl
+                                      file-extended-attributes
+                                      fill-single-char-nobreak-p
+                                      frame-monitor-attributes
+                                      get-pos-property
+                                      group-gid
+                                      group-real-gid
+                                      hash-table-keys
+                                      hash-table-values
+                                      macrop
+                                      remove-function
+                                      set-file-acl
+                                      special-form-p
+                                      string-blank-p
+                                      string-empty-p
+                                      string-join
+                                      string-remove-prefix
+                                      string-remove-suffix
+                                      string-reverse
+                                      string-suffix-p
+                                      string-trim
+                                      string-trim-left
+                                      string-trim-right
+                                      window-bottom-divider-width
+                                      window-header-line-height
+                                      window-mode-line-height
+                                      window-right-divider-width
+                                      window-scroll-bar-width
+                                      window-text-pixel-size
+                                      with-eval-after-load
+                                      zlib-decompress-region))
    (cons '(25)
-         (package-lint--match-symbols
-          alist-get backward-word-strictly
-          bidi-find-overridden-directionality
-          buffer-substring-with-bidi-context bufferpos-to-filepos
-          checkdoc-file char-fold-to-regexp cl-digit-char-p
-          cl-fresh-line cl-parse-integer default-font-width
-          define-advice define-inline directory-name-p
-          directory-files-recursively file-notify-valid-p
-          filepos-to-bufferpos forward-word-strictly format-message
-          frame-edges frame-geometry frame-scroll-bar-height
-          funcall-interactively function-put
-          horizontal-scroll-bars-available-p if-let macroexpand-1
-          make-process mouse-absolute-pixel-position set-binary-mode
-          set-mouse-absolute-pixel-position string-collate-equalp
-          string-collate-lessp string-greaterp thread-first
-          thread-last toggle-horizontal-scroll-bar when-let
-          window-absolute-pixel-position window-font-height
-          window-font-width window-max-chars-per-line
-          window-preserve-size window-scroll-bar-height
-          with-file-modes pcase-exhaustive pcase-lambda pcase-defmacro
-          with-displayed-buffer-window)))
+         (package-lint--match-symbols alist-get
+                                      backward-word-strictly
+                                      bidi-find-overridden-directionality
+                                      buffer-substring-with-bidi-context
+                                      bufferpos-to-filepos
+                                      char-fold-to-regexp
+                                      checkdoc-file
+                                      cl-digit-char-p
+                                      cl-fresh-line
+                                      cl-parse-integer
+                                      default-font-width
+                                      define-advice
+                                      define-inline
+                                      directory-files-recursively
+                                      directory-name-p
+                                      file-notify-valid-p
+                                      filepos-to-bufferpos
+                                      format-message
+                                      forward-word-strictly
+                                      frame-edges
+                                      frame-geometry
+                                      frame-scroll-bar-height
+                                      funcall-interactively
+                                      function-put
+                                      horizontal-scroll-bars-available-p
+                                      if-let
+                                      macroexpand-1
+                                      make-process
+                                      mouse-absolute-pixel-position
+                                      pcase-defmacro
+                                      pcase-exhaustive
+                                      pcase-lambda
+                                      set-binary-mode
+                                      set-mouse-absolute-pixel-position
+                                      string-collate-equalp
+                                      string-collate-lessp
+                                      string-greaterp
+                                      thread-first
+                                      thread-last
+                                      toggle-horizontal-scroll-bar
+                                      when-let
+                                      window-absolute-pixel-position
+                                      window-font-height
+                                      window-font-width
+                                      window-max-chars-per-line
+                                      window-preserve-size
+                                      window-scroll-bar-height
+                                      with-displayed-buffer-window
+                                      with-file-modes)))
   "An alist of function/macro names and when they were added to Emacs.")
 
 (defconst package-lint--sane-prefixes
