@@ -214,6 +214,214 @@ This is bound dynamically while the checks run.")
           with-file-modes)))
   "An alist of function/macro names and when they were added to Emacs.")
 
+(defconst package-lint--unprefixed-cl-symbols
+  '(cddar
+    make-random-state
+    do-all-symbols
+    lexical-let
+    define-modify-macro
+    nsubstitute-if
+    equalp
+    tree-equal
+    cdddr
+    eval-when
+    cddaar
+    position-if-not
+    defstruct
+    case
+    copy-list
+    truncate*
+    mapcar*
+    nreconc
+    cddadr
+    sixth
+    multiple-value-setq
+    pairlis
+    intersection
+    remove-if
+    set-exclusive-or
+    defmacro*
+    do*
+    replace
+    mapl
+    letf
+    svref
+    tailp
+    seventh
+    find-if
+    nsubst-if-not
+    set-difference
+    block
+    substitute-if
+    nth-value
+    third
+    nset-exclusive-or
+    fifth
+    fourth
+    load-time-value
+    typecase
+    random-state-p
+    remove-if-not
+    minusp
+    symbol-macrolet
+    first
+    list-length
+    ldiff
+    assert
+    floor*
+    notany
+    revappend
+    reduce
+    pushnew
+    isqrt
+    assoc-if
+    decf
+    defun*
+    random*
+    sort*
+    sublis
+    rem*
+    lexical-let*
+    mismatch
+    caadar
+    callf
+    macrolet
+    values
+    typep
+    notevery
+    remf
+    caaddr
+    mod*
+    delete-if-not
+    caaar
+    eighth
+    incf
+    assoc-if-not
+    copy-seq
+    delete-duplicates
+    caadr
+    proclaim
+    lcm
+    subst-if
+    etypecase
+    floatp-safe
+    rest
+    mapcan
+    position
+    nset-difference
+    cdadar
+    subst-if-not
+    subseq
+    caddar
+    concatenate
+    define-setf-method
+    cdaddr
+    delete*
+    cadddr
+    cdaar
+    fill
+    callf2
+    find
+    cdadr
+    values-list
+    shiftf
+    subsetp
+    ninth
+    delete-if
+    member-if-not
+    acons
+    endp
+    gcd
+    get*
+    rassoc-if
+    cdddar
+    mapcon
+    search
+    nunion
+    nsubst-if
+    plusp
+    remove-duplicates
+    list*
+    cddddr
+    getf
+    second
+    check-type
+    gentemp
+    multiple-value-bind
+    stable-sort
+    find-if-not
+    member-if
+    count-if-not
+    rotatef
+    nsubst
+    do-symbols
+    define-compiler-macro
+    gensym
+    remove*
+    ecase
+    ceiling*
+    rassoc*
+    progv
+    count-if
+    assoc*
+    function*
+    nsublis
+    locally
+    some
+    coerce
+    substitute-if-not
+    letf*
+    member*
+    return-from
+    return
+    destructuring-bind
+    union
+    multiple-value-list
+    loop
+    the
+    caaaar
+    nsubstitute
+    count
+    evenp
+    caaadr
+    defsetf
+    signum
+    round*
+    adjoin
+    nintersection
+    position-if
+    merge
+    defsubst*
+    cadar
+    psetf
+    psetq
+    remprop
+    rassoc-if-not
+    every
+    subst
+    caddr
+    maplist
+    deftype
+    cdaaar
+    flet
+    tenth
+    define-setf-expander
+    multiple-value-apply
+    substitute
+    nsubstitute-if-not
+    cadaar
+    compiler-macroexpand
+    oddp
+    cdaadr
+    declaim
+    labels
+    multiple-value-call
+    cadadr)
+  "A list of all symbols defined in the obsolete cl.el")
+
+(defconst package-lint--unprefixed-cl-re
+  (concat "['(]" (regexp-opt (mapcar 'symbol-name package-lint--unprefixed-cl-symbols)) "[[:space:]\n\r()]"))
+
 (defconst package-lint--sane-prefixes
   (rx
    string-start
@@ -223,6 +431,17 @@ This is bound dynamically while the checks run.")
     "org-babel-default-header-args:"))
   "A regexp matching whitelisted non-standard symbol prefixes.")
 
+(defun package-lint--all-matches-in-buffer (re)
+  "Return a list of lists of the start and end points of all strings matching RE
+in the current buffer"
+  (let (matches)
+    (save-excursion
+      (goto-char (point-min))
+      (save-match-data
+        (while (re-search-forward re nil t nil)
+          (setq matches (cons (match-data) matches)))))
+    matches))
+
 (defun package-lint--check-all ()
   "Return a list of errors/warnings for the current buffer."
   (let ((package-lint--errors '()))
@@ -230,6 +449,7 @@ This is bound dynamically while the checks run.")
       (save-excursion
         (save-restriction
           (widen)
+          (package-lint--check-unprefixed-cl)
           (package-lint--check-keywords-list)
           (package-lint--check-package-version-present)
           (package-lint--check-lexical-binding-is-on-first-line)
@@ -251,6 +471,24 @@ This is bound dynamically while the checks run.")
 
 
 ;;; Checks
+
+(defun package-lint--remove-all-text-properties (string)
+  "Destructively removes all text properties from STRING, and returns STRING."
+  (set-text-properties 0 (length string) nil string)
+  string)
+
+(defun package-lint--check-unprefixed-cl ()
+  "Ensure the package does not use any functions from cl.el"
+  (dolist (markers (package-lint--all-matches-in-buffer package-lint--unprefixed-cl-re))
+    (package-lint--error
+     (line-number-at-pos (car markers))
+     (save-excursion (goto-char (car markers)) (current-column))
+     'warning
+     (format "\"%s\" is deprecated; consider using cl-%s instead."
+             (package-lint--remove-all-text-properties
+              (buffer-substring (1+ (car markers)) (1- (cadr markers))))
+             (package-lint--remove-all-text-properties
+              (buffer-substring (1+ (car markers)) (1- (cadr markers))))))))
 
 (defun package-lint--check-keywords-list ()
   "Verify that package keywords are listed in `finder-known-keywords'."
