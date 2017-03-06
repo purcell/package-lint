@@ -111,6 +111,7 @@ This is bound dynamically while the checks run.")
           file-name-base
           function-get
           posnp
+          read-only-mode
           setq-local
           system-groups
           system-users
