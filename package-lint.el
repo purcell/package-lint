@@ -626,7 +626,11 @@ The returned list is of the form (SYMBOL-NAME . POSITION)."
          (when (member submenu-name '("Variables" "Defuns"))
            (setq result (nconc (reverse submenu-elements) result))))
         (_
-         (push entry result))))
+         (unless (and (consp entry)     ;Do not push entry to result if it's a comment
+                      (save-excursion
+                        (goto-char (cdr entry))
+                        (looking-at-p ";+")))
+           (push entry result)))))
     ;; If it's Semantic, then it returns overlays, not positions. Convert
     ;; them.
     (dolist (entry result)
