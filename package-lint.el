@@ -614,10 +614,13 @@ The returned list is of the form (SYMBOL-NAME . POSITION)."
   ;; enabled, Imenu will use its index anyway.
   (let ((result '())
         (index
-         ;; In case it's actually Semantic, tell it not to decorate symbol
-         ;; names.
          (save-excursion
-           (let ((semantic-imenu-summary-function 'semantic-format-tag-name))
+           ;; Use the default imenu expression list so that we're not confused
+           ;; by user customizations.
+           (let ((imenu-generic-expression lisp-imenu-generic-expression)
+                 ;; In case it's actually Semantic, tell it not to decorate
+                 ;; symbol names.
+                 (semantic-imenu-summary-function 'semantic-format-tag-name))
              (funcall imenu-create-index-function)))))
     (dolist (entry index)
       (pcase entry
