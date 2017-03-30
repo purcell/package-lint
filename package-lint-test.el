@@ -42,6 +42,11 @@ when it's nil, the default is used."
     (let ((buffer-file-name "test.el"))
       (package-lint-buffer))))
 
+(ert-deftest package-lint-test-warn-literal-emacs-path ()
+  (should (equal '((3 10 warning "Use variable `user-emacs-directory' or function `locate-user-emacs-file' instead of a literal path to the Emacs user directory or files."))
+                 (package-lint-test--run "\"/.emacs.d\"")))
+  (should (equal nil (package-lint-test--run "\"emacs dot dee\""))))
+
 (ert-deftest package-lint-test-accept-standard-keywords ()
   ;; Test comma- and space-separated keywords, as both are commonly used.
   (should (equal '() (package-lint-test--run ";; Keywords: lisp convenience")))

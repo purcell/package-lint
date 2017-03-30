@@ -241,6 +241,7 @@ This is bound dynamically while the checks run.")
             (package-lint--check-lexical-binding-requires-emacs-24 deps)
             (package-lint--check-libraries-available-in-emacs deps)
             (package-lint--check-macros-functions-available-in-emacs deps))
+          (package-lint--check-for-literal-emacs-path)
           (let ((definitions (package-lint--get-defs)))
             (package-lint--check-defs-prefix definitions)
             (package-lint--check-symbol-separators definitions)))))
@@ -252,6 +253,15 @@ This is bound dynamically while the checks run.")
 
 
 ;;; Checks
+
+(defun package-lint--check-for-literal-emacs-path ()
+  "Verify package does not refer to \"\.emacs\.d\" literally.
+Instead it should use `user-emacs-directory' or `locate-user-emacs-file'."
+  (goto-char (point-min))
+  (while (re-search-forward (rx (syntax string-quote) (0+ (not (syntax string-quote))) (or "/" "\\") ".emacs.d") nil t)
+    (package-lint--error
+     (line-number-at-pos) (current-column) 'warning
+     "Use variable `user-emacs-directory' or function `locate-user-emacs-file' instead of a literal path to the Emacs user directory or files.")))
 
 (defun package-lint--check-keywords-list ()
   "Verify that package keywords are listed in `finder-known-keywords'."
