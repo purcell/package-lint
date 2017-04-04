@@ -45,8 +45,9 @@ when it's nil, the default is used."
 (ert-deftest package-lint-test-warn-literal-emacs-path ()
   (should
    (equal
-    '((3 10 warning "Use variable `user-emacs-directory' or function `locate-user-emacs-file' instead of a literal path to the Emacs user directory or files."))
-    (package-lint-test--run "\"/.emacs\.d\"")))
+    '((3 8 warning "Use variable `user-emacs-directory' or function `locate-user-emacs-file' instead of a literal path to the Emacs user directory or files."))
+    (package-lint-test--run "\.emacs\.d")))
+  (should (equal '() (package-lint-test--run ";; ~/\.emacs\.d/elpa")))
   (should (equal '() (package-lint-test--run "\"emacs dot dee\""))))
 
 (ert-deftest package-lint-test-accept-standard-keywords ()
