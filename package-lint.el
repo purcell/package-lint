@@ -258,10 +258,12 @@ This is bound dynamically while the checks run.")
   "Verify package does not refer to \"\.emacs\.d\" literally.
 Instead it should use `user-emacs-directory' or `locate-user-emacs-file'."
   (goto-char (point-min))
-  (while (re-search-forward (rx (syntax string-quote) (0+ (not (syntax string-quote))) (or "/" "\\") ".emacs.d") nil t)
-    (package-lint--error
-     (line-number-at-pos) (current-column) 'warning
-     "Use variable `user-emacs-directory' or function `locate-user-emacs-file' instead of a literal path to the Emacs user directory or files.")))
+  (while (re-search-forward "\\.emacs\\.d" nil t)
+    (unless (nth 4 (syntax-ppss))
+      ;; Not in a comment
+      (package-lint--error
+       (line-number-at-pos) (current-column) 'warning
+       "Use variable `user-emacs-directory' or function `locate-user-emacs-file' instead of a literal path to the Emacs user directory or files."))))
 
 (defun package-lint--check-keywords-list ()
   "Verify that package keywords are listed in `finder-known-keywords'."
