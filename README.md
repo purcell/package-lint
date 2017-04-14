@@ -51,18 +51,16 @@ Additional checks for future versions:
 - WARN: suggest cl-lib vs cl
 - non-use of standard keywords
 - checkdoc failures for interactive functions / defcustoms
-- presence of :group for each defcustom / defgroup
+- presence of :group for each defgroup
 - trailing whitespace?
 - themes which aren't in a matching *-theme.el file
 - use of unsafe local variables
 - use of emacs version dependencies
 - local variable set in header line
-- use of nadvice.el without depending on Emacs 24.4
 - non-empty commentary
 - using commentary to talk about load[- ]path and installation
 - lack of autoloads
 - references to README files which won't be bundled in a package
-- dependencies on unavailable packages / versions
 - use of CamelCase identifiers
 
 License
