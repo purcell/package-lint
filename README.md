@@ -54,7 +54,6 @@ Additional checks for future versions:
 - presence of :group for each defcustom / defgroup
 - trailing whitespace?
 - themes which aren't in a matching *-theme.el file
-- files lacking a (provide ...) which matches their name
 - use of unsafe local variables
 - use of emacs version dependencies
 - local variable set in header line

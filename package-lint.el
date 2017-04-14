@@ -49,6 +49,11 @@
       'package-desc-summary
     'package-desc-doc))
 
+(defalias 'package-lint--package-desc-name
+  (if (fboundp 'package-desc-name)
+      'package-desc-name
+    (lambda (desc) (intern (nth 0 desc)))))
+
 
 ;;; Machinery
 
@@ -237,7 +242,8 @@ This is bound dynamically while the checks run.")
           (package-lint--check-lexical-binding-is-on-first-line)
           (let ((desc (package-lint--check-package-el-can-parse)))
             (when desc
-              (package-lint--check-package-summary desc)))
+              (package-lint--check-package-summary desc)
+              (package-lint--check-provide-form desc)))
           (let ((deps (package-lint--check-dependency-list)))
             (package-lint--check-lexical-binding-requires-emacs-24 deps)
             (package-lint--check-libraries-available-in-emacs deps)
@@ -539,6 +545,17 @@ DESC is a struct as returned by `package-buffer-info'."
        'warning
        "Including \"Emacs\" in the package description is usually redundant."))))
 
+(defun package-lint--check-provide-form (desc)
+  "Check the provide form for package with descriptor DESC.
+DESC is a struct as returned by `package-buffer-info'."
+  (let ((name (package-lint--package-desc-name desc))
+        (feature (package-lint--provided-feature)))
+    (unless (string-equal (symbol-name name) feature)
+      (package-lint--error
+       1 1
+       'error
+       (format "There is no (provide '%s) form." name)))))
+
 (defun package-lint--check-symbol-separators (definitions)
   "Check that symbol DEFINITIONS don't contain non-standard separators."
   (pcase-dolist (`(,name . ,position) definitions)
@@ -650,12 +667,19 @@ The returned list is of the form (SYMBOL-NAME . POSITION)."
         (setcdr entry (overlay-start (cdr entry)))))
     (nreverse result)))
 
+(defun package-lint--provided-feature ()
+  "Return the first-provided feature name, as a string, or nil if none."
+  (save-excursion
+    (goto-char (point-max))
+    (when (re-search-backward (rx "(provide '" (group (1+ (or (syntax word) (syntax symbol))))) nil t)
+      (match-string-no-properties 1))))
+
 (defun package-lint--get-package-prefix ()
   "Return package prefix string (i.e. the symbol the package `provide's).
 Prefix is returned without any `-mode' suffix."
-  (goto-char (point-max))
-  (when (re-search-backward (rx "(provide '" (group (1+ (or (syntax word) (syntax symbol))))) nil t)
-    (replace-regexp-in-string "-mode\\'" "" (match-string-no-properties 1))))
+  (let ((feature (package-lint--provided-feature)))
+    (when feature
+      (replace-regexp-in-string "-mode\\'" "" feature))))
 
 
 ;;; Public interface

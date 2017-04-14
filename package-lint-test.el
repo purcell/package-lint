@@ -27,17 +27,19 @@
 (require 'package-lint)
 (require 'ert)
 
-(defun package-lint-test--run (contents &optional header version footer)
+(defun package-lint-test--run (contents &optional header version footer provide)
   "Run `package-lint-buffer' on a temporary buffer with given CONTENTS.
 
-HEADER, VERSION and FOOTER can be either strings or nil; when one is a string,
-the corresponding package boilerplate part is replaced with the passed string,
-when it's nil, the default is used."
+HEADER, VERSION, FOOTER and PROVIDE can be either strings or nil;
+when one is a string, the corresponding package boilerplate part
+is replaced with the passed string, when it's nil, the default is
+used."
   (with-temp-buffer
     (emacs-lisp-mode)
     (insert (or header ";;; test.el --- A test\n"))
     (insert (or version ";; Package-Version: 0\n"))
     (insert contents)
+    (insert "\n" (or provide "(provide 'test)\n"))
     (insert (or footer "\n\n;;; test.el ends here\n"))
     (let ((buffer-file-name "test.el"))
       (package-lint-buffer))))
@@ -195,26 +197,26 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-nonstandard-symbol-separator ()
   (should
    (equal
-    '((4 1 error "`foo:bar' contains a non-standard separator `:', use hyphens instead.")
-      (3 1 error "`foo/bar' contains a non-standard separator `/', use hyphens instead."))
+    '((4 1 error "`test-thing:bar' contains a non-standard separator `:', use hyphens instead.")
+      (3 1 error "`test-thing/bar' contains a non-standard separator `/', use hyphens instead."))
     (package-lint-test--run
-     "(defun foo/bar () t)\n(defun foo:bar () nil)")))
+     "(defun test-thing/bar () t)\n(defun test-thing:bar () nil)")))
   ;; But accept /= when at the end.
-  (should (equal '() (package-lint-test--run "(defun foo-/= (a b) t)"))))
+  (should (equal '() (package-lint-test--run "(defun test-/= (a b) t)"))))
 
 (ert-deftest package-lint-test-error-unprefixed-definitions ()
   (should
    (equal
     '((3 1 error "\"foo\" doesn't start with package's prefix \"test\"."))
-    (package-lint-test--run "(defun foo ())\n(provide 'test)"))))
+    (package-lint-test--run "(defun foo ())"))))
 
 (ert-deftest package-lint-test-accept-prefixed-definitions ()
   (should (equal '() (package-lint-test--run
-                      "(defun test-foo ())\n(defun test ())\n(provide 'test)"))))
+                      "(defun test-foo ())\n(defun test ())"))))
 
 (ert-deftest package-lint-test-accept-sane-prefixed-definitions ()
   (should (equal '() (package-lint-test--run
-                      "(defun org-dblock-write:test ())\n(provide 'test)"))))
+                      "(defun org-dblock-write:test ())"))))
 
 (ert-deftest package-lint-test-error-new-libraries ()
   (should
@@ -253,6 +255,19 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
    (member
     '(1 1 error "package.el cannot parse this buffer: Search failed: \";;; test.el ends here\"")
     (package-lint-test--run "" nil nil "\n\n;;; Test.el ends here\n"))))
+
+(ert-deftest package-lint-test-error-missing-provide-form ()
+  (should
+   (equal
+    '((1 1 error "There is no (provide 'test) form."))
+    (package-lint-test--run "" nil nil nil ""))))
+
+(ert-deftest package-lint-test-error-mismatched-provide-form ()
+  (should
+   (equal
+    '((1 1 error "There is no (provide 'test) form."))
+    (package-lint-test--run "" nil nil nil "(provide 'blargh)"))))
+
 
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
