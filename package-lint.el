@@ -52,7 +52,7 @@
 (defalias 'package-lint--package-desc-name
   (if (fboundp 'package-desc-name)
       'package-desc-name
-    (lambda (desc) (intern (nth 0 desc)))))
+    (lambda (desc) (intern (elt desc 0)))))
 
 
 ;;; Machinery
