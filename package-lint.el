@@ -226,7 +226,8 @@ This is bound dynamically while the checks run.")
 
 (defun package-lint--check-all ()
   "Return a list of errors/warnings for the current buffer."
-  (let ((package-lint--errors '()))
+  (let ((package-lint--errors '())
+        (case-fold-search nil))
     (save-match-data
       (save-excursion
         (save-restriction

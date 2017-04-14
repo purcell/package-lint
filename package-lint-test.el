@@ -248,5 +248,11 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
      (insert ";; Dummy-Header: dummy-value\n")
      (package-lint-looks-like-a-package-p))))
 
+(ert-deftest package-lint-test-error-unmatched-first-and-last-lines ()
+  (should
+   (member
+    '(1 1 error "package.el cannot parse this buffer: Search failed: \";;; test.el ends here\"")
+    (package-lint-test--run "" nil nil "\n\n;;; Test.el ends here\n"))))
+
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
