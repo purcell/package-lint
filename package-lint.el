@@ -237,6 +237,7 @@ This is bound dynamically while the checks run.")
       (save-excursion
         (save-restriction
           (widen)
+          (package-lint--check-for-needed-autoloads)
           (package-lint--check-autoloads-on-private-functions)
           (package-lint--check-keywords-list)
           (package-lint--check-package-version-present)
@@ -261,6 +262,33 @@ This is bound dynamically while the checks run.")
 
 
 ;;; Checks
+
+(defun package-lint--check-for-needed-autoloads ()
+  "Verify that autoload cookies are on definitions that generally need them."
+  ;; Check common defs
+  (let ((defs '("define-minor-mode")))
+    (dolist (def defs)
+      (goto-char (point-min))
+      (while (re-search-forward (rx-to-string `(seq bol "(" ,def (1+ space))) nil t)
+        (save-excursion
+          (forward-line -1)
+          (unless (looking-at (rx ";;;###autoload"))
+            (package-lint--error
+             (line-number-at-pos) (current-column) 'warning
+             (format "\"%s\" generally should be autoloaded." def)))))))
+  ;; Check interactive functions
+  (goto-char (point-min))
+  (while (re-search-forward (rx "(interactive)") nil t)
+    (unless (or (nth 3 (syntax-ppss))
+                (nth 4 (syntax-ppss)))
+      ;; Not in string or comment
+      (save-excursion
+        (when (re-search-backward (rx bol "(defun ") nil t)
+          (forward-line -1)
+          (unless (looking-at (rx ";;;###autoload"))
+            (package-lint--error
+             (line-number-at-pos) (current-column) 'warning
+             "Interactive commands generally should be autoloaded.")))))))
 
 (defun package-lint--check-autoloads-on-private-functions ()
   "Verify that private functions don't have autoload cookies."
