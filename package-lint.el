@@ -270,12 +270,15 @@ This is bound dynamically while the checks run.")
     (dolist (def defs)
       (goto-char (point-min))
       (while (re-search-forward (rx-to-string `(seq bol "(" ,def (1+ space))) nil t)
-        (save-excursion
-          (forward-line -1)
-          (unless (looking-at (rx ";;;###autoload"))
-            (package-lint--error
-             (line-number-at-pos) (current-column) 'warning
-             (format "\"%s\" generally should be autoloaded." def)))))))
+        (unless (or (nth 3 (syntax-ppss))
+                    (nth 4 (syntax-ppss)))
+          ;; Not in string or comment
+          (save-excursion
+            (forward-line -1)
+            (unless (looking-at (rx ";;;###autoload"))
+              (package-lint--error
+               (line-number-at-pos) (current-column) 'warning
+               (format "\"%s\" generally should be autoloaded." def))))))))
   ;; Check interactive functions
   (goto-char (point-min))
   (while (re-search-forward (rx "(interactive)") nil t)
