@@ -568,7 +568,7 @@ DESC is a struct as returned by `package-buffer-info'."
           (goto-char position)
           (package-lint--error
            (line-number-at-pos) 1 'error
-           (format "`%s' contains a non-standard separator `%s', use hyphens instead."
+           (format "`%s' contains a non-standard separator `%s', use hyphens instead (see Elisp Coding Conventions)."
                    name (substring-no-properties name match-pos (1+ match-pos)))))))))
 
 (defun package-lint--check-defs-prefix (definitions)

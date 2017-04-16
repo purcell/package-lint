@@ -197,8 +197,8 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-nonstandard-symbol-separator ()
   (should
    (equal
-    '((4 1 error "`test-thing:bar' contains a non-standard separator `:', use hyphens instead.")
-      (3 1 error "`test-thing/bar' contains a non-standard separator `/', use hyphens instead."))
+    '((4 1 error "`test-thing:bar' contains a non-standard separator `:', use hyphens instead (see Elisp Coding Conventions).")
+      (3 1 error "`test-thing/bar' contains a non-standard separator `/', use hyphens instead (see Elisp Coding Conventions)."))
     (package-lint-test--run
      "(defun test-thing/bar () t)\n(defun test-thing:bar () nil)")))
   ;; But accept /= when at the end.
