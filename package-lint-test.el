@@ -56,13 +56,9 @@ used."
     (package-lint-test--run "(defun test-something \n\"Docstring\"\n(interactive)\n")))
   ;; Negatives
   (should
-   (equal
-    nil
-    (package-lint-test--run ";;;###autoload\n(define-minor-mode test-something ")))
+   (equal nil (package-lint-test--run ";;;###autoload\n(define-minor-mode test-something ")))
   (should
-   (equal
-    nil
-    (package-lint-test--run ";;;###autoload\n(defun test-something \n\"Docstring\"\n(interactive)\n"))))
+   (equal nil (package-lint-test--run ";;;###autoload\n(defun test-something \n\"Docstring\"\n(interactive)\n"))))
 
 (ert-deftest package-lint-test-check-autoloads-on-private-functions ()
   (should
