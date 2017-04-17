@@ -53,10 +53,6 @@ used."
   (should
    (equal
     '((3 0 warning "Private functions generally should not be autoloaded."))
-    (package-lint-test--run ";;;###autoload\n(cl-defun test--private-function ())")))
-  (should
-   (equal
-    '((3 0 warning "Private functions generally should not be autoloaded."))
     (package-lint-test--run ";;;###autoload\n(defmacro test--private-macro ())"))))
 
 (ert-deftest package-lint-test-warn-literal-emacs-path ()
