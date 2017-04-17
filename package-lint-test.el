@@ -44,12 +44,20 @@ used."
     (let ((buffer-file-name "test.el"))
       (package-lint-buffer))))
 
-(ert-deftest package-lint-test-check-autoloads-on-private-functions ()
+(ert-deftest package-lint-test-error-autoloads-on-private-functions ()
+  (should (equal '() (package-lint-test--run "(defun test--private-function ())")))
   (should
    (equal
     '((3 0 warning "Private functions generally should not be autoloaded."))
-    (package-lint-test--run ";;;###autoload\n(defun test-prefix--private-function ")))
-  (should (equal '() (package-lint-test--run "(defun test-prefix--private-function "))))
+    (package-lint-test--run ";;;###autoload\n(defun test--private-function ())")))
+  (should
+   (equal
+    '((3 0 warning "Private functions generally should not be autoloaded."))
+    (package-lint-test--run ";;;###autoload\n(cl-defun test--private-function ())")))
+  (should
+   (equal
+    '((3 0 warning "Private functions generally should not be autoloaded."))
+    (package-lint-test--run ";;;###autoload\n(defmacro test--private-macro ())"))))
 
 (ert-deftest package-lint-test-warn-literal-emacs-path ()
   (should

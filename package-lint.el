@@ -237,7 +237,6 @@ This is bound dynamically while the checks run.")
       (save-excursion
         (save-restriction
           (widen)
-          (package-lint--check-autoloads-on-private-functions)
           (package-lint--check-keywords-list)
           (package-lint--check-package-version-present)
           (package-lint--check-lexical-binding-is-on-first-line)
@@ -251,6 +250,7 @@ This is bound dynamically while the checks run.")
             (package-lint--check-macros-functions-available-in-emacs deps))
           (package-lint--check-for-literal-emacs-path)
           (let ((definitions (package-lint--get-defs)))
+            (package-lint--check-autoloads-on-private-functions definitions)
             (package-lint--check-defs-prefix definitions)
             (package-lint--check-symbol-separators definitions)))))
     package-lint--errors))
@@ -262,17 +262,13 @@ This is bound dynamically while the checks run.")
 
 ;;; Checks
 
-(defun package-lint--check-autoloads-on-private-functions ()
-  "Verify that private functions don't have autoload cookies."
-  (goto-char (point-min))
-  (while (re-search-forward (rx bol "(defun" (1+ space)
-                                (1+ (or (syntax symbol) (syntax word)))
-                                "--"
-                                (1+ (or (syntax symbol) (syntax word))))
-                            nil t)
-    (save-excursion
+(defun package-lint--check-autoloads-on-private-functions (definitions)
+  "Verify that private functions DEFINITIONS don't have autoload cookies."
+  (pcase-dolist (`(,symbol . ,position) definitions)
+    (when (string-match-p (rx "--") symbol)
+      (goto-char position)
       (forward-line -1)
-      (when (looking-at (rx ";;;###autoload"))
+      (when (looking-at-p (rx ";;;###autoload"))
         (package-lint--error
          (line-number-at-pos) (current-column) 'warning
          "Private functions generally should not be autoloaded.")))))
