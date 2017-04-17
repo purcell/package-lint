@@ -44,6 +44,29 @@ used."
     (let ((buffer-file-name "test.el"))
       (package-lint-buffer))))
 
+(ert-deftest package-lint-test-check-for-needed-autoloads ()
+  ;; Positives
+  (should
+   (equal
+    '((2 0 warning "\"define-minor-mode\" generally should be autoloaded."))
+    (package-lint-test--run "(define-minor-mode test-something ")))
+  (should
+   (equal
+    '((2 0 warning "Interactive commands generally should be autoloaded."))
+    (package-lint-test--run "(defun test-something \n\"Docstring\"\n(interactive)\n")))
+  ;; Negatives
+  (should
+   (equal nil (package-lint-test--run ";;;###autoload\n(define-minor-mode test-something ")))
+  (should
+   (equal nil (package-lint-test--run ";;;###autoload\n(defun test-something \n\"Docstring\"\n(interactive)\n"))))
+
+(ert-deftest package-lint-test-check-autoloads-on-private-functions ()
+  (should
+   (equal
+    '((3 0 warning "Private functions generally should not be autoloaded."))
+    (package-lint-test--run ";;;###autoload\n(defun test-prefix--private-function ")))
+  (should (equal '() (package-lint-test--run "(defun test-prefix--private-function "))))
+
 (ert-deftest package-lint-test-warn-literal-emacs-path ()
   (should
    (equal
