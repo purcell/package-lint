@@ -237,6 +237,7 @@ This is bound dynamically while the checks run.")
       (save-excursion
         (save-restriction
           (widen)
+          (package-lint--check-autoloads-on-private-functions)
           (package-lint--check-keywords-list)
           (package-lint--check-package-version-present)
           (package-lint--check-lexical-binding-is-on-first-line)
@@ -260,6 +261,21 @@ This is bound dynamically while the checks run.")
 
 
 ;;; Checks
+
+(defun package-lint--check-autoloads-on-private-functions ()
+  "Verify that private functions don't have autoload cookies."
+  (goto-char (point-min))
+  (while (re-search-forward (rx bol "(defun" (1+ space)
+                                (1+ (or (syntax symbol) (syntax word)))
+                                "--"
+                                (1+ (or (syntax symbol) (syntax word))))
+                            nil t)
+    (save-excursion
+      (forward-line -1)
+      (when (looking-at (rx ";;;###autoload"))
+        (package-lint--error
+         (line-number-at-pos) (current-column) 'warning
+         "Private functions generally should not be autoloaded.")))))
 
 (defun package-lint--check-for-literal-emacs-path ()
   "Verify package does not refer to \"\.emacs\.d\" literally.
