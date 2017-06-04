@@ -94,6 +94,7 @@ This is bound dynamically while the checks run.")
           pcase-dolist
           pcase-let
           pcase-let*
+          prog-mode
           read-char-choice
           run-hook-wrapped
           server-eval-at
