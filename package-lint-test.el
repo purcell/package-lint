@@ -27,17 +27,17 @@
 (require 'package-lint)
 (require 'ert)
 
-(defun package-lint-test--run (contents &optional header version footer provide)
+(defun package-lint-test--run (contents &optional header version footer provide commentary)
   "Run `package-lint-buffer' on a temporary buffer with given CONTENTS.
 
-HEADER, VERSION, FOOTER and PROVIDE can be either strings or nil;
-when one is a string, the corresponding package boilerplate part
-is replaced with the passed string, when it's nil, the default is
-used."
+HEADER, VERSION, FOOTER, PROVIDE and COMMENTARY can be either strings or nil;
+when one is a string, the corresponding package boilerplate part is replaced
+with the passed string, when it's nil, the default is used."
   (with-temp-buffer
     (emacs-lisp-mode)
     (insert (or header ";;; test.el --- A test\n"))
     (insert (or version ";; Package-Version: 0\n"))
+    (insert (or commentary ";;; Commentary:\n;; A test package, for testing.\n"))
     (insert contents)
     (insert "\n" (or provide "(provide 'test)\n"))
     (insert (or footer "\n\n;;; test.el ends here\n"))
@@ -48,17 +48,17 @@ used."
   (should (equal '() (package-lint-test--run "(defun test--private-function ())")))
   (should
    (equal
-    '((3 0 warning "Private functions generally should not be autoloaded."))
+    '((5 0 warning "Private functions generally should not be autoloaded."))
     (package-lint-test--run ";;;###autoload\n(defun test--private-function ())")))
   (should
    (equal
-    '((3 0 warning "Private functions generally should not be autoloaded."))
+    '((5 0 warning "Private functions generally should not be autoloaded."))
     (package-lint-test--run ";;;###autoload\n(defmacro test--private-macro ())"))))
 
 (ert-deftest package-lint-test-warn-literal-emacs-path ()
   (should
    (equal
-    '((3 8 warning "Use variable `user-emacs-directory' or function `locate-user-emacs-file' instead of a literal path to the Emacs user directory or files."))
+    '((5 8 warning "Use variable `user-emacs-directory' or function `locate-user-emacs-file' instead of a literal path to the Emacs user directory or files."))
     (package-lint-test--run "\.emacs\.d")))
   (should (equal '() (package-lint-test--run ";; ~/\.emacs\.d/elpa")))
   (should (equal '() (package-lint-test--run "\"emacs dot dee\""))))
@@ -71,7 +71,7 @@ used."
 (ert-deftest package-lint-test-warn-no-standard-keyword ()
   (should
    (equal
-    '((3 1 warning "You should include standard keywords: see the variable `finder-known-keywords'."))
+    '((5 1 warning "You should include standard keywords: see the variable `finder-known-keywords'."))
     (package-lint-test--run ";; Keywords: foo"))))
 
 (ert-deftest package-lint-test-no-warning-if-at-least-one-standard-keyword ()
@@ -82,7 +82,7 @@ used."
   (should
    (member
     '(2 21 warning "\"invalid\" is not a valid version. MELPA will handle this, but other archives will not.")
-    (package-lint-test--run "" nil ";; Package-Version: invalid"))))
+    (package-lint-test--run "" nil ";; Package-Version: invalid\n"))))
 
 (ert-deftest package-lint-test-warn-no-version ()
   (should
@@ -91,7 +91,7 @@ used."
     (package-lint-test--run ";; Package-Requires: ((example \"0\"))" nil ""))))
 
 (ert-deftest package-lint-test-accept-valid-version ()
-  (should (equal '() (package-lint-test--run "" nil ";; Package-Version: 1.2.3-cvs"))))
+  (should (equal '() (package-lint-test--run "" nil ";; Package-Version: 1.2.3-cvs\n"))))
 
 (ert-deftest package-lint-test-error-lexical-binding-not-at-end ()
   (should
@@ -144,17 +144,17 @@ used."
 (ert-deftest package-lint-test-error-invalid-dependency ()
   (should
    (member
-    '(3 1 error "Expected (package-name \"version-num\"), but found invalid.")
+    '(5 1 error "Expected (package-name \"version-num\"), but found invalid.")
     (package-lint-test--run ";; Package-Requires: (invalid)")))
   (should
    (member
-    '(3 24 error "\"invalid\" is not a valid version string: see `version-to-list'.")
+    '(5 24 error "\"invalid\" is not a valid version string: see `version-to-list'.")
     (package-lint-test--run ";; Package-Requires: ((package-lint \"invalid\"))"))))
 
 (ert-deftest package-lint-test-error-emacs-23-dep ()
   (should
    (equal
-    '((3 24 error "You can only depend on Emacs version 24 or greater: package.el for Emacs 23 does not support the \"emacs\" pseudopackage."))
+    '((5 24 error "You can only depend on Emacs version 24 or greater: package.el for Emacs 23 does not support the \"emacs\" pseudopackage."))
     (package-lint-test--run ";; Package-Requires: ((emacs \"23\"))"))))
 
 (ert-deftest package-lint-test-accept-emacs-24+-dep ()
@@ -164,25 +164,25 @@ used."
 (ert-deftest package-lint-test-error-uninstallable-dep ()
   (should
    (equal
-    '((3 24 error "Package example-nonexistent-package is not installable."))
+    '((5 24 error "Package example-nonexistent-package is not installable."))
     (package-lint-test--run ";; Package-Requires: ((example-nonexistent-package \"1\"))"))))
 
 (ert-deftest package-lint-test-warn-snapshot-dep ()
   (should
    (equal
-    '((3 24 warning "Use a non-snapshot version number for dependency on \"package-lint\" if possible."))
+    '((5 24 warning "Use a non-snapshot version number for dependency on \"package-lint\" if possible."))
     (package-lint-test--run ";; Package-Requires: ((package-lint \"20160101.1234\"))"))))
 
 (ert-deftest package-lint-test-warn-unversioned-dep ()
   (should
    (equal
-    '((3 24 warning "Use a properly versioned dependency on \"package-lint\" if possible."))
+    '((5 24 warning "Use a properly versioned dependency on \"package-lint\" if possible."))
     (package-lint-test--run ";; Package-Requires: ((package-lint \"0\"))"))))
 
 (ert-deftest package-lint-test-error-cl-lib-1.0-dep ()
   (should
    (member
-    '(3 24 error "Depend on the latest 0.x version of cl-lib rather than on version \"(1)\".
+    '(5 24 error "Depend on the latest 0.x version of cl-lib rather than on version \"(1)\".
 Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled.")
     (package-lint-test--run ";; Package-Requires: ((cl-lib \"1\"))"))))
 
@@ -193,7 +193,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-new-functions ()
   (should
    (equal
-    '((3 1 error "You should depend on (emacs \"25\") if you need `when-let'."))
+    '((5 1 error "You should depend on (emacs \"25\") if you need `when-let'."))
     (package-lint-test--run
      "(when-let ((foo (bar))) (message \"ok\"))"))))
 
@@ -208,8 +208,8 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-nonstandard-symbol-separator ()
   (should
    (equal
-    '((4 1 error "`test-thing:bar' contains a non-standard separator `:', use hyphens instead (see Elisp Coding Conventions).")
-      (3 1 error "`test-thing/bar' contains a non-standard separator `/', use hyphens instead (see Elisp Coding Conventions)."))
+    '((6 1 error "`test-thing:bar' contains a non-standard separator `:', use hyphens instead (see Elisp Coding Conventions).")
+      (5 1 error "`test-thing/bar' contains a non-standard separator `/', use hyphens instead (see Elisp Coding Conventions)."))
     (package-lint-test--run
      "(defun test-thing/bar () t)\n(defun test-thing:bar () nil)")))
   ;; But accept /= when at the end.
@@ -218,7 +218,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-unprefixed-definitions ()
   (should
    (equal
-    '((3 1 error "\"foo\" doesn't start with package's prefix \"test\"."))
+    '((5 1 error "\"foo\" doesn't start with package's prefix \"test\"."))
     (package-lint-test--run "(defun foo ())"))))
 
 (ert-deftest package-lint-test-accept-prefixed-definitions ()
@@ -232,7 +232,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-new-libraries ()
   (should
    (equal
-    '((3 10 error "You should depend on (emacs \"24.4\") if you need `nadvice'."))
+    '((5 10 error "You should depend on (emacs \"24.4\") if you need `nadvice'."))
     (package-lint-test--run "(require 'nadvice)"))))
 
 (ert-deftest package-lint-test-accept-new-libraries-with-dep ()
@@ -279,6 +279,17 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((1 1 error "There is no (provide 'test) form."))
     (package-lint-test--run "" nil nil nil "(provide 'blargh)"))))
 
+(ert-deftest package-lint-test-error-no-commentary ()
+  (should
+   (equal
+    '((1 1 error "Package should have a ;;; Commentary section."))
+    (package-lint-test--run "" nil nil nil nil "\n"))))
+
+(ert-deftest package-lint-test-error-empty-commentary ()
+  (should
+   (equal
+    '((3 0 error "Package should have a non-empty ;;; Commentary section."))
+    (package-lint-test--run "" nil nil nil nil ";;; Commentary:\n ;;   \n;;; Code:\n"))))
 
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here

@@ -57,7 +57,6 @@ Additional checks for future versions:
 - use of unsafe local variables
 - use of emacs version dependencies
 - local variable set in header line
-- non-empty commentary
 - using commentary to talk about load[- ]path and installation
 - lack of autoloads
 - references to README files which won't be bundled in a package
