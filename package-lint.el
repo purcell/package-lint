@@ -255,7 +255,15 @@ This is bound dynamically while the checks run.")
             (package-lint--check-autoloads-on-private-functions definitions)
             (package-lint--check-defs-prefix definitions)
             (package-lint--check-symbol-separators definitions)))))
-    package-lint--errors))
+    (sort package-lint--errors
+          (lambda (a b)
+            (pcase-let ((`(,a-line ,a-column ,_ ,a-message) a)
+                        (`(,b-line ,b-column ,_ ,b-message) b))
+              (cond
+               ((/= a-line b-line) (< a-line b-line))
+               ((/= a-column b-column) (< a-column b-column))
+               (t
+                (string-lessp a-message b-message))))))))
 
 (defun package-lint--error (line col type message)
   "Construct a datum for error at LINE and COL with TYPE and MESSAGE."
