@@ -613,10 +613,19 @@ DESC is a struct as returned by `package-buffer-info'."
   "Verify that symbol DEFINITIONS start with package prefix."
   (let ((prefix (package-lint--get-package-prefix)))
     (when prefix
-      (let ((prefix-re (rx-to-string `(seq string-start ,prefix (or "-" string-end)))))
+      (let ((prefix-re (rx-to-string `(seq string-start ,prefix (or "-" string-end))))
+            (global-minor-mode-re
+             (rx-to-string
+              `(seq string-start
+                    "global-"
+                    ,prefix
+                    (or "-mode"
+                        (seq "-" (* any) "-mode"))
+                    string-end))))
         (pcase-dolist (`(,name . ,position) definitions)
           (unless (or (string-match-p prefix-re name)
-                      (string-match-p package-lint--sane-prefixes name))
+                      (string-match-p package-lint--sane-prefixes name)
+                      (string-match-p global-minor-mode-re name))
             (let ((line-no (line-number-at-pos position)))
               (package-lint--error
                line-no 1 'error
