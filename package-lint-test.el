@@ -21,7 +21,7 @@
 
 ;;; Commentary:
 
-;;
+;; This file contains the official package-lint testsuite.
 
 ;;; Code:
 (require 'package-lint)
@@ -297,7 +297,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should
    (equal
     '((3 0 error "Package should have a non-empty ;;; Commentary section."))
-    (package-lint-test--run "" nil nil nil nil ";;; Commentary:\n ;;   \n;;; Code:\n"))))
+    (package-lint-test--run "" nil nil nil nil ";;; Commentary:\n ;;   \n \n\n;;; Code:\n"))))
 
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here

@@ -643,7 +643,7 @@ Lines consisting only of whitespace or empty comments are considered empty."
       (let ((inhibit-changing-match-data t))
         (narrow-to-region start end)
         (goto-char start)
-        (while (and (looking-at "^[[:space:]]*;+[[:space:]]*$")
+        (while (and (looking-at "^[[:space:]]*;*[[:space:]]*$")
                     (= 0 (forward-line))))
         (eobp)))))
 
