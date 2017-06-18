@@ -624,7 +624,10 @@ DESC is a struct as returned by `package-buffer-info'."
                              string-end))))))
         (pcase-dolist (`(,name . ,position) definitions)
           (unless (or (string-match-p prefix-re name)
-                      (string-match-p package-lint--sane-prefixes name))
+                      (string-match-p package-lint--sane-prefixes name)
+                      (progn
+                        (goto-char position)
+                        (looking-at-p (rx "(" (*? space) "defadvice" symbol-end))))
             (let ((line-no (line-number-at-pos position)))
               (package-lint--error
                line-no 1 'error

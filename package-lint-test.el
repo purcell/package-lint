@@ -299,5 +299,8 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((3 0 error "Package should have a non-empty ;;; Commentary section."))
     (package-lint-test--run "" nil nil nil nil ";;; Commentary:\n ;;   \n \n\n;;; Code:\n"))))
 
+(ert-deftest package-lint-test-accept-unprefixed-defadvice ()
+  (should (equal '() (package-lint-test--run "(defadvice foo (before ignore))"))))
+
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
