@@ -300,7 +300,10 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     (package-lint-test--run "" nil nil nil nil ";;; Commentary:\n ;;   \n \n\n;;; Code:\n"))))
 
 (ert-deftest package-lint-test-accept-unprefixed-defadvice ()
-  (should (equal '() (package-lint-test--run "(defadvice foo (before ignore))"))))
+  (should (equal '() (package-lint-test--run "(defadvice foo (before ignore))")))
+  ;; Test if the special case we use for `defadvice' doesn't get
+  ;; confused by weird spacing.
+  (should (equal '() (package-lint-test--run "   (  defadvice \t\n\n foo (before ignore))"))))
 
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
