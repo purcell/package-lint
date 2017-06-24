@@ -62,6 +62,7 @@ Additional checks for future versions:
 - references to README files which won't be bundled in a package
 - use of CamelCase identifiers
 - Defining a `-mode` function directly instead of using `define-derived-mode` or `define-minor-mode`
+- Referring to `display-graphic-p` or `window-system` in `-theme.el` files
 
 License
 -------
