@@ -187,6 +187,8 @@ This is bound dynamically while the checks run.")
           directory-name-p
           file-notify-valid-p
           filepos-to-bufferpos
+          font-lock-ensure
+          font-lock-flush
           format-message
           forward-word-strictly
           frame-edges
