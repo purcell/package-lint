@@ -205,6 +205,15 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
      ";; Package-Requires: ((emacs \"25\"))
 \(when-let ((foo (bar))) (message \"ok\"))"))))
 
+(ert-deftest package-lint-test-accept-new-functions-with-fboundp ()
+  (should
+   (equal
+    '()
+    (package-lint-test--run
+     "(if (fboundp 'when-let)
+    (when-let blah)
+  (bloop))"))))
+
 (ert-deftest package-lint-test-error-nonstandard-symbol-separator ()
   (should
    (equal

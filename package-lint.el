@@ -439,6 +439,19 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
          lexbind-line lexbind-col 'warning
          "You should depend on (emacs \"24\") if you need lexical-binding.")))))
 
+(defun package-lint--inside-comment-or-string-p ()
+  "Return non-nil if point is inside a comment or string."
+  (let ((ppss (save-match-data (syntax-ppss))))
+    (or (nth 3 ppss) (nth 4 ppss))))
+
+(defun package-lint--seen-featurep-check-for (sym)
+  "Return non-nil if a `featurep' check for SYM is present before point."
+  (save-excursion
+    (save-match-data
+      (and (re-search-backward
+            (concat "(fboundp\\s-+'" (regexp-quote sym) "\\_>") (point-min) t)
+           (not (package-lint--inside-comment-or-string-p))))))
+
 (defun package-lint--check-version-regexp-list (valid-deps list rx-start rx-end)
   "Warn about matches of REGEXP when VERSION is not in VALID-DEPS.
 LIST is an alist of (VERSION . REGEXP*).
@@ -448,15 +461,16 @@ REGEXP is (concat RX-START REGEXP* RX-END) for each REGEXP*."
       (when (version-list-< emacs-version-dep added-in-version)
         (goto-char (point-min))
         (while (re-search-forward (concat rx-start regexp rx-end) nil t)
-          (unless (let ((ppss (save-match-data (syntax-ppss))))
-                    (or (nth 3 ppss) (nth 4 ppss)))
-            (package-lint--error
-             (line-number-at-pos)
-             (save-excursion (goto-char (match-beginning 1)) (current-column))
-             'error
-             (format "You should depend on (emacs \"%s\") if you need `%s'."
-                     (mapconcat #'number-to-string added-in-version ".")
-                     (match-string-no-properties 1)))))))))
+          (unless (package-lint--inside-comment-or-string-p)
+            (let ((sym (match-string-no-properties 1)))
+              (unless (package-lint--seen-featurep-check-for sym)
+                (package-lint--error
+                 (line-number-at-pos)
+                 (save-excursion (goto-char (match-beginning 1)) (current-column))
+                 'error
+                 (format "You should depend on (emacs \"%s\") if you need `%s'."
+                         (mapconcat #'number-to-string added-in-version ".")
+                         sym))))))))))
 
 (defun package-lint--check-libraries-available-in-emacs (valid-deps)
   "Warn about use of libraries that are not available in the Emacs version in VALID-DEPS."
