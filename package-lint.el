@@ -40,6 +40,7 @@
 (require 'lisp-mnt)
 (require 'finder)
 (require 'imenu)
+(require 'checkdoc)
 
 
 ;;; Compatibility
@@ -247,6 +248,7 @@ This is bound dynamically while the checks run.")
           (package-lint--check-url-header)
           (package-lint--check-package-version-present)
           (package-lint--check-lexical-binding-is-on-first-line)
+          (package-lint--check-documentation)
           (package-lint--check-objects-by-regexp
            "(define-minor-mode\\s-"
            #'package-lint--check-minor-mode)
@@ -371,6 +373,17 @@ Instead it should use `user-emacs-directory' or `locate-user-emacs-file'."
     (package-lint--error
      1 1 'error
      "Package should have a Homepage or URL header.")))
+
+(defun package-lint--check-documentation ()
+  "Verify that package keywords are listed in `finder-known-keywords'."
+  (cl-letf (((symbol-function #'checkdoc-error)
+             (lambda (point _)
+               (when point
+                 (throw 'package-lint--break t)))))
+    (when (catch 'package-lint--break
+            (checkdoc-current-buffer t)
+            nil)
+      (package-lint--error 1 1 'warning "Checkdoc reports warning(s) in this file: run `M-x checkdoc' to fix"))))
 
 (defun package-lint--check-dependency-list ()
   "Check the contents of the \"Package-Requires\" header.

@@ -41,6 +41,7 @@ it's nil, the default is used."
     (insert (or version ";; Package-Version: 0\n"))
     (insert (or url ";; URL: https://package-lint.test/p?q#f\n"))
     (insert (or commentary ";;; Commentary:\n;; A test package, for testing.\n"))
+    (insert "\n;;; Code:\n")
     (insert contents)
     (insert "\n" (or provide "(provide 'test)\n"))
     (insert (or footer "\n\n;;; test.el ends here\n"))
@@ -103,7 +104,7 @@ it's nil, the default is used."
     (should-not (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC> <ESC>\"))"))))
 
 (ert-deftest package-lint-test-error-autoloads-on-private-functions ()
-  (should (equal '() (package-lint-test--run "(defun test--private-function ())")))
+  (should (equal '() (package-lint-test--run "(defun test--private-function () \"Do something.\")")))
   (should
    (equal
     '((6 0 warning "Private functions generally should not be autoloaded."))
@@ -202,8 +203,8 @@ it's nil, the default is used."
 
 (ert-deftest package-lint-test-warn-empty-summary ()
   (should
-   (equal
-    '((1 1 warning "Package should have a non-empty summary."))
+   (member
+    '(1 1 warning "Package should have a non-empty summary.")
     (package-lint-test--run "" ";;; test.el ---\n"))))
 
 (ert-deftest package-lint-test-warn-too-long-summary ()
@@ -305,9 +306,9 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((6 1 error "`test-thing/bar' contains a non-standard separator `/', use hyphens instead (see Elisp Coding Conventions).")
       (7 1 error "`test-thing:bar' contains a non-standard separator `:', use hyphens instead (see Elisp Coding Conventions)."))
     (package-lint-test--run
-     "(defun test-thing/bar () t)\n(defun test-thing:bar () nil)")))
+     "(defun test-thing/bar () \"Do something.\" t)\n(defun test-thing:bar () \"Do something.\" nil)")))
   ;; But accept /= when at the end.
-  (should (equal '() (package-lint-test--run "(defun test-/= (a b) t)"))))
+  (should (equal '() (package-lint-test--run "(defun test-/= (a b) \"Do something with A and B.\" t)"))))
 
 (ert-deftest package-lint-test-error-unprefixed-definitions ()
   (should
@@ -321,7 +322,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 
 (ert-deftest package-lint-test-accept-prefixed-definitions ()
   (should (equal '() (package-lint-test--run
-                      "(defun test-foo ())\n(defun test ())")))
+                      "(defun test-foo () \"Do something.\")\n(defun test () \"Do something.\")")))
   (should (equal '() (package-lint-test--run
                       "(define-globalized-minor-mode global-test-mode ignore ignore :require 'test)")))
   (should (equal '() (package-lint-test--run
@@ -329,7 +330,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 
 (ert-deftest package-lint-test-accept-sane-prefixed-definitions ()
   (should (equal '() (package-lint-test--run
-                      "(defun org-dblock-write:test ())"))))
+                      "(defun org-dblock-write:test () \"Do something.\")"))))
 
 (ert-deftest package-lint-test-error-new-libraries ()
   (should
@@ -394,10 +395,10 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     (package-lint-test--run "" nil nil nil nil ";;; Commentary:\n ;;   \n \n\n;;; Code:\n"))))
 
 (ert-deftest package-lint-test-accept-unprefixed-defadvice ()
-  (should (equal '() (package-lint-test--run "(defadvice foo (before ignore))")))
+  (should (equal '() (package-lint-test--run "(defadvice foo (before ignore) \"Do something.\")")))
   ;; Test if the special case we use for `defadvice' doesn't get
   ;; confused by weird spacing.
-  (should (equal '() (package-lint-test--run "   (  defadvice \t\n\n foo (before ignore))"))))
+  (should (equal '() (package-lint-test--run "   (  defadvice \t\n\n foo (before ignore) \"Do something.\")"))))
 
 (ert-deftest package-lint-test-minor-mode-global-t ()
   (should
