@@ -453,7 +453,7 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
            (not (package-lint--inside-comment-or-string-p))))))
 
 (defun package-lint--check-version-regexp-list (valid-deps list rx-start rx-end)
-  "Warn about matches of REGEXP when VERSION is not in VALID-DEPS.
+  "Warn about any match of REGEXP when VERSION is not in VALID-DEPS.
 LIST is an alist of (VERSION . REGEXP*).
 REGEXP is (concat RX-START REGEXP* RX-END) for each REGEXP*."
   (let ((emacs-version-dep (or (cadr (assq 'emacs valid-deps)) '(0))))
