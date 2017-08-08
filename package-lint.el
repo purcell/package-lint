@@ -242,6 +242,7 @@ This is bound dynamically while the checks run.")
       (save-excursion
         (save-restriction
           (widen)
+          (package-lint--check-reserved-keybindings)
           (package-lint--check-keywords-list)
           (package-lint--check-package-version-present)
           (package-lint--check-lexical-binding-is-on-first-line)
@@ -275,6 +276,41 @@ This is bound dynamically while the checks run.")
 
 
 ;;; Checks
+
+(defun package-lint--check-reserved-keybindings ()
+  "Warn about reserved keybindings."
+  (let ((re  ;; See test `package-lint-test-reserved-keybindings' for examples
+         (rx (or (and "(kbd" (1+ space)
+                      (syntax string-quote)
+                      (or (and "C-c" (1+ space) (or "{" "}" "<" ">" ":" ";"
+                                                    (repeat 1 alnum)
+                                                    (char punct)))
+                          (and "<f" (char "5-9") ">")
+                          (and (1+ (not (syntax string-quote)))
+                               "C-" (or "g" "h"))
+                          (and (1+ (not (syntax string-quote)))
+                               ;; FIXME: This is ugly but I can't find a way to negate a string at once.
+                               ;; And, anyway, it doesn't work.  :(
+                               ;; (and (not (any "<")) (not (any "E")) (not (any "S")) (not (any "C")) (not (any ">")))
+                               (1+ space) "<ESC>"))
+                      (syntax string-quote) ")")
+                 (and (or (and (syntax string-quote)
+                               "\\C-c" (repeat 1 alnum)
+                               (syntax string-quote))
+                          (and "[f" (char "5-9") "]")))
+                 (and (syntax string-quote)
+                      "\\"
+                      (or (and "C-c" (char punct))
+                          (and (1+ (not (syntax string-quote)))
+                               "C-" (or "g" "h")))
+                      (syntax string-quote))))))
+    (goto-char (point-min))
+    (while (re-search-forward re nil t)
+      (unless (nth 4 (syntax-ppss))
+        ;; Not in a comment
+        (package-lint--error
+         (line-number-at-pos) (current-column) 'warning
+         "This key binding is reserved.")))))
 
 (defun package-lint--check-commentary-existence ()
   "Warn about nonexistent or empty commentary section."

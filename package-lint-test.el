@@ -44,6 +44,94 @@ with the passed string, when it's nil, the default is used."
     (let ((buffer-file-name "test.el"))
       (package-lint-buffer))))
 
+(ert-deftest package-lint-test-reserved-keybindings ()
+  ;; C-c and a letter (either upper or lower case)
+  (should
+   (equal
+    '((5 13 warning "This key binding is reserved."))
+    (package-lint-test--run "(kbd \"C-c n\")")))
+  (should
+   (equal
+    '((5 7 warning "This key binding is reserved."))
+    (package-lint-test--run "\"\\C-cn\"")))
+  ;; C-c followed by a control character or a digit
+  (should
+   (equal
+    '((5 39 warning "This key binding is reserved."))
+    (package-lint-test--run "(defcustom test-something (kbd \"C-c 1\")")))
+  (should
+   (equal
+    '((5 7 warning "This key binding is reserved."))
+    (package-lint-test--run "\"\\C-c1\"")))
+  ;; C-c followed by {, }, <, >, : or ;
+  (should
+   (equal
+    '((5 39 warning "This key binding is reserved."))
+    (package-lint-test--run "(defcustom test-something (kbd \"C-c <\")")))
+  (should
+   (equal
+    '((5 7 warning "This key binding is reserved."))
+    (package-lint-test--run "\"\\C-c<\"")))
+  ;; Function keys <F5> through <F9> without modifier keys
+  (should
+   (equal
+    '((5 38 warning "This key binding is reserved."))
+    (package-lint-test--run "(defcustom test-something (kbd \"<f5>\")")))
+  (should
+   (equal
+    '((5 20 warning "This key binding is reserved."))
+    (package-lint-test--run (concat "(global-set-key [" "f5] 'something"))))
+  ;; TODO: C-c followed by any other ASCII punctuation or symbol character
+  (should
+   (equal
+    '((5 39 warning "This key binding is reserved."))
+    (package-lint-test--run "(defcustom test-something (kbd \"C-c .\")")))
+  (should
+   (equal
+    '((5 23 warning "This key binding is reserved."))
+    (package-lint-test--run "(global-set-key \"\\C-c.\" 'something")))
+  ;; TODO: Don't bind C-h following any prefix character
+  (should
+   (equal
+    '((5 41 warning "This key binding is reserved."))
+    (package-lint-test--run "(defcustom test-something (kbd \"C-x C-h\")")))
+  (should
+   (equal
+    '((5 25 warning "This key binding is reserved."))
+    (package-lint-test--run "(global-set-key \"\\C-cC-h\" 'something")))
+  ;; Don't bind a key sequence ending in <C-g>
+  (should
+   (equal
+    '((5 41 warning "This key binding is reserved."))
+    (package-lint-test--run "(defcustom test-something (kbd \"C-x C-g\")")))
+  (should
+   (equal
+    '((5 25 warning "This key binding is reserved."))
+    (package-lint-test--run "(global-set-key \"\\C-cC-g\" 'something")))
+  ;; TODO: Don't bind a key sequence ending in <ESC> except following another <ESC>
+  ;; Can't find a way to make this work in the regexp.  Could test the resulting string but...
+  ;; (should
+  ;;  (equal
+  ;;   '((5 43 warning "This key binding is reserved."))
+  ;;   (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC>\")")))
+  ;; (should
+  ;;  (equal
+  ;;   nil
+  ;;   (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC><ESC>\")")))
+  ;; (should
+  ;;  (equal
+  ;;   nil
+  ;;   (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC> <ESC>\")")))
+  ;; (should
+  ;;  (equal
+  ;;   '((5 22 warning "This key binding is reserved."))
+  ;;   (package-lint-test--run "(global-set-key \"^C^[\" 'something")))
+  ;; (should
+  ;;  (equal
+  ;;   nil
+  ;;   (package-lint-test--run "(global-set-key \"^C^[^[\" 'something")))
+  )
+
 (ert-deftest package-lint-test-error-autoloads-on-private-functions ()
   (should (equal '() (package-lint-test--run "(defun test--private-function ())")))
   (should
