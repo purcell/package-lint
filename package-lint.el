@@ -242,6 +242,7 @@ This is bound dynamically while the checks run.")
       (save-excursion
         (save-restriction
           (widen)
+          (package-lint--check-reserved-keybindings)
           (package-lint--check-keywords-list)
           (package-lint--check-package-version-present)
           (package-lint--check-lexical-binding-is-on-first-line)
@@ -275,6 +276,29 @@ This is bound dynamically while the checks run.")
 
 
 ;;; Checks
+
+(defun package-lint--check-reserved-keybindings ()
+  "Warn about reserved keybindings."
+  (let ((re (rx "(" (or "kbd" "global-set-key" "local-set-key" "define-key")))
+        seq message)
+    (goto-char (point-min))
+    (while (re-search-forward re nil t)
+      (unless (or (nth 3 (syntax-ppss))
+                  (nth 4 (syntax-ppss)))
+        ;; Not in a string or comment
+        (goto-char (match-beginning 0))
+        ;; Read form and get key-sequence
+        (when (and (setq seq (pcase (read (current-buffer))
+                               (`(kbd ,seq)
+                                seq)
+                               (`(,(or global-set-key local-set-key) ,seq ,def)
+                                seq)
+                               (`(define-key ,map ,seq ,def)
+                                seq)))
+                   ;; Validate sequence
+                   (setq message (package-lint--test-keyseq seq)))
+          (package-lint--error (line-number-at-pos) (current-column)
+                               'warning message))))))
 
 (defun package-lint--check-commentary-existence ()
   "Warn about nonexistent or empty commentary section."
@@ -654,6 +678,33 @@ DESC is a struct as returned by `package-buffer-info'."
 
 
 ;;; Helpers
+
+(defun package-lint--test-keyseq (seq)
+  (let* ((lks (listify-key-sequence (cl-typecase seq
+                                      (string (kbd seq))
+                                      (vector seq))))
+         (modifiers (event-modifiers lks))
+         (basic-type (event-basic-type lks)))
+
+    (cond ((equal (car (last lks)) 7)
+           "Key sequences that end in C-g are reserved")
+
+          ((and (equal (car (last lks)) 27)
+                (not (equal (nthcdr (- (length lks) 2) lks)
+                            '(27 27))))
+           "Key sequences that end in one <ESC> are reserved")
+
+          ((and (equal modifiers '(control))
+                (= 99 basic-type)
+                (= 1 (length (cdr lks)))
+                (not (equal '(control) (event-modifiers (aref (vconcat lks) 1)))))
+           "Key sequences that begin with C-c are reserved (unless followed by another modifier sequence)")
+
+          ((member basic-type '(f5 f6 f7 f8 f9))
+           "Function keys F5-F9 are reserved")
+
+          ((equal (car (last lks)) 8)
+           "Key sequences that end in C-h are reserved"))))
 
 (defun package-lint--region-empty-p (start end)
   "Return t iff the region between START and END has no non-empty lines.
