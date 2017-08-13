@@ -296,16 +296,18 @@ This is bound dynamically while the checks run.")
 
 (defun package-lint--extract-key-sequence (form)
   "Extract the key sequence from FORM."
-  (pcase form
-    (`(kbd ,seq)
-     (package-lint--extract-key-sequence seq))
-    ((or `(global-set-key ,seq ,_) `(local-set-key ,seq ,_))
-     (package-lint--extract-key-sequence seq))
-    (`(define-key ,_ ,seq ,_)
-     (package-lint--extract-key-sequence seq))
-    (`,seq (listify-key-sequence (cl-typecase seq
-                                   (string (read-kbd-macro seq))
-                                   (vector seq))))))
+  (let (seq)
+    (pcase form
+      (`(kbd ,seq)
+       (package-lint--extract-key-sequence seq))
+      ((or `(global-set-key ,seq ,_) `(local-set-key ,seq ,_))
+       (package-lint--extract-key-sequence seq))
+      (`(define-key ,_ ,seq ,_)
+       (package-lint--extract-key-sequence seq))
+      (`,seq
+       (listify-key-sequence (cl-typecase seq
+                               (string (read-kbd-macro seq))
+                               (vector seq)))))))
 
 (defun package-lint--check-commentary-existence ()
   "Warn about nonexistent or empty commentary section."
