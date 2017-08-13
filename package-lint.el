@@ -282,9 +282,9 @@ This is bound dynamically while the checks run.")
   (let ((re (rx "(" (*? space) (or "kbd" "global-set-key" "local-set-key" "define-key") symbol-end)))
     (goto-char (point-min))
     (while (re-search-forward re nil t)
-      (goto-char (match-beginning 0))
       (unless (nth 8 (syntax-ppss))
         ;; Read form and get key-sequence
+        (goto-char (match-beginning 0))
         (let ((seq (package-lint--extract-key-sequence
                     (read (current-buffer)))))
           (when seq
