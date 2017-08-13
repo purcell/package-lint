@@ -45,63 +45,64 @@ with the passed string, when it's nil, the default is used."
       (package-lint-buffer))))
 
 (ert-deftest package-lint-test-reserved-keybindings ()
-  ;; C-c and a letter (either upper or lower case)
-  (should (equal (package-lint-test--run "(kbd \"C-c n\")")
-                 '((5 13 warning "Key sequences that begin with C-c are reserved (unless followed by another modifier sequence)"))))
-  (should (equal (package-lint-test--run "(local-set-key \"\\C-cn\" 'something)")
-                 '((5 34 warning "Key sequences that begin with C-c are reserved (unless followed by another modifier sequence)"))))
-  (should (equal (package-lint-test--run "(kbd \"C-d n\")")
-                 nil))
+  (let ((reserved-message "This key sequence is reserved (see Key Binding Conventions in the Emacs Lisp manual)"))
+    ;; C-c and a letter (either upper or lower case)
+    (should (equal (package-lint-test--run "(kbd \"C-c n\")")
+                   `((5 13 warning ,reserved-message))))
+    (should (equal (package-lint-test--run "(local-set-key \"\\C-cn\" 'something)")
+                   `((5 34 warning ,reserved-message))))
+    (should (equal (package-lint-test--run "(kbd \"C-d n\")")
+                   nil))
 
-  ;; C-c followed by a control character or a digit
-  (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-c 1\"))")
-                 '((5 39 warning "Key sequences that begin with C-c are reserved (unless followed by another modifier sequence)"))))
-  (should (equal (package-lint-test--run "(global-set-key \"\\C-c1\" 'something)")
-                 '((5 35 warning "Key sequences that begin with C-c are reserved (unless followed by another modifier sequence)"))))
+    ;; C-c followed by a control character or a digit
+    (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-c 1\"))")
+                   `((5 39 warning ,reserved-message))))
+    (should (equal (package-lint-test--run "(global-set-key \"\\C-c1\" 'something)")
+                   `((5 35 warning ,reserved-message))))
 
-  ;; C-c followed by {, }, <, >, : or ;
-  (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-c <\"))")
-                 '((5 39 warning "Key sequences that begin with C-c are reserved (unless followed by another modifier sequence)"))))
-  (should (equal (package-lint-test--run "(define-key map \"\\C-c<\" 'something)")
-                 '((5 35 warning "Key sequences that begin with C-c are reserved (unless followed by another modifier sequence)"))))
+    ;; C-c followed by {, }, <, >, : or ;
+    (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-c <\"))")
+                   `((5 39 warning ,reserved-message))))
+    (should (equal (package-lint-test--run "(define-key map \"\\C-c<\" 'something)")
+                   `((5 35 warning ,reserved-message))))
 
-  ;; Function keys <F5> through <F9> without modifier keys
-  (should (equal (package-lint-test--run "(define-key map (kbd \"<f5>\") 'something)")
-                 '((5 40 warning "Function keys F5-F9 are reserved"))))
-  (should (equal (package-lint-test--run (concat "(global-set-key [" "f5] 'something)"))
-                 '((5 32 warning "Function keys F5-F9 are reserved"))))
-  (should (equal (package-lint-test--run (concat "(global-set-key [" "f4] 'something)"))
-                 nil))
+    ;; Function keys <F5> through <F9> without modifier keys
+    (should (equal (package-lint-test--run "(define-key map (kbd \"<f5>\") 'something)")
+                   `((5 40 warning ,reserved-message))))
+    (should (equal (package-lint-test--run (concat "(global-set-key [" "f5] 'something)"))
+                   `((5 32 warning ,reserved-message))))
+    (should (equal (package-lint-test--run (concat "(global-set-key [" "f4] 'something)"))
+                   nil))
 
-  ;; C-c followed by any other ASCII punctuation or symbol character
-  (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-c .\"))")
-                 '((5 39 warning "Key sequences that begin with C-c are reserved (unless followed by another modifier sequence)"))))
-  (should (equal (package-lint-test--run "(global-set-key \"\\C-c.\" 'something)")
-                 '((5 35 warning "Key sequences that begin with C-c are reserved (unless followed by another modifier sequence)"))))
+    ;; C-c followed by any other ASCII punctuation or symbol character
+    (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-c .\"))")
+                   `((5 39 warning ,reserved-message))))
+    (should (equal (package-lint-test--run "(global-set-key \"\\C-c.\" 'something)")
+                   `((5 35 warning ,reserved-message))))
 
-  ;; But C-c followed by another modifier sequence is allowed
-  (should (equal (package-lint-test--run "(global-set-key (kbd \"C-c C-x d\") 'something)")
-                 nil))
+    ;; But C-c followed by another modifier sequence is allowed
+    (should (equal (package-lint-test--run "(global-set-key (kbd \"C-c C-x d\") 'something)")
+                   nil))
 
-  ;; Don't bind C-h following any prefix character
-  (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x C-h\"))")
-                 '((5 41 warning "Key sequences that end in C-h are reserved"))))
-  (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-h C-x\"))")
-                 nil))
+    ;; Don't bind C-h following any prefix character
+    (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x C-h\"))")
+                   `((5 41 warning ,reserved-message))))
+    (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-h C-x\"))")
+                   nil))
 
-  ;; Don't bind a key sequence ending in <C-g>
-  (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x C-g\"))")
-                 '((5 41 warning "Key sequences that end in C-g are reserved"))))
-  (should (equal (package-lint-test--run "(global-set-key \"\\C-c\\C-g\" 'something)")
-                 '((5 38 warning "Key sequences that end in C-g are reserved"))))
-  (should (equal (package-lint-test--run "(global-set-key \"C-x g\" 'something)")
-                 nil))
+    ;; Don't bind a key sequence ending in <C-g>
+    (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x C-g\"))")
+                   `((5 41 warning ,reserved-message))))
+    (should (equal (package-lint-test--run "(global-set-key \"\\C-c\\C-g\" 'something)")
+                   `((5 38 warning ,reserved-message))))
+    (should (equal (package-lint-test--run "(global-set-key \"C-x g\" 'something)")
+                   nil))
 
-  ;; Don't bind a key sequence ending in <ESC> except following another <ESC>
-  (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC>\")")
-                 '((5 43 warning "Key sequences that end in one <ESC> are reserved"))))
-  (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC> <ESC>\"))")
-                 nil)))
+    ;; Don't bind a key sequence ending in <ESC> except following another <ESC>
+    (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC>\")")
+                   `((5 43 warning ,reserved-message))))
+    (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC> <ESC>\"))")
+                   nil))))
 
 (ert-deftest package-lint-test-error-autoloads-on-private-functions ()
   (should (equal '() (package-lint-test--run "(defun test--private-function ())")))

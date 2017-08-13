@@ -288,17 +288,25 @@ This is bound dynamically while the checks run.")
         ;; Not in a string or comment
         (goto-char (match-beginning 0))
         ;; Read form and get key-sequence
-        (when (and (setq seq (pcase (read (current-buffer))
-                               (`(kbd ,seq)
-                                seq)
-                               (`(,(or global-set-key local-set-key) ,seq ,def)
-                                seq)
-                               (`(define-key ,map ,seq ,def)
-                                seq)))
-                   ;; Validate sequence
-                   (setq message (package-lint--test-keyseq seq)))
-          (package-lint--error (line-number-at-pos) (current-column)
-                               'warning message))))))
+        (let ((seq (package-lint--extract-key-sequence (read (current-buffer)))))
+          (when seq
+            (let ((message (package-lint--test-keyseq seq)))
+              (when message
+                (package-lint--error (line-number-at-pos) (current-column)
+                                     'warning message)))))))))
+
+(defun package-lint--extract-key-sequence (form)
+  "Extract the key sequence from FORM."
+  (pcase form
+    (`(kbd ,seq)
+     (package-lint--extract-keysequence seq))
+    (`(,(or global-set-key local-set-key) ,seq ,def)
+     (package-lint--extract-keysequence seq))
+    (`(define-key ,map ,seq ,def)
+     (package-lint--extract-keysequence seq))
+    (`,seq (listify-key-sequence (cl-typecase seq
+                                   (string (read-kbd-macro seq))
+                                   (vector seq))))))
 
 (defun package-lint--check-commentary-existence ()
   "Warn about nonexistent or empty commentary section."
@@ -679,32 +687,21 @@ DESC is a struct as returned by `package-buffer-info'."
 
 ;;; Helpers
 
-(defun package-lint--test-keyseq (seq)
-  (let* ((lks (listify-key-sequence (cl-typecase seq
-                                      (string (kbd seq))
-                                      (vector seq))))
-         (modifiers (event-modifiers lks))
+(defun package-lint--test-keyseq (lks)
+  "Return a message if the listified key sequence LKS is invalid, otherwise nil."
+  (let* ((modifiers (event-modifiers lks))
          (basic-type (event-basic-type lks)))
-
-    (cond ((equal (car (last lks)) 7)
-           "Key sequences that end in C-g are reserved")
-
-          ((and (equal (car (last lks)) 27)
-                (not (equal (nthcdr (- (length lks) 2) lks)
-                            '(27 27))))
-           "Key sequences that end in one <ESC> are reserved")
-
-          ((and (equal modifiers '(control))
-                (= 99 basic-type)
-                (= 1 (length (cdr lks)))
-                (not (equal '(control) (event-modifiers (aref (vconcat lks) 1)))))
-           "Key sequences that begin with C-c are reserved (unless followed by another modifier sequence)")
-
-          ((member basic-type '(f5 f6 f7 f8 f9))
-           "Function keys F5-F9 are reserved")
-
-          ((equal (car (last lks)) 8)
-           "Key sequences that end in C-h are reserved"))))
+    (when (or (equal (car (last lks)) 7)
+              (and (equal (car (last lks)) 27)
+                   (not (equal (nthcdr (- (length lks) 2) lks)
+                               '(27 27))))
+              (and (equal modifiers '(control))
+                   (= 99 basic-type)
+                   (= 1 (length (cdr lks)))
+                   (not (equal '(control) (event-modifiers (aref (vconcat lks) 1)))))
+              (member basic-type '(f5 f6 f7 f8 f9))
+              (equal (car (last lks)) 8))
+      "This key sequence is reserved (see Key Binding Conventions in the Emacs Lisp manual)")))
 
 (defun package-lint--region-empty-p (start end)
   "Return t iff the region between START and END has no non-empty lines.
