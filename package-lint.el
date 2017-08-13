@@ -304,10 +304,8 @@ This is bound dynamically while the checks run.")
        (package-lint--extract-key-sequence seq))
       (`(define-key ,_ ,seq ,_)
        (package-lint--extract-key-sequence seq))
-      (`,seq
-       (listify-key-sequence (cl-typecase seq
-                               (string (read-kbd-macro seq))
-                               (vector seq)))))))
+      ((pred stringp) (listify-key-sequence (read-kbd-macro form)))
+      ((pred vectorp) (listify-key-sequence form)))))
 
 (defun package-lint--check-commentary-existence ()
   "Warn about nonexistent or empty commentary section."
