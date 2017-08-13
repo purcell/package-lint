@@ -279,8 +279,7 @@ This is bound dynamically while the checks run.")
 
 (defun package-lint--check-reserved-keybindings ()
   "Warn about reserved keybindings."
-  (let ((re (rx "(" (or "kbd" "global-set-key" "local-set-key" "define-key")))
-        seq message)
+  (let ((re (rx "(" (or "kbd" "global-set-key" "local-set-key" "define-key"))))
     (goto-char (point-min))
     (while (re-search-forward re nil t)
       (unless (or (nth 3 (syntax-ppss))
@@ -300,9 +299,9 @@ This is bound dynamically while the checks run.")
   (pcase form
     (`(kbd ,seq)
      (package-lint--extract-keysequence seq))
-    (`(,(or global-set-key local-set-key) ,seq ,def)
+    (`(,(or global-set-key local-set-key) ,seq ,_)
      (package-lint--extract-keysequence seq))
-    (`(define-key ,map ,seq ,def)
+    (`(define-key ,_ ,seq ,_)
      (package-lint--extract-keysequence seq))
     (`,seq (listify-key-sequence (cl-typecase seq
                                    (string (read-kbd-macro seq))
