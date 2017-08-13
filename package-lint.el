@@ -293,20 +293,6 @@ This is bound dynamically while the checks run.")
                 (package-lint--error (line-number-at-pos) (current-column)
                                      'warning message)))))))))
 
-(defun package-lint--extract-key-sequence (form)
-  "Extract the key sequence from FORM."
-  (let (seq)
-    (pcase form
-      (`(kbd ,seq)
-       (package-lint--extract-key-sequence seq))
-      ((or `(global-set-key ,seq ,_) `(local-set-key ,seq ,_))
-       (package-lint--extract-key-sequence seq))
-      (`(define-key ,_ ,seq ,_)
-       (package-lint--extract-key-sequence seq))
-      ((pred stringp)
-       (listify-key-sequence (read-kbd-macro form)))
-      ((pred vectorp) (listify-key-sequence form)))))
-
 (defun package-lint--check-commentary-existence ()
   "Warn about nonexistent or empty commentary section."
   (let ((start (lm-commentary-start)))
@@ -685,6 +671,20 @@ DESC is a struct as returned by `package-buffer-info'."
 
 
 ;;; Helpers
+
+(defun package-lint--extract-key-sequence (form)
+  "Extract the key sequence from FORM."
+  (let (seq)
+    (pcase form
+      (`(kbd ,seq)
+       (package-lint--extract-key-sequence seq))
+      ((or `(global-set-key ,seq ,_) `(local-set-key ,seq ,_))
+       (package-lint--extract-key-sequence seq))
+      (`(define-key ,_ ,seq ,_)
+       (package-lint--extract-key-sequence seq))
+      ((pred stringp)
+       (listify-key-sequence (read-kbd-macro form)))
+      ((pred vectorp) (listify-key-sequence form)))))
 
 (defun package-lint--test-keyseq (lks)
   "Return a message if the listified key sequence LKS is invalid, otherwise nil."
