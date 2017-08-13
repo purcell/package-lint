@@ -279,15 +279,14 @@ This is bound dynamically while the checks run.")
 
 (defun package-lint--check-reserved-keybindings ()
   "Warn about reserved keybindings."
-  (let ((re (rx "(" (or "kbd" "global-set-key" "local-set-key" "define-key"))))
+  (let ((re (rx "(" (*? space) (or "kbd" "global-set-key" "local-set-key" "define-key") symbol-end)))
     (goto-char (point-min))
     (while (re-search-forward re nil t)
-      (unless (or (nth 3 (syntax-ppss))
-                  (nth 4 (syntax-ppss)))
-        ;; Not in a string or comment
-        (goto-char (match-beginning 0))
+      (goto-char (match-beginning 0))
+      (unless (nth 8 (syntax-ppss))
         ;; Read form and get key-sequence
-        (let ((seq (package-lint--extract-key-sequence (read (current-buffer)))))
+        (let ((seq (package-lint--extract-key-sequence
+                    (read (current-buffer)))))
           (when seq
             (let ((message (package-lint--test-keyseq seq)))
               (when message
@@ -304,7 +303,8 @@ This is bound dynamically while the checks run.")
        (package-lint--extract-key-sequence seq))
       (`(define-key ,_ ,seq ,_)
        (package-lint--extract-key-sequence seq))
-      ((pred stringp) (listify-key-sequence (read-kbd-macro form)))
+      ((pred stringp)
+       (listify-key-sequence (read-kbd-macro form)))
       ((pred vectorp) (listify-key-sequence form)))))
 
 (defun package-lint--check-commentary-existence ()
