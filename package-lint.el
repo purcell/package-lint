@@ -299,7 +299,7 @@ This is bound dynamically while the checks run.")
   (pcase form
     (`(kbd ,seq)
      (package-lint--extract-key-sequence seq))
-    (`(,(or global-set-key local-set-key) ,seq ,_)
+    ((or `(global-set-key ,seq ,_) `(local-set-key ,seq ,_))
      (package-lint--extract-key-sequence seq))
     (`(define-key ,_ ,seq ,_)
      (package-lint--extract-key-sequence seq))
