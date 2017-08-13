@@ -674,17 +674,17 @@ DESC is a struct as returned by `package-buffer-info'."
 
 (defun package-lint--extract-key-sequence (form)
   "Extract the key sequence from FORM."
-  (let (seq)
-    (pcase form
-      (`(kbd ,seq)
-       (package-lint--extract-key-sequence seq))
-      ((or `(global-set-key ,seq ,_) `(local-set-key ,seq ,_))
-       (package-lint--extract-key-sequence seq))
-      (`(define-key ,_ ,seq ,_)
-       (package-lint--extract-key-sequence seq))
-      ((pred stringp)
-       (listify-key-sequence (read-kbd-macro form)))
-      ((pred vectorp) (listify-key-sequence form)))))
+  (pcase form
+    (`(kbd ,seq)
+     (package-lint--extract-key-sequence seq))
+    ((or `(global-set-key ,seq ,_) `(local-set-key ,seq ,_))
+     (package-lint--extract-key-sequence seq))
+    (`(define-key ,_ ,seq ,_)
+     (package-lint--extract-key-sequence seq))
+    ((pred stringp)
+     (listify-key-sequence (read-kbd-macro form)))
+    ((pred vectorp)
+     (listify-key-sequence form))))
 
 (defun package-lint--test-keyseq (lks)
   "Return a message if the listified key sequence LKS is invalid, otherwise nil."
