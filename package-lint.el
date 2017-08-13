@@ -298,11 +298,11 @@ This is bound dynamically while the checks run.")
   "Extract the key sequence from FORM."
   (pcase form
     (`(kbd ,seq)
-     (package-lint--extract-keysequence seq))
+     (package-lint--extract-key-sequence seq))
     (`(,(or global-set-key local-set-key) ,seq ,_)
-     (package-lint--extract-keysequence seq))
+     (package-lint--extract-key-sequence seq))
     (`(define-key ,_ ,seq ,_)
-     (package-lint--extract-keysequence seq))
+     (package-lint--extract-key-sequence seq))
     (`,seq (listify-key-sequence (cl-typecase seq
                                    (string (read-kbd-macro seq))
                                    (vector seq))))))
