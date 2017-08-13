@@ -697,7 +697,7 @@ DESC is a struct as returned by `package-buffer-info'."
               (and (equal modifiers '(control))
                    (= ?c basic-type)
                    (not (null (cdr lks)))
-                   (not (equal '(control) (event-modifiers (aref (vconcat lks) 1)))))
+                   (not (equal '(control) (event-modifiers (nth 1 lks)))))
               (member basic-type '(f5 f6 f7 f8 f9))
               (equal (car (last lks)) ?\C-h))
       "This key sequence is reserved (see Key Binding Conventions in the Emacs Lisp manual)")))
