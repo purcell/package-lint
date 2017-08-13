@@ -696,7 +696,7 @@ DESC is a struct as returned by `package-buffer-info'."
                                '(?\e ?\e))))
               (and (equal modifiers '(control))
                    (= ?c basic-type)
-                   (= 1 (length (cdr lks)))
+                   (not (null (cdr lks)))
                    (not (equal '(control) (event-modifiers (aref (vconcat lks) 1)))))
               (member basic-type '(f5 f6 f7 f8 f9))
               (equal (car (last lks)) ?\C-h))

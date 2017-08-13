@@ -53,6 +53,8 @@ with the passed string, when it's nil, the default is used."
                    `((5 34 warning ,reserved-message))))
     (should (equal (package-lint-test--run "(kbd \"C-d n\")")
                    nil))
+    (should (equal (package-lint-test--run "(kbd \"C-c x n\")")
+                   `((5 15 warning ,reserved-message))))
 
     ;; C-c followed by a control character or a digit
     (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-c 1\"))")
