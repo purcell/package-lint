@@ -696,7 +696,7 @@ DESC is a struct as returned by `package-buffer-info'."
                                '(?\e ?\e))))
               (equal (car (last lks)) ?\C-h)
               (and (equal modifiers '(control))
-                   (= 99 basic-type)
+                   (= ?c basic-type)
                    (cdr lks)
                    (let ((v (event-basic-type (cdr lks)))
                          (m (event-modifiers (cdr lks))))
