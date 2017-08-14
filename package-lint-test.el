@@ -49,7 +49,7 @@ with the passed string, when it's nil, the default is used."
     ;; C-c and a letter (either upper or lower case)
     (should (equal (package-lint-test--run "(kbd \"C-c n\")")
                    `((5 13 warning ,reserved-message))))
-    (should (equal (package-lint-test--run "(local-set-key \"\\C-cn\" 'something)")
+    (should (equal (package-lint-test--run "(local-set-key \"\\C-cF\" 'something)")
                    `((5 34 warning ,reserved-message))))
     (should (equal (package-lint-test--run "(kbd \"C-d n\")")
                    nil))
@@ -58,15 +58,15 @@ with the passed string, when it's nil, the default is used."
 
     ;; C-c followed by a control character or a digit
     (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-c 1\"))")
-                   `((5 39 warning ,reserved-message))))
+                   nil))
     (should (equal (package-lint-test--run "(global-set-key \"\\C-c1\" 'something)")
-                   `((5 35 warning ,reserved-message))))
+                   nil))
 
     ;; C-c followed by {, }, <, >, : or ;
     (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-c <\"))")
-                   `((5 39 warning ,reserved-message))))
+                   nil))
     (should (equal (package-lint-test--run "(define-key map \"\\C-c<\" 'something)")
-                   `((5 35 warning ,reserved-message))))
+                   nil))
 
     ;; Function keys <F5> through <F9> without modifier keys
     (should (equal (package-lint-test--run "(define-key map (kbd \"<f5>\") 'something)")
@@ -78,9 +78,9 @@ with the passed string, when it's nil, the default is used."
 
     ;; C-c followed by any other ASCII punctuation or symbol character
     (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-c .\"))")
-                   `((5 39 warning ,reserved-message))))
+                   nil))
     (should (equal (package-lint-test--run "(global-set-key \"\\C-c.\" 'something)")
-                   `((5 35 warning ,reserved-message))))
+                   nil))
 
     ;; But C-c followed by another modifier sequence is allowed
     (should (equal (package-lint-test--run "(global-set-key (kbd \"C-c C-x d\") 'something)")
