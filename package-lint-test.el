@@ -388,17 +388,17 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should
    (equal
     '((5 0 error "Global minor modes must `:require' their defining file (i.e. \":require 'test\"), to support the customization variable of the same name."))
-    (package-lint-test--run "(define-globalized-minor-mode test-mode \"\")")))
+    (package-lint-test--run "(define-globalized-minor-mode test-mode ignore ignore)")))
   ;; Check for incorrect :require.
   (should
    (equal
     '((5 0 error "Global minor modes must `:require' their defining file (i.e. \":require 'test\"), to support the customization variable of the same name."))
-    (package-lint-test--run "(define-globalized-minor-mode test-mode \"\" :require 'blargh)")))
+    (package-lint-test--run "(define-globalized-minor-mode test-mode ignore ignore :require 'blargh)")))
   ;; Check for undocumented alias.
   (should
    (equal
     '((5 0 warning "Use `define-globalized-minor-mode' to define global minor modes."))
-    (package-lint-test--run "(define-global-minor-mode test-mode \"\" :require 'test)"))))
+    (package-lint-test--run "(define-global-minor-mode test-mode ignore ignore :require 'test)"))))
 
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
