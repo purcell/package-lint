@@ -712,7 +712,8 @@ DESC is a struct as returned by `package-buffer-info'."
     ((pred stringp)
      (listify-key-sequence (read-kbd-macro form)))
     ((pred vectorp)
-     (listify-key-sequence form))))
+     (unless (listp (elt form 0))
+       (listify-key-sequence form)))))
 
 (defun package-lint--test-keyseq (lks)
   "Return a message if the listified key sequence LKS is invalid, otherwise nil."
