@@ -246,6 +246,12 @@ This is bound dynamically while the checks run.")
           (package-lint--check-keywords-list)
           (package-lint--check-package-version-present)
           (package-lint--check-lexical-binding-is-on-first-line)
+          (package-lint--check-objects-by-regexp
+           "(define-minor-mode\\s-"
+           #'package-lint--check-minor-mode)
+          (package-lint--check-objects-by-regexp
+           "(define-global\\(?:ized\\)?-minor-mode\\s-"
+           #'package-lint--check-globalized-minor-mode)
           (let ((desc (package-lint--check-package-el-can-parse)))
             (when desc
               (package-lint--check-package-summary desc)
@@ -273,6 +279,10 @@ This is bound dynamically while the checks run.")
 (defun package-lint--error (line col type message)
   "Construct a datum for error at LINE and COL with TYPE and MESSAGE."
   (push (list line col type message) package-lint--errors))
+
+(defun package-lint--error-at-point (type message)
+  "Construct a datum for error at the point with TYPE and MESSAGE."
+  (package-lint--error (line-number-at-pos) (current-column) type message))
 
 
 ;;; Checks
@@ -669,6 +679,24 @@ DESC is a struct as returned by `package-buffer-info'."
                (format "\"%s\" doesn't start with package's prefix \"%s\"."
                        name prefix)))))))))
 
+(defun package-lint--check-minor-mode (def)
+  "Offer up concerns about the minor mode definition DEF."
+  (when (cl-search '(:global t) def)
+    (package-lint--check-globalized-minor-mode def)))
+
+(defun package-lint--check-globalized-minor-mode (def)
+  "Offer up concerns about the global minor mode definition DEF."
+  (unless (eq 'define-globalized-minor-mode (car def))
+    (package-lint--error-at-point
+     'warning
+     "Use `define-globalized-minor-mode' to define global minor modes."))
+  (let ((feature (intern (package-lint--provided-feature))))
+    (unless (cl-search `(:require ',feature) def :test #'equal)
+      (package-lint--error-at-point
+       'error
+       (format
+        "Global minor modes must `:require' their defining file (i.e. \":require '%s\"), to support the customization variable of the same name." feature)))))
+
 
 ;;; Helpers
 
@@ -811,6 +839,23 @@ Prefix is returned without any `-mode' suffix."
   (let ((feature (package-lint--provided-feature)))
     (when feature
       (replace-regexp-in-string "-mode\\'" "" feature))))
+
+(defun package-lint--check-objects-by-regexp (regexp function)
+  "Check all objects with the literal printed form matching REGEXP.
+
+The objects are parsed with `read'. The FUNCTION is passed the
+read object, with the point at the beginning of the match.
+
+S-expressions in comments or comments, partial s-expressions, or
+otherwise invalid read forms are ignored."
+  (goto-char (point-min))
+  (while (re-search-forward regexp nil t)
+    (save-excursion
+      (goto-char (match-beginning 0))
+      (let ((obj (unless (package-lint--inside-comment-or-string-p)
+                   (save-excursion
+                     (ignore-errors (read (current-buffer)))))))
+        (when obj (funcall function obj))))))
 
 
 ;;; Public interface

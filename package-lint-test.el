@@ -294,15 +294,15 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should
    (equal
     '((5 1 error "\"global-testfoo-mode\" doesn't start with package's prefix \"test\"."))
-    (package-lint-test--run "(define-globalized-minor-mode global-testfoo-mode ignore ignore)"))))
+    (package-lint-test--run "(define-globalized-minor-mode global-testfoo-mode ignore ignore :require 'test)"))))
 
 (ert-deftest package-lint-test-accept-prefixed-definitions ()
   (should (equal '() (package-lint-test--run
                       "(defun test-foo ())\n(defun test ())")))
   (should (equal '() (package-lint-test--run
-                      "(define-globalized-minor-mode global-test-mode ignore ignore)")))
+                      "(define-globalized-minor-mode global-test-mode ignore ignore :require 'test)")))
   (should (equal '() (package-lint-test--run
-                      "(define-globalized-minor-mode global-test-foo-mode ignore ignore)"))))
+                      "(define-globalized-minor-mode global-test-foo-mode ignore ignore :require 'test)"))))
 
 (ert-deftest package-lint-test-accept-sane-prefixed-definitions ()
   (should (equal '() (package-lint-test--run
@@ -375,6 +375,30 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   ;; Test if the special case we use for `defadvice' doesn't get
   ;; confused by weird spacing.
   (should (equal '() (package-lint-test--run "   (  defadvice \t\n\n foo (before ignore))"))))
+
+(ert-deftest package-lint-test-minor-mode-global-t ()
+  (should
+   (equal
+    '((5 0 error "Global minor modes must `:require' their defining file (i.e. \":require 'test\"), to support the customization variable of the same name.")
+      (5 0 warning "Use `define-globalized-minor-mode' to define global minor modes."))
+    (package-lint-test--run "(define-minor-mode test-mode \"\" :global t)"))))
+
+(ert-deftest package-lint-test-globalized-minor-mode ()
+  ;; Check for missing :require.
+  (should
+   (equal
+    '((5 0 error "Global minor modes must `:require' their defining file (i.e. \":require 'test\"), to support the customization variable of the same name."))
+    (package-lint-test--run "(define-globalized-minor-mode test-mode ignore ignore)")))
+  ;; Check for incorrect :require.
+  (should
+   (equal
+    '((5 0 error "Global minor modes must `:require' their defining file (i.e. \":require 'test\"), to support the customization variable of the same name."))
+    (package-lint-test--run "(define-globalized-minor-mode test-mode ignore ignore :require 'blargh)")))
+  ;; Check for undocumented alias.
+  (should
+   (equal
+    '((5 0 warning "Use `define-globalized-minor-mode' to define global minor modes."))
+    (package-lint-test--run "(define-global-minor-mode test-mode ignore ignore :require 'test)"))))
 
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
