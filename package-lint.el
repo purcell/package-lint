@@ -302,8 +302,7 @@ This is bound dynamically while the checks run.")
           (when seq
             (let ((message (package-lint--test-keyseq seq)))
               (when message
-                (package-lint--error (line-number-at-pos) (current-column)
-                                     'warning message)))))))))
+                (package-lint--error-at-point 'warning message)))))))))
 
 (defun package-lint--check-commentary-existence ()
   "Warn about nonexistent or empty commentary section."
@@ -317,8 +316,8 @@ This is bound dynamically while the checks run.")
       (forward-line)
       (when (package-lint--region-empty-p (point) (lm-commentary-end))
         (goto-char start)
-        (package-lint--error
-         (line-number-at-pos) (current-column) 'error
+        (package-lint--error-at-point
+         'error
          "Package should have a non-empty ;;; Commentary section.")))))
 
 (defun package-lint--check-autoloads-on-private-functions (definitions)
@@ -328,8 +327,8 @@ This is bound dynamically while the checks run.")
       (goto-char position)
       (forward-line -1)
       (when (looking-at-p (rx ";;;###autoload"))
-        (package-lint--error
-         (line-number-at-pos) (current-column) 'warning
+        (package-lint--error-at-point
+         'warning
          "Private functions generally should not be autoloaded.")))))
 
 (defun package-lint--check-for-literal-emacs-path ()
@@ -496,13 +495,13 @@ REGEXP is (concat RX-START REGEXP* RX-END) for each REGEXP*."
           (unless (package-lint--inside-comment-or-string-p)
             (let ((sym (match-string-no-properties 1)))
               (unless (package-lint--seen-fboundp-check-for sym)
-                (package-lint--error
-                 (line-number-at-pos)
-                 (save-excursion (goto-char (match-beginning 1)) (current-column))
-                 'error
-                 (format "You should depend on (emacs \"%s\") if you need `%s'."
-                         (mapconcat #'number-to-string added-in-version ".")
-                         sym))))))))))
+                (save-excursion
+                  (goto-char (match-beginning 1))
+                  (package-lint--error-at-point
+                   'error
+                   (format "You should depend on (emacs \"%s\") if you need `%s'."
+                           (mapconcat #'number-to-string added-in-version ".")
+                           sym)))))))))))
 
 (defun package-lint--check-libraries-available-in-emacs (valid-deps)
   "Warn about use of libraries that are not available in the Emacs version in VALID-DEPS."
