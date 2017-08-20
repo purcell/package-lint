@@ -400,5 +400,19 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((5 0 warning "Use `define-globalized-minor-mode' to define global minor modes."))
     (package-lint-test--run "(define-global-minor-mode test-mode ignore ignore :require 'test)"))))
 
+(ert-deftest package-lint-test-error-defgroup-name ()
+  (should
+   (equal
+    '((5 0 error "Customization groups should not end in \"-mode\" unless that name would conflict with their parent group."))
+    (package-lint-test--run "(defgroup test-mode nil \"\")")))
+  (should
+   (equal
+    '((5 0 error "Customization groups should not end in \"-mode\" unless that name would conflict with their parent group."))
+    (package-lint-test--run "(defgroup test-mode nil \"\" :group 'testing)")))
+  (should
+   (equal
+    '()
+    (package-lint-test--run "(defgroup test-mode nil \"\" :group 'test)"))))
+
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
