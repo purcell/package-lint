@@ -120,8 +120,13 @@ with the passed string, when it's nil, the default is used."
 (ert-deftest package-lint-test-warn-literal-emacs-path ()
   (should
    (equal
-    '((5 8 warning "Use variable `user-emacs-directory' or function `locate-user-emacs-file' instead of a literal path to the Emacs user directory or files."))
-    (package-lint-test--run "\.emacs\.d")))
+    '((5 9 warning "Use variable `user-emacs-directory' or function `locate-user-emacs-file' instead of a literal path to the Emacs user directory or files."))
+    (package-lint-test--run "\".emacs\.d\"")))
+  (should
+   (equal
+    '((5 11 warning "Use variable `user-emacs-directory' or function `locate-user-emacs-file' instead of a literal path to the Emacs user directory or files."))
+    (package-lint-test--run "\"~/.emacs\.d/foo\"")))
+  (should (equal '() (package-lint-test--run "\"/foo/foo.emacs.dat\"")))
   (should (equal '() (package-lint-test--run ";; ~/\.emacs\.d/elpa")))
   (should (equal '() (package-lint-test--run "\"emacs dot dee\""))))
 
