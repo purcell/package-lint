@@ -45,8 +45,6 @@ Additional checks for future versions:
 
 - WARN: header line formatting / capitalisation
 - trailing line presence / formatting
-- URL header presence
-- URL header value is a single valid http(s) URL
 - WARN: library is called *-mode but doesn't provide a major mode
 - WARN: suggest cl-lib vs cl
 - non-use of standard keywords
