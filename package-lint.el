@@ -625,7 +625,7 @@ DESC is a struct as returned by `package-buffer-info'."
        "The package summary is too long. It should be at most 50 characters.")))
     (when (save-match-data
             (let ((case-fold-search t))
-              (and (string-match "\\<emacs\\>" summary)
+              (and (string-match "[^.]\\<emacs\\>" summary)
                    (not (string-match-p "[[:space:]]+lisp" summary (match-end 0))))))
       (package-lint--error
        1 1

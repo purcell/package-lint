@@ -208,6 +208,9 @@ with the passed string, when it's nil, the default is used."
 (ert-deftest package-lint-test-accept-emacs-lisp-in-summary ()
   (should (equal '() (package-lint-test--run "" ";;; test.el --- Emacs Lisp test framework\n"))))
 
+(ert-deftest package-lint-test-accept-.emacs-in-summary ()
+  (should (equal '() (package-lint-test--run "" ";;; test.el --- Something for .emacs\n"))))
+
 (ert-deftest package-lint-test-error-invalid-dependency ()
   (should
    (member
