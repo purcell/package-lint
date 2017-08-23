@@ -4,6 +4,7 @@
 
 ;; Author: Steve Purcell <steve@sanityinc.com>
 ;;         Fanael Linithien <fanael4@gmail.com>
+;; URL: https://github.com/purcell/package-lint
 ;; Version: 0
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -27,16 +28,18 @@
 (require 'package-lint)
 (require 'ert)
 
-(defun package-lint-test--run (contents &optional header version footer provide commentary)
+(defun package-lint-test--run (contents &optional header version footer provide commentary url)
   "Run `package-lint-buffer' on a temporary buffer with given CONTENTS.
 
-HEADER, VERSION, FOOTER, PROVIDE and COMMENTARY can be either strings or nil;
-when one is a string, the corresponding package boilerplate part is replaced
-with the passed string, when it's nil, the default is used."
+HEADER, VERSION, FOOTER, PROVIDE, COMMENTARY, and URL can be
+either strings or nil; when one is a string, the corresponding
+package boilerplate part is replaced with the passed string, when
+it's nil, the default is used."
   (with-temp-buffer
     (emacs-lisp-mode)
     (insert (or header ";;; test.el --- A test\n"))
     (insert (or version ";; Package-Version: 0\n"))
+    (insert (or url ";; URL: https://package-lint.test/p?q#f\n"))
     (insert (or commentary ";;; Commentary:\n;; A test package, for testing.\n"))
     (insert contents)
     (insert "\n" (or provide "(provide 'test)\n"))
@@ -48,13 +51,13 @@ with the passed string, when it's nil, the default is used."
   (let ((reserved-message "This key sequence is reserved (see Key Binding Conventions in the Emacs Lisp manual)"))
     ;; C-c and a letter (either upper or lower case)
     (should (equal (package-lint-test--run "(kbd \"C-c n\")")
-                   `((5 13 warning ,reserved-message))))
+                   `((6 13 warning ,reserved-message))))
     (should (equal (package-lint-test--run "(local-set-key \"\\C-cF\" 'something)")
-                   `((5 34 warning ,reserved-message))))
+                   `((6 34 warning ,reserved-message))))
     (should (equal (package-lint-test--run "(kbd \"C-d n\")")
                    nil))
     (should (equal (package-lint-test--run "(kbd \"C-c x n\")")
-                   `((5 15 warning ,reserved-message))))
+                   `((6 15 warning ,reserved-message))))
 
     ;; C-c followed by a control character or a digit
     (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-c 1\"))")
@@ -70,9 +73,9 @@ with the passed string, when it's nil, the default is used."
 
     ;; Function keys <F5> through <F9> without modifier keys
     (should (equal (package-lint-test--run "(define-key map (kbd \"<f5>\") 'something)")
-                   `((5 40 warning ,reserved-message))))
+                   `((6 40 warning ,reserved-message))))
     (should (equal (package-lint-test--run (concat "(global-set-key [" "f5] 'something)"))
-                   `((5 32 warning ,reserved-message))))
+                   `((6 32 warning ,reserved-message))))
     (should (equal (package-lint-test--run (concat "(global-set-key [" "f4] 'something)"))
                    nil))
 
@@ -88,21 +91,21 @@ with the passed string, when it's nil, the default is used."
 
     ;; Don't bind C-h following any prefix character
     (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x C-h\"))")
-                   `((5 41 warning ,reserved-message))))
+                   `((6 41 warning ,reserved-message))))
     (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-h C-x\"))")
                    nil))
 
     ;; Don't bind a key sequence ending in <C-g>
     (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x C-g\"))")
-                   `((5 41 warning ,reserved-message))))
+                   `((6 41 warning ,reserved-message))))
     (should (equal (package-lint-test--run "(global-set-key \"\\C-c\\C-g\" 'something)")
-                   `((5 38 warning ,reserved-message))))
+                   `((6 38 warning ,reserved-message))))
     (should (equal (package-lint-test--run "(global-set-key \"C-x g\" 'something)")
                    nil))
 
     ;; Don't bind a key sequence ending in <ESC> except following another <ESC>
     (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC>\")")
-                   `((5 43 warning ,reserved-message))))
+                   `((6 43 warning ,reserved-message))))
     (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC> <ESC>\"))")
                    nil))))
 
@@ -110,21 +113,21 @@ with the passed string, when it's nil, the default is used."
   (should (equal '() (package-lint-test--run "(defun test--private-function ())")))
   (should
    (equal
-    '((5 0 warning "Private functions generally should not be autoloaded."))
+    '((6 0 warning "Private functions generally should not be autoloaded."))
     (package-lint-test--run ";;;###autoload\n(defun test--private-function ())")))
   (should
    (equal
-    '((5 0 warning "Private functions generally should not be autoloaded."))
+    '((6 0 warning "Private functions generally should not be autoloaded."))
     (package-lint-test--run ";;;###autoload\n(defmacro test--private-macro ())"))))
 
 (ert-deftest package-lint-test-warn-literal-emacs-path ()
   (should
    (equal
-    '((5 9 warning "Use variable `user-emacs-directory' or function `locate-user-emacs-file' instead of a literal path to the Emacs user directory or files."))
+    '((6 9 warning "Use variable `user-emacs-directory' or function `locate-user-emacs-file' instead of a literal path to the Emacs user directory or files."))
     (package-lint-test--run "\".emacs\.d\"")))
   (should
    (equal
-    '((5 11 warning "Use variable `user-emacs-directory' or function `locate-user-emacs-file' instead of a literal path to the Emacs user directory or files."))
+    '((6 11 warning "Use variable `user-emacs-directory' or function `locate-user-emacs-file' instead of a literal path to the Emacs user directory or files."))
     (package-lint-test--run "\"~/.emacs\.d/foo\"")))
   (should (equal '() (package-lint-test--run "\"/foo/foo.emacs.dat\"")))
   (should (equal '() (package-lint-test--run ";; ~/\.emacs\.d/elpa")))
@@ -138,12 +141,27 @@ with the passed string, when it's nil, the default is used."
 (ert-deftest package-lint-test-warn-no-standard-keyword ()
   (should
    (equal
-    '((5 1 warning "You should include standard keywords: see the variable `finder-known-keywords'."))
+    '((6 1 warning "You should include standard keywords: see the variable `finder-known-keywords'."))
     (package-lint-test--run ";; Keywords: foo"))))
 
 (ert-deftest package-lint-test-no-warning-if-at-least-one-standard-keyword ()
   (should
    (equal nil (package-lint-test--run ";; Keywords: lisp foo"))))
+
+(ert-deftest package-lint-test-error-if-no-url ()
+  (should
+   (equal
+    '((1 1 error "Package should have a URL header."))
+    (package-lint-test--run "" nil nil nil nil nil "")))
+  (should
+   (equal
+    '((3 9 error "Package URLs should be a single HTTPS or HTTP URL."))
+    (package-lint-test--run "" nil nil nil nil nil ";; URL: not a URL\n")))
+  (should
+   (equal
+    '((3 9 error "Package URLs should be a single HTTPS or HTTP URL."))
+    (package-lint-test--run "" nil nil nil nil nil
+                            ";; URL: git://test/test.git\n"))))
 
 (ert-deftest package-lint-test-warn-invalid-version ()
   (should
@@ -214,17 +232,17 @@ with the passed string, when it's nil, the default is used."
 (ert-deftest package-lint-test-error-invalid-dependency ()
   (should
    (member
-    '(5 1 error "Expected (package-name \"version-num\"), but found invalid.")
+    '(6 1 error "Expected (package-name \"version-num\"), but found invalid.")
     (package-lint-test--run ";; Package-Requires: (invalid)")))
   (should
    (member
-    '(5 24 error "\"invalid\" is not a valid version string: see `version-to-list'.")
+    '(6 24 error "\"invalid\" is not a valid version string: see `version-to-list'.")
     (package-lint-test--run ";; Package-Requires: ((package-lint \"invalid\"))"))))
 
 (ert-deftest package-lint-test-error-emacs-23-dep ()
   (should
    (equal
-    '((5 24 error "You can only depend on Emacs version 24 or greater: package.el for Emacs 23 does not support the \"emacs\" pseudopackage."))
+    '((6 24 error "You can only depend on Emacs version 24 or greater: package.el for Emacs 23 does not support the \"emacs\" pseudopackage."))
     (package-lint-test--run ";; Package-Requires: ((emacs \"23\"))"))))
 
 (ert-deftest package-lint-test-accept-emacs-24+-dep ()
@@ -234,25 +252,25 @@ with the passed string, when it's nil, the default is used."
 (ert-deftest package-lint-test-error-uninstallable-dep ()
   (should
    (equal
-    '((5 24 error "Package example-nonexistent-package is not installable."))
+    '((6 24 error "Package example-nonexistent-package is not installable."))
     (package-lint-test--run ";; Package-Requires: ((example-nonexistent-package \"1\"))"))))
 
 (ert-deftest package-lint-test-warn-snapshot-dep ()
   (should
    (equal
-    '((5 24 warning "Use a non-snapshot version number for dependency on \"package-lint\" if possible."))
+    '((6 24 warning "Use a non-snapshot version number for dependency on \"package-lint\" if possible."))
     (package-lint-test--run ";; Package-Requires: ((package-lint \"20160101.1234\"))"))))
 
 (ert-deftest package-lint-test-warn-unversioned-dep ()
   (should
    (equal
-    '((5 24 warning "Use a properly versioned dependency on \"package-lint\" if possible."))
+    '((6 24 warning "Use a properly versioned dependency on \"package-lint\" if possible."))
     (package-lint-test--run ";; Package-Requires: ((package-lint \"0\"))"))))
 
 (ert-deftest package-lint-test-error-cl-lib-1.0-dep ()
   (should
    (member
-    '(5 24 error "Depend on the latest 0.x version of cl-lib rather than on version \"(1)\".
+    '(6 24 error "Depend on the latest 0.x version of cl-lib rather than on version \"(1)\".
 Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled.")
     (package-lint-test--run ";; Package-Requires: ((cl-lib \"1\"))"))))
 
@@ -263,7 +281,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-new-functions ()
   (should
    (equal
-    '((5 1 error "You should depend on (emacs \"25\") if you need `when-let'."))
+    '((6 1 error "You should depend on (emacs \"25\") if you need `when-let'."))
     (package-lint-test--run
      "(when-let ((foo (bar))) (message \"ok\"))"))))
 
@@ -287,8 +305,8 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-nonstandard-symbol-separator ()
   (should
    (equal
-    '((5 1 error "`test-thing/bar' contains a non-standard separator `/', use hyphens instead (see Elisp Coding Conventions).")
-      (6 1 error "`test-thing:bar' contains a non-standard separator `:', use hyphens instead (see Elisp Coding Conventions)."))
+    '((6 1 error "`test-thing/bar' contains a non-standard separator `/', use hyphens instead (see Elisp Coding Conventions).")
+      (7 1 error "`test-thing:bar' contains a non-standard separator `:', use hyphens instead (see Elisp Coding Conventions)."))
     (package-lint-test--run
      "(defun test-thing/bar () t)\n(defun test-thing:bar () nil)")))
   ;; But accept /= when at the end.
@@ -297,11 +315,11 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-unprefixed-definitions ()
   (should
    (equal
-    '((5 1 error "\"foo\" doesn't start with package's prefix \"test\"."))
+    '((6 1 error "\"foo\" doesn't start with package's prefix \"test\"."))
     (package-lint-test--run "(defun foo ())")))
   (should
    (equal
-    '((5 1 error "\"global-testfoo-mode\" doesn't start with package's prefix \"test\"."))
+    '((6 1 error "\"global-testfoo-mode\" doesn't start with package's prefix \"test\"."))
     (package-lint-test--run "(define-globalized-minor-mode global-testfoo-mode ignore ignore :require 'test)"))))
 
 (ert-deftest package-lint-test-accept-prefixed-definitions ()
@@ -319,7 +337,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-new-libraries ()
   (should
    (equal
-    '((5 10 error "You should depend on (emacs \"24.4\") if you need `nadvice'."))
+    '((6 10 error "You should depend on (emacs \"24.4\") if you need `nadvice'."))
     (package-lint-test--run "(require 'nadvice)"))))
 
 (ert-deftest package-lint-test-accept-new-libraries-with-dep ()
@@ -375,7 +393,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-empty-commentary ()
   (should
    (equal
-    '((3 0 error "Package should have a non-empty ;;; Commentary section."))
+    '((4 0 error "Package should have a non-empty ;;; Commentary section."))
     (package-lint-test--run "" nil nil nil nil ";;; Commentary:\n ;;   \n \n\n;;; Code:\n"))))
 
 (ert-deftest package-lint-test-accept-unprefixed-defadvice ()
@@ -387,35 +405,35 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-minor-mode-global-t ()
   (should
    (equal
-    '((5 0 error "Global minor modes must `:require' their defining file (i.e. \":require 'test\"), to support the customization variable of the same name.")
-      (5 0 warning "Use `define-globalized-minor-mode' to define global minor modes."))
+    '((6 0 error "Global minor modes must `:require' their defining file (i.e. \":require 'test\"), to support the customization variable of the same name.")
+      (6 0 warning "Use `define-globalized-minor-mode' to define global minor modes."))
     (package-lint-test--run "(define-minor-mode test-mode \"\" :global t)"))))
 
 (ert-deftest package-lint-test-globalized-minor-mode ()
   ;; Check for missing :require.
   (should
    (equal
-    '((5 0 error "Global minor modes must `:require' their defining file (i.e. \":require 'test\"), to support the customization variable of the same name."))
+    '((6 0 error "Global minor modes must `:require' their defining file (i.e. \":require 'test\"), to support the customization variable of the same name."))
     (package-lint-test--run "(define-globalized-minor-mode test-mode ignore ignore)")))
   ;; Check for incorrect :require.
   (should
    (equal
-    '((5 0 error "Global minor modes must `:require' their defining file (i.e. \":require 'test\"), to support the customization variable of the same name."))
+    '((6 0 error "Global minor modes must `:require' their defining file (i.e. \":require 'test\"), to support the customization variable of the same name."))
     (package-lint-test--run "(define-globalized-minor-mode test-mode ignore ignore :require 'blargh)")))
   ;; Check for undocumented alias.
   (should
    (equal
-    '((5 0 warning "Use `define-globalized-minor-mode' to define global minor modes."))
+    '((6 0 warning "Use `define-globalized-minor-mode' to define global minor modes."))
     (package-lint-test--run "(define-global-minor-mode test-mode ignore ignore :require 'test)"))))
 
 (ert-deftest package-lint-test-error-defgroup-name ()
   (should
    (equal
-    '((5 0 error "Customization groups should not end in \"-mode\" unless that name would conflict with their parent group."))
+    '((6 0 error "Customization groups should not end in \"-mode\" unless that name would conflict with their parent group."))
     (package-lint-test--run "(defgroup test-mode nil \"\")")))
   (should
    (equal
-    '((5 0 error "Customization groups should not end in \"-mode\" unless that name would conflict with their parent group."))
+    '((6 0 error "Customization groups should not end in \"-mode\" unless that name would conflict with their parent group."))
     (package-lint-test--run "(defgroup test-mode nil \"\" :group 'testing)")))
   (should
    (equal
