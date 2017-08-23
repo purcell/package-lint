@@ -723,7 +723,12 @@ DESC is a struct as returned by `package-buffer-info'."
           (unless (cl-search `(:group ',parent) def :test #'equal)
             (package-lint--error-at-point
              'error
-             "Customization groups should not end in \"-mode\" unless that name would conflict with their parent group.")))))))
+             "Customization groups should not end in \"-mode\" unless that name would conflict with their parent group."))))))
+
+  (unless (memq :group def)
+    (package-lint--error-at-point
+     'error
+     "Customization groups should specify a parent via `:group'.")))
 
 
 ;;; Helpers

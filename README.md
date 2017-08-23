@@ -49,7 +49,6 @@ Additional checks for future versions:
 - WARN: suggest cl-lib vs cl
 - non-use of standard keywords
 - checkdoc failures for interactive functions / defcustoms
-- presence of :group for each defgroup
 - trailing whitespace?
 - themes which aren't in a matching *-theme.el file
 - use of unsafe local variables
