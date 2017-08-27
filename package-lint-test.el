@@ -59,6 +59,9 @@ it's nil, the default is used."
     (should (equal (package-lint-test--run "(kbd \"C-c x n\")")
                    `((6 15 warning ,reserved-message))))
 
+    ;; [C-keyname] bindings should work fine
+    (should-not (package-lint-test--run "(define-key map [C-return] 'something)"))
+
     ;; C-c followed by a control character or a digit
     (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-c 1\"))")
                    nil))
