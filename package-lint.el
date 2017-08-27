@@ -707,10 +707,6 @@ DESC is a struct as returned by `package-buffer-info'."
 
 (defun package-lint--check-globalized-minor-mode (def)
   "Offer up concerns about the global minor mode definition DEF."
-  (unless (eq 'define-globalized-minor-mode (car def))
-    (package-lint--error-at-point
-     'warning
-     "Use `define-globalized-minor-mode' to define global minor modes."))
   (let ((feature (intern (package-lint--provided-feature))))
     (unless (cl-search `(:require ',feature) def :test #'equal)
       (package-lint--error-at-point

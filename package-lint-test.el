@@ -396,8 +396,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-minor-mode-global-t ()
   (should
    (equal
-    '((6 0 error "Global minor modes must `:require' their defining file (i.e. \":require 'test\"), to support the customization variable of the same name.")
-      (6 0 warning "Use `define-globalized-minor-mode' to define global minor modes."))
+    '((6 0 error "Global minor modes must `:require' their defining file (i.e. \":require 'test\"), to support the customization variable of the same name."))
     (package-lint-test--run "(define-minor-mode test-mode \"\" :global t)"))))
 
 (ert-deftest package-lint-test-globalized-minor-mode ()
@@ -410,12 +409,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should
    (equal
     '((6 0 error "Global minor modes must `:require' their defining file (i.e. \":require 'test\"), to support the customization variable of the same name."))
-    (package-lint-test--run "(define-globalized-minor-mode test-mode ignore ignore :require 'blargh)")))
-  ;; Check for undocumented alias.
-  (should
-   (equal
-    '((6 0 warning "Use `define-globalized-minor-mode' to define global minor modes."))
-    (package-lint-test--run "(define-global-minor-mode test-mode ignore ignore :require 'test)"))))
+    (package-lint-test--run "(define-globalized-minor-mode test-mode ignore ignore :require 'blargh)"))))
 
 (ert-deftest package-lint-test-error-defgroup-name ()
   (should
