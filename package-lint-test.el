@@ -54,8 +54,7 @@ it's nil, the default is used."
                    `((6 13 warning ,reserved-message))))
     (should (equal (package-lint-test--run "(local-set-key \"\\C-cF\" 'something)")
                    `((6 34 warning ,reserved-message))))
-    (should (equal (package-lint-test--run "(kbd \"C-d n\")")
-                   nil))
+    (should-not (package-lint-test--run "(kbd \"C-d n\")"))
     (should (equal (package-lint-test--run "(kbd \"C-c x n\")")
                    `((6 15 warning ,reserved-message))))
 
@@ -63,54 +62,43 @@ it's nil, the default is used."
     (should-not (package-lint-test--run "(define-key map [C-return] 'something)"))
 
     ;; C-c followed by a control character or a digit
-    (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-c 1\"))")
-                   nil))
-    (should (equal (package-lint-test--run "(global-set-key \"\\C-c1\" 'something)")
-                   nil))
+    (should-not (package-lint-test--run "(defcustom test-something (kbd \"C-c 1\"))"))
+    (should-not (package-lint-test--run "(global-set-key \"\\C-c1\" 'something)"))
 
     ;; C-c followed by {, }, <, >, : or ;
-    (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-c <\"))")
-                   nil))
-    (should (equal (package-lint-test--run "(define-key map \"\\C-c<\" 'something)")
-                   nil))
+    (should-not (package-lint-test--run "(defcustom test-something (kbd \"C-c <\"))"))
+    (should-not (package-lint-test--run "(define-key map \"\\C-c<\" 'something)"))
 
     ;; Function keys <F5> through <F9> without modifier keys
     (should (equal (package-lint-test--run "(define-key map (kbd \"<f5>\") 'something)")
                    `((6 40 warning ,reserved-message))))
     (should (equal (package-lint-test--run (concat "(global-set-key [" "f5] 'something)"))
                    `((6 32 warning ,reserved-message))))
-    (should (equal (package-lint-test--run (concat "(global-set-key [" "f4] 'something)"))
-                   nil))
+    (should-not (package-lint-test--run (concat "(global-set-key [" "f4] 'something)")))
 
     ;; C-c followed by any other ASCII punctuation or symbol character
-    (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-c .\"))")
-                   nil))
-    (should (equal (package-lint-test--run "(global-set-key \"\\C-c.\" 'something)")
-                   nil))
+    (should-not (package-lint-test--run "(defcustom test-something (kbd \"C-c .\"))"))
+    (should-not (package-lint-test--run "(global-set-key \"\\C-c.\" 'something)"))
 
     ;; But C-c followed by another modifier sequence is allowed
-    (should (equal (package-lint-test--run "(global-set-key (kbd \"C-c C-x d\") 'something)")
-                   nil))
+    (should-not (package-lint-test--run "(global-set-key (kbd \"C-c C-x d\") 'something)"))
 
     ;; Don't bind C-h following any prefix character
     (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x C-h\"))")
                    `((6 41 warning ,reserved-message))))
-    (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-h C-x\"))")
-                   nil))
+    (should-not (package-lint-test--run "(defcustom test-something (kbd \"C-h C-x\"))"))
 
     ;; Don't bind a key sequence ending in <C-g>
     (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x C-g\"))")
                    `((6 41 warning ,reserved-message))))
     (should (equal (package-lint-test--run "(global-set-key \"\\C-c\\C-g\" 'something)")
                    `((6 38 warning ,reserved-message))))
-    (should (equal (package-lint-test--run "(global-set-key \"C-x g\" 'something)")
-                   nil))
+    (should-not (package-lint-test--run "(global-set-key \"C-x g\" 'something)"))
 
     ;; Don't bind a key sequence ending in <ESC> except following another <ESC>
     (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC>\")")
                    `((6 43 warning ,reserved-message))))
-    (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC> <ESC>\"))")
-                   nil))))
+    (should-not (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC> <ESC>\"))"))))
 
 (ert-deftest package-lint-test-error-autoloads-on-private-functions ()
   (should (equal '() (package-lint-test--run "(defun test--private-function ())")))
