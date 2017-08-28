@@ -415,7 +415,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should
    (equal
     '((6 0 error "Customization groups should not end in \"-mode\" unless that name would conflict with their parent group."))
-    (package-lint-test--run "(defgroup test-mode nil \"\")")))
+    (package-lint-test--run "(defgroup test-mode nil \"\" :group 'programming)")))
   (should
    (equal
     '((6 0 error "Customization groups should not end in \"-mode\" unless that name would conflict with their parent group."))
@@ -424,6 +424,12 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
    (equal
     '()
     (package-lint-test--run "(defgroup test-mode nil \"\" :group 'test)"))))
+
+(ert-deftest package-lint-test-error-defgroup-no-parent ()
+  (should
+   (equal
+    '((6 0 error "Customization groups should specify a parent via `:group'."))
+    (package-lint-test--run "(defgroup test nil \"\")"))))
 
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
