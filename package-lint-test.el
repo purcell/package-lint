@@ -94,6 +94,8 @@ it's nil, the default is used."
     (should (equal (package-lint-test--run "(global-set-key \"\\C-c\\C-g\" 'something)")
                    `((6 38 warning ,reserved-message))))
     (should-not (package-lint-test--run "(global-set-key \"C-x g\" 'something)"))
+    ;; But we allow C-g alone, which is acceptable for some special cases
+    (should-not (package-lint-test--run "(defcustom test-something (kbd \"C-g\"))"))
 
     ;; Don't bind a key sequence ending in <ESC> except following another <ESC>
     (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC>\")")
