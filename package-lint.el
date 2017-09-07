@@ -752,7 +752,7 @@ DESC is a struct as returned by `package-buffer-info'."
   "Return a message if the listified key sequence LKS is invalid, otherwise nil."
   (let* ((modifiers (event-modifiers lks))
          (basic-type (event-basic-type lks)))
-    (when (or (and (> 1 (length lks)) (equal (car (last lks)) ?\C-g))
+    (when (or (and (> (length lks) 1) (equal (car (last lks)) ?\C-g))
               (and (equal (car (last lks)) ?\e)
                    (not (equal (nthcdr (- (length lks) 2) lks)
                                '(?\e ?\e))))
