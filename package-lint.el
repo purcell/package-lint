@@ -965,4 +965,7 @@ otherwise."
          nil t)))))
 
 (provide 'package-lint)
+;; Local Variables:
+;; indent-tabs-mode: nil
+;; End:
 ;;; package-lint.el ends here
