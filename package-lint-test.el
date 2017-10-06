@@ -144,7 +144,7 @@ it's nil, the default is used."
 (ert-deftest package-lint-test-error-if-no-url ()
   (should
    (equal
-    '((1 1 error "Package should have a URL header."))
+    '((1 1 error "Package should have a Homepage or URL header."))
     (package-lint-test--run "" nil nil nil nil nil "")))
   (should
    (equal
@@ -155,6 +155,10 @@ it's nil, the default is used."
     '((3 9 error "Package URLs should be a single HTTPS or HTTP URL."))
     (package-lint-test--run "" nil nil nil nil nil
                             ";; URL: git://test/test.git\n"))))
+
+(ert-deftest package-lint-test-accept-homepage ()
+  (should (equal '() (package-lint-test--run "" nil nil nil nil nil
+                                             ";; Homepage: https://package-lint.test/foo\n"))))
 
 (ert-deftest package-lint-test-warn-invalid-version ()
   (should
