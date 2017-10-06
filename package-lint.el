@@ -358,7 +358,7 @@ Instead it should use `user-emacs-directory' or `locate-user-emacs-file'."
 
 (defun package-lint--check-url-header ()
   "Verify that the package has an HTTPS or HTTP Homepage/URL header."
-  (if (package-lint--goto-header "\\(?:URL\\|Homepage\\)")
+  (if (package-lint--goto-header "\\(?:x-\\)?\\(?:URL\\|Homepage\\)")
       (let ((url (match-string 3))
             (url-start (match-beginning 3)))
         (unless (and (equal (thing-at-point 'url) url)
