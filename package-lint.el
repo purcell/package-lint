@@ -358,18 +358,19 @@ Instead it should use `user-emacs-directory' or `locate-user-emacs-file'."
 
 (defun package-lint--check-url-header ()
   "Verify that the package has an HTTPS or HTTP URL header."
-  (let ((url (lm-homepage)))
-    (if url
-        (unless (string-match-p "^https?://" url)
-          (goto-char (point-min))
-          (search-forward url nil t)
-          (goto-char (match-beginning 0))
-          (package-lint--error-at-point
+  (if (package-lint--goto-header "URL")
+      (let ((url (match-string 3))
+            (url-start (match-beginning 3)))
+        (unless (and (equal (thing-at-point 'url) url)
+                     (string-match-p "^https?://" url))
+          (package-lint--error
+           (line-number-at-pos)
+           (1+ (- url-start (line-beginning-position)))
            'error
-           "Package URLs should be a single HTTPS or HTTP URL."))
-      (package-lint--error
-       1 1 'error
-       "Package should have a URL header."))))
+           "Package URLs should be a single HTTPS or HTTP URL.")))
+    (package-lint--error
+     1 1 'error
+     "Package should have a URL header.")))
 
 (defun package-lint--check-dependency-list ()
   "Check the contents of the \"Package-Requires\" header.

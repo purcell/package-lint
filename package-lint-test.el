@@ -148,17 +148,13 @@ it's nil, the default is used."
     (package-lint-test--run "" nil nil nil nil nil "")))
   (should
    (equal
-    '((3 8 error "Package URLs should be a single HTTPS or HTTP URL."))
+    '((3 9 error "Package URLs should be a single HTTPS or HTTP URL."))
     (package-lint-test--run "" nil nil nil nil nil ";; URL: not a URL\n")))
   (should
    (equal
-    '((3 8 error "Package URLs should be a single HTTPS or HTTP URL."))
+    '((3 9 error "Package URLs should be a single HTTPS or HTTP URL."))
     (package-lint-test--run "" nil nil nil nil nil
                             ";; URL: git://test/test.git\n"))))
-
-(ert-deftest package-lint-test-accept-valid-homepage-url ()
-  (should (equal '() (package-lint-test--run "" nil nil nil nil nil
-                                             ";; Homepage: https://package-lint.test/foo\n"))))
 
 (ert-deftest package-lint-test-warn-invalid-version ()
   (should
