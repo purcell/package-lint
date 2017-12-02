@@ -75,6 +75,7 @@ it's nil, the default is used."
     (should (equal (package-lint-test--run "(global-set-key [f5] 'something)")
                    `((6 32 warning ,reserved-message))))
     (should-not (package-lint-test--run "(global-set-key [f4] 'something)"))
+    (should-not (package-lint-test--run "(global-set-key (kbd \"C-c <tab>\") 'something)"))
 
     ;; C-c followed by any other ASCII punctuation or symbol character
     (should-not (package-lint-test--run "(defcustom test-something (kbd \"C-c .\"))"))
