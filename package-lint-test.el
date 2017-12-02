@@ -72,9 +72,9 @@ it's nil, the default is used."
     ;; Function keys <F5> through <F9> without modifier keys
     (should (equal (package-lint-test--run "(define-key map (kbd \"<f5>\") 'something)")
                    `((6 40 warning ,reserved-message))))
-    (should (equal (package-lint-test--run (concat "(global-set-key [" "f5] 'something)"))
+    (should (equal (package-lint-test--run "(global-set-key [f5] 'something)")
                    `((6 32 warning ,reserved-message))))
-    (should-not (package-lint-test--run (concat "(global-set-key [" "f4] 'something)")))
+    (should-not (package-lint-test--run "(global-set-key [f4] 'something)"))
 
     ;; C-c followed by any other ASCII punctuation or symbol character
     (should-not (package-lint-test--run "(defcustom test-something (kbd \"C-c .\"))"))
