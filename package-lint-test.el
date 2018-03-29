@@ -304,6 +304,13 @@ it's nil, the default is used."
     (should
      (equal '() (package-lint-test--run ";; Package-Requires: ((package-lint-foobar \"0.3.0\"))")))))
 
+(ert-deftest package-lint-test-dont-warn-dependency-too-high-4 ()
+  (let ((package-lint-accepted-dependencies '((package-lint-foobar (0 6 0))))
+        (package-archive-contents nil))
+    (package-lint-test-add-package-lint-foobar-to-archive '(0 5 0))
+    (should
+     (equal '() (package-lint-test--run ";; Package-Requires: ((package-lint-foobar \"0.6.0\"))")))))
+
 (ert-deftest package-lint-test-error-cl-lib-1.0-dep ()
   (should
    (member

@@ -438,6 +438,31 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
           (format "Expected (package-name \"version-num\"), but found %S." entry)))))
     valid-deps))
 
+(defvar package-lint-accepted-dependencies nil
+  "List of pairs (PACKAGE-NAME VERSION) for which package-lint won't complain.
+
+If the checked file requires a dependency whose name and version
+are in this list, package-lint won't check the package-archives
+for the availability of the dependency's version.  This is useful
+for package authors who release several inter-dependent packages
+at the same time: an author won't have to first release the
+depended-upon package, wait for the package archive to be
+updated, and then release the depending package.
+
+Pay attention: the depended-upon package must still be in a
+package archive.")
+
+(defun package-lint--accepted-dependency-p (package-name package-version)
+  "Return non-nil if PACKAGE-NAME at PACKAGE-VERSION is in `package-lint-accepted-dependencies'."
+  (let ((dependency (list package-name package-version)))
+    (cl-find dependency package-lint-accepted-dependencies :test #'equal)))
+
+(defun package-lint--package-dependency-too-high-p (package-name package-version best-version)
+  "Check that PACKAGE-NAME at PACKAGE-VERSION can be installed from an archive.
+BEST-VERSION represent the most recent version in the archive."
+  (and (version-list-< best-version package-version)
+       (not (package-lint--accepted-dependency-p package-name package-version))))
+
 (defun package-lint--check-package-installable (archive-entry package-version line-no offset)
   "Check that ARCHIVE-ENTRY is installable from a configured package archive.
 
@@ -446,7 +471,7 @@ required version PACKAGE-VERSION.  If not, raise an error for
 LINE-NO at OFFSET."
   (let* ((package-name (car archive-entry))
          (best-version (package-lint--highest-installable-version-of package-name)))
-    (when (version-list-< best-version package-version)
+    (when (package-lint--package-dependency-too-high-p package-name package-version best-version)
       (package-lint--error
        line-no offset 'warning
        (format "Version dependency for %s appears too high: try %s" package-name
