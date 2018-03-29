@@ -879,7 +879,7 @@ Prefix is returned without any `-mode' suffix."
 (defun package-lint--check-objects-by-regexp (regexp function)
   "Check all objects with the literal printed form matching REGEXP.
 
-The objects are parsed with `read'. The FUNCTION is passed the
+The objects are parsed with `read'.  The FUNCTION is passed the
 read object, with the point at the beginning of the match.
 
 S-expressions in comments or comments, partial s-expressions, or
