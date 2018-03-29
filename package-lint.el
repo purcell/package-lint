@@ -438,6 +438,20 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
           (format "Expected (package-name \"version-num\"), but found %S." entry)))))
     valid-deps))
 
+(defun package-lint--check-package-installable (archive-entry package-version line-no offset)
+  "Check that ARCHIVE-ENTRY is installable from a configured package archive.
+
+Check that package described by ARCHIVE-ENTRY can be installed at
+required version PACKAGE-VERSION.  If not, raise an error for
+LINE-NO at OFFSET."
+  (let* ((package-name (car archive-entry))
+         (best-version (package-lint--lowest-installable-version-of package-name)))
+    (when (version-list-< best-version package-version)
+      (package-lint--error
+       line-no offset 'warning
+       (format "Version dependency for %s appears too high: try %s" package-name
+               (package-version-join best-version))))))
+
 (defun package-lint--check-packages-installable (valid-deps)
   "Check that all VALID-DEPS are available for installation."
   (pcase-dolist (`(,package-name ,package-version ,line-no ,offset) valid-deps)
@@ -449,12 +463,7 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
       ;; Not 'emacs
       (let ((archive-entry (assq package-name package-archive-contents)))
         (if archive-entry
-            (let ((best-version (package-lint--lowest-installable-version-of package-name)))
-              (when (version-list-< best-version package-version)
-                (package-lint--error
-                 line-no offset 'warning
-                 (format "Version dependency for %s appears too high: try %s" package-name
-                         (package-version-join best-version)))))
+            (package-lint--check-package-installable archive-entry package-version line-no offset)
           (package-lint--error
            line-no offset 'error
            (format "Package %S is not installable." package-name)))))))
