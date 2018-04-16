@@ -137,6 +137,7 @@ This is bound dynamically while the checks run.")
           define-alternative
           define-error
           display-monitor-attributes-list
+          eieio-object-class
           file-acl
           file-extended-attributes
           fill-single-char-nobreak-p
