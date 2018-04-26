@@ -445,7 +445,7 @@ Check that package described by ARCHIVE-ENTRY can be installed at
 required version PACKAGE-VERSION.  If not, raise an error for
 LINE-NO at OFFSET."
   (let* ((package-name (car archive-entry))
-         (best-version (package-lint--lowest-installable-version-of package-name)))
+         (best-version (package-lint--highest-installable-version-of package-name)))
     (when (version-list-< best-version package-version)
       (package-lint--error
        line-no offset 'warning
@@ -792,12 +792,12 @@ Lines consisting only of whitespace or empty comments are considered empty."
                     (= 0 (forward-line))))
         (eobp)))))
 
-(defun package-lint--lowest-installable-version-of (package)
-  "Return the lowest version of PACKAGE available for installation."
+(defun package-lint--highest-installable-version-of (package)
+  "Return the highest version of PACKAGE available for installation."
   (let ((descriptors (cdr (assq package package-archive-contents))))
     (if (fboundp 'package-desc-version)
         (car (sort (mapcar 'package-desc-version descriptors)
-                   #'version-list-<))
+                   (lambda (v1 v2) (not (version-list-< v1 v2)))))
       (aref descriptors 0))))
 
 (defun package-lint--goto-header (header-name)

@@ -295,6 +295,15 @@ it's nil, the default is used."
     (should
      (equal '() (package-lint-test--run ";; Package-Requires: ((package-lint-foobar \"0.5.0\"))")))))
 
+(ert-deftest package-lint-test-dont-warn-dependency-too-high-3 ()
+  (let ((package-archive-contents nil))
+    ;; Sometimes a package appears with different versions from
+    ;; different archives:
+    (package-lint-test-add-package-lint-foobar-to-archive '(0 5 0) "gnu")
+    (package-lint-test-add-package-lint-foobar-to-archive '(0 1 0) "melpa-stable")
+    (should
+     (equal '() (package-lint-test--run ";; Package-Requires: ((package-lint-foobar \"0.3.0\"))")))))
+
 (ert-deftest package-lint-test-error-cl-lib-1.0-dep ()
   (should
    (member
