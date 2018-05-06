@@ -438,6 +438,20 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
           (format "Expected (package-name \"version-num\"), but found %S." entry)))))
     valid-deps))
 
+(defun package-lint--check-package-installable (archive-entry package-version line-no offset)
+  "Check that ARCHIVE-ENTRY is installable from a configured package archive.
+
+Check that package described by ARCHIVE-ENTRY can be installed at
+required version PACKAGE-VERSION.  If not, raise an error for
+LINE-NO at OFFSET."
+  (let* ((package-name (car archive-entry))
+         (best-version (package-lint--highest-installable-version-of package-name)))
+    (when (version-list-< best-version package-version)
+      (package-lint--error
+       line-no offset 'warning
+       (format "Version dependency for %s appears too high: try %s" package-name
+               (package-version-join best-version))))))
+
 (defun package-lint--check-packages-installable (valid-deps)
   "Check that all VALID-DEPS are available for installation."
   (pcase-dolist (`(,package-name ,package-version ,line-no ,offset) valid-deps)
@@ -449,12 +463,7 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
       ;; Not 'emacs
       (let ((archive-entry (assq package-name package-archive-contents)))
         (if archive-entry
-            (let ((best-version (package-lint--lowest-installable-version-of package-name)))
-              (when (version-list-< best-version package-version)
-                (package-lint--error
-                 line-no offset 'warning
-                 (format "Version dependency for %s appears too high: try %s" package-name
-                         (package-version-join best-version)))))
+            (package-lint--check-package-installable archive-entry package-version line-no offset)
           (package-lint--error
            line-no offset 'error
            (format "Package %S is not installable." package-name)))))))
@@ -783,12 +792,12 @@ Lines consisting only of whitespace or empty comments are considered empty."
                     (= 0 (forward-line))))
         (eobp)))))
 
-(defun package-lint--lowest-installable-version-of (package)
-  "Return the lowest version of PACKAGE available for installation."
+(defun package-lint--highest-installable-version-of (package)
+  "Return the highest version of PACKAGE available for installation."
   (let ((descriptors (cdr (assq package package-archive-contents))))
     (if (fboundp 'package-desc-version)
         (car (sort (mapcar 'package-desc-version descriptors)
-                   #'version-list-<))
+                   (lambda (v1 v2) (not (version-list-< v1 v2)))))
       (aref descriptors 0))))
 
 (defun package-lint--goto-header (header-name)
@@ -879,7 +888,7 @@ Prefix is returned without any `-mode' suffix."
 (defun package-lint--check-objects-by-regexp (regexp function)
   "Check all objects with the literal printed form matching REGEXP.
 
-The objects are parsed with `read'. The FUNCTION is passed the
+The objects are parsed with `read'.  The FUNCTION is passed the
 read object, with the point at the beginning of the match.
 
 S-expressions in comments or comments, partial s-expressions, or

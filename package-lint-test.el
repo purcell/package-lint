@@ -28,6 +28,16 @@
 (require 'package-lint)
 (require 'ert)
 
+(defun package-lint-test-add-package-lint-foobar-to-archive (version &optional archive)
+  "Add a package-lint-foobar package to melpa-stable archive.
+VERSION is a list of numbers, e.g., (0 5 0) to represent version
+0.5.0."
+  (package--add-to-archive-contents
+   `(package-lint-foobar . [,version ((emacs (25 1))) "Some documentation" single
+                                     ((:commit . "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+                                      (:url . "https://gitlab.com/somewhere"))])
+   (or archive "melpa-stable")))
+
 (defun package-lint-test--run (contents &optional header version footer provide commentary url)
   "Run `package-lint-buffer' on a temporary buffer with given CONTENTS.
 
@@ -264,6 +274,35 @@ it's nil, the default is used."
    (equal
     '((6 24 warning "Use a properly versioned dependency on \"package-lint\" if possible."))
     (package-lint-test--run ";; Package-Requires: ((package-lint \"0\"))"))))
+
+(ert-deftest package-lint-test-warn-dependency-too-high ()
+  (let ((package-archive-contents nil))
+    (package-lint-test-add-package-lint-foobar-to-archive '(0 5 0))
+    (should
+     (equal
+      '((6 24 warning "Version dependency for package-lint-foobar appears too high: try 0.5.0"))
+      (package-lint-test--run ";; Package-Requires: ((package-lint-foobar \"0.6.0\"))")))))
+
+(ert-deftest package-lint-test-dont-warn-dependency-too-high-1 ()
+  (let ((package-archive-contents nil))
+    (package-lint-test-add-package-lint-foobar-to-archive '(0 5 0))
+    (should
+     (equal '() (package-lint-test--run ";; Package-Requires: ((package-lint-foobar \"0.5.0\"))")))))
+
+(ert-deftest package-lint-test-dont-warn-dependency-too-high-2 ()
+  (let ((package-archive-contents nil))
+    (package-lint-test-add-package-lint-foobar-to-archive '(0 6 0))
+    (should
+     (equal '() (package-lint-test--run ";; Package-Requires: ((package-lint-foobar \"0.5.0\"))")))))
+
+(ert-deftest package-lint-test-dont-warn-dependency-too-high-3 ()
+  (let ((package-archive-contents nil))
+    ;; Sometimes a package appears with different versions from
+    ;; different archives:
+    (package-lint-test-add-package-lint-foobar-to-archive '(0 5 0) "gnu")
+    (package-lint-test-add-package-lint-foobar-to-archive '(0 1 0) "melpa-stable")
+    (should
+     (equal '() (package-lint-test--run ";; Package-Requires: ((package-lint-foobar \"0.3.0\"))")))))
 
 (ert-deftest package-lint-test-error-cl-lib-1.0-dep ()
   (should
