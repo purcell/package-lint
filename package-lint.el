@@ -232,7 +232,8 @@ This is bound dynamically while the checks run.")
     "org-babel-execute:"
     "org-babel-prep-session:"
     "org-babel-variable-assignments:"
-    "org-babel-default-header-args:"))
+    "org-babel-default-header-args:"
+    "pcomplete/"))
   "A regexp matching whitelisted non-standard symbol prefixes.")
 
 (defun package-lint--check-all ()
