@@ -147,6 +147,7 @@ This is bound dynamically while the checks run.")
           group-real-gid
           hash-table-keys
           hash-table-values
+          line-pixel-height
           macrop
           remove-function
           set-file-acl
@@ -164,6 +165,7 @@ This is bound dynamically while the checks run.")
           window-bottom-divider-width
           window-header-line-height
           window-mode-line-height
+          window-pixel-height
           window-right-divider-width
           window-scroll-bar-width
           window-text-pixel-size
