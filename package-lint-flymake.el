@@ -22,7 +22,8 @@
 ;;; Commentary:
 
 ;; Flymake is the built-in Emacs package to support on-the-fly syntax
-;; checking.  This file adds support for flymake to `package-lint'.
+;; checking.  This library adds support for flymake to `package-lint'.
+;; It requires Emacs 26.
 
 ;; Enable it by calling `package-lint-setup-flymake' from a
 ;; file-visiting buffer.  To enable in all `emacs-lisp-mode' buffers:
@@ -37,6 +38,9 @@
 (require 'package-lint)
 
 (defvar-local package-lint--flymake-proc nil)
+
+(declare-function flymake-diag-region "flymake")
+(declare-function flymake-make-diagnostic "flymake")
 
 (defun package-lint-flymake (report-fn &rest _args)
   "A Flymake backend for `package-lint'.
