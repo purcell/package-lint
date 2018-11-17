@@ -2,6 +2,10 @@
 
 ;; Copyright (C) 2018 J. Alexander Branham (alex DOT branham AT gmail DOT com)
 
+;; Package-Requires: ((emacs "26") (package-lint "0.5"))
+;; Package-Version: 0
+;; Homepage: https://github.com/purcell/package-lint
+
 ;; This file is not part of GNU Emacs.
 
 ;; This is free software; you can redistribute it and/or modify it under
@@ -62,10 +66,8 @@ Use `package-lint-setup-flymake' to add this to
 ;;;###autoload
 (defun package-lint-setup-flymake ()
   "Setup package-lint integration with Flymake."
-  (if (< emacs-major-version 26)
-      (error "Package-lint-flymake requires Emacs 26 or later")
-    (add-hook 'flymake-diagnostic-functions #'package-lint-flymake nil t)
-    (flymake-mode)))
+  (add-hook 'flymake-diagnostic-functions #'package-lint-flymake nil t)
+  (flymake-mode))
 
 (provide 'package-lint-flymake)
 
