@@ -66,8 +66,10 @@ Use `package-lint-setup-flymake' to add this to
 ;;;###autoload
 (defun package-lint-setup-flymake ()
   "Setup package-lint integration with Flymake."
-  (add-hook 'flymake-diagnostic-functions #'package-lint-flymake nil t)
-  (flymake-mode))
+  (if (< emacs-major-version 26)
+      (error "Package-lint-flymake requires Emacs 26 or later")
+    (add-hook 'flymake-diagnostic-functions #'package-lint-flymake nil t)
+    (flymake-mode)))
 
 (provide 'package-lint-flymake)
 
