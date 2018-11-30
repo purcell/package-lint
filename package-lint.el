@@ -264,6 +264,7 @@ This is bound dynamically while the checks run.")
               (package-lint--check-package-summary desc)
               (package-lint--check-provide-form desc)))
           (package-lint--check-no-use-of-cl)
+          (package-lint--check-no-use-of-cl-lib-sublibraries)
           (let ((deps (package-lint--check-dependency-list)))
             (package-lint--check-lexical-binding-requires-emacs-24 deps)
             (package-lint--check-libraries-available-in-emacs deps)
@@ -543,6 +544,16 @@ REGEXP is (concat RX-START REGEXP* RX-END) for each REGEXP*."
         (package-lint--error-at-point
          'warning
          "Replace deprecated `cl' with `cl-lib'.  The `cl-libify' package can help with this.")))))
+
+(defun package-lint--check-no-use-of-cl-lib-sublibraries ()
+  "Warn about use of `cl-macs', `cl-seq' etc."
+  (save-excursion
+    (save-match-data
+      (goto-char (point-min))
+      (when (re-search-forward "(\\s-*?require\\s-*?'cl-\\(?:macs\\|seq\\)\\_>" nil t)
+        (package-lint--error-at-point
+         'warning
+         "This file is not in the `cl-lib' ELPA compatibility package: require `cl-lib' instead.")))))
 
 (defun package-lint--check-libraries-available-in-emacs (valid-deps)
   "Warn about use of libraries that are not available in the Emacs version in VALID-DEPS."
