@@ -265,6 +265,7 @@ This is bound dynamically while the checks run.")
               (package-lint--check-provide-form desc)))
           (package-lint--check-no-use-of-cl)
           (package-lint--check-no-use-of-cl-lib-sublibraries)
+          (package-lint--check-eval-after-load)
           (let ((deps (package-lint--check-dependency-list)))
             (package-lint--check-lexical-binding-requires-emacs-24 deps)
             (package-lint--check-libraries-available-in-emacs deps)
@@ -534,6 +535,16 @@ REGEXP is (concat RX-START REGEXP* RX-END) for each REGEXP*."
                    (format "You should depend on (emacs \"%s\") if you need `%s'."
                            (mapconcat #'number-to-string added-in-version ".")
                            sym)))))))))))
+
+(defun package-lint--check-eval-after-load ()
+  "Warn about use of `eval-after-load' and co."
+  (save-excursion
+    (save-match-data
+      (goto-char (point-min))
+      (when (re-search-forward "(\\s-*?\\(\\(?:with-\\)?eval-after-load\\)\\_>" nil t)
+        (package-lint--error-at-point
+         'warning
+         (format "`%s' is for use in configurations, and should rarely be used in packages." (match-string 1)))))))
 
 (defun package-lint--check-no-use-of-cl ()
   "Warn about use of deprecated `cl' library."

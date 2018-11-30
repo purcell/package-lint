@@ -54,7 +54,6 @@ Additional checks for future versions:
 - use of unsafe local variables
 - use of emacs version dependencies
 - local variable set in header line
-- (with-)eval-after-load shouldn't generally appear in packages
 - using commentary to talk about load[- ]path and installation
 - lack of autoloads
 - references to README files which won't be bundled in a package
