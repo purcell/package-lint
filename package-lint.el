@@ -737,7 +737,7 @@ Valid definition names are:
       (progn
         (goto-char position)
         (looking-at-p (rx (*? space) "(" (*? space)
-                          "defadvice"
+                          (or "defadvice" "cl-defmethod")
                           symbol-end)))))
 
 (defun package-lint--check-defs-prefix (definitions)
