@@ -721,6 +721,25 @@ DESC is a struct as returned by `package-buffer-info'."
            (format "`%s' contains a non-standard separator `%s', use hyphens instead (see Elisp Coding Conventions)."
                    name (substring-no-properties name match-pos (1+ match-pos)))))))))
 
+(defun package-lint--valid-definition-name-p (name prefix-re position)
+  "Return non-nil if NAME denotes a valid definition name.
+
+Valid definition names are:
+
+- a NAME starting with PREFIX-RE, a regular expression
+  representing the current package prefix,
+
+- a NAME matching `package-lint--sane-prefixes', or
+
+- a NAME whose POSITION in the buffer denotes a global definition."
+  (or (string-match-p prefix-re name)
+      (string-match-p package-lint--sane-prefixes name)
+      (progn
+        (goto-char position)
+        (looking-at-p (rx (*? space) "(" (*? space)
+                          "defadvice"
+                          symbol-end)))))
+
 (defun package-lint--check-defs-prefix (definitions)
   "Verify that symbol DEFINITIONS start with package prefix."
   (let ((prefix (package-lint--get-package-prefix)))
@@ -735,11 +754,7 @@ DESC is a struct as returned by `package-buffer-info'."
                                  (seq "-" (* any) "-mode"))
                              string-end))))))
         (pcase-dolist (`(,name . ,position) definitions)
-          (unless (or (string-match-p prefix-re name)
-                      (string-match-p package-lint--sane-prefixes name)
-                      (progn
-                        (goto-char position)
-                        (looking-at-p (rx (*? space) "(" (*? space) "defadvice" symbol-end))))
+          (unless (package-lint--valid-definition-name-p name prefix-re position)
             (let ((line-no (line-number-at-pos position)))
               (package-lint--error
                line-no 1 'error
