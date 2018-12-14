@@ -439,6 +439,9 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   ;; confused by weird spacing.
   (should (equal '() (package-lint-test--run "   (  defadvice \t\n\n foo (before ignore))"))))
 
+(ert-deftest package-lint-test-accept-unprefixed-cl-defmethod ()
+  (should (equal '() (package-lint-test--run "(cl-defmethod foo ()"))))
+
 (ert-deftest package-lint-test-minor-mode-global-t ()
   (should
    (equal
