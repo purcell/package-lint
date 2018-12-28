@@ -768,12 +768,17 @@ Valid definition names are:
 
 (defun package-lint--check-globalized-minor-mode (def)
   "Offer up concerns about the global minor mode definition DEF."
-  (let ((feature (intern (package-lint--provided-feature))))
-    (unless (cl-search `(:require ',feature) def :test #'equal)
+  (let ((feature (intern (package-lint--provided-feature)))
+        (autoloaded (save-excursion
+                      (forward-line -1)
+                      (beginning-of-line)
+                      (looking-at ";;;###autoload"))))
+    (unless (or autoloaded
+                (cl-search `(:require ',feature) def :test #'equal))
       (package-lint--error-at-point
        'error
        (format
-        "Global minor modes must `:require' their defining file (i.e. \":require '%s\"), to support the customization variable of the same name." feature)))))
+        "Global minor modes should be autoloaded or, rarely, `:require' their defining file (i.e. \":require '%s\"), to support the customization variable of the same name." feature)))))
 
 (defun package-lint--check-defgroup (def)
   "Offer up concerns about the customization group definition DEF."
