@@ -220,10 +220,10 @@ it's nil, the default is used."
 (ert-deftest package-lint-test-warn-too-long-summary ()
   (should
    (equal
-    '((1 1 warning "The package summary is too long. It should be at most 50 characters."))
+    '((1 1 warning "The package summary is too long. It should be at most 60 characters."))
     (package-lint-test--run
      ""
-     ";;; test.el --- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"))))
+     ";;; test.el --- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"))))
 
 (ert-deftest package-lint-test-warn-emacs-in-summary ()
   (should
