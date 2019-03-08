@@ -149,6 +149,7 @@ This is bound dynamically while the checks run.")
           hash-table-values
           line-pixel-height
           macrop
+          process-lines
           remove-function
           set-file-acl
           special-form-p
