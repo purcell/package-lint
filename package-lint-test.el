@@ -421,6 +421,10 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((1 1 error "There is no (provide 'test) form."))
     (package-lint-test--run "" nil nil nil "(provide 'blargh)"))))
 
+(ert-deftest package-lint-test-error-accept-provide-me ()
+  (should
+   (equal '() (package-lint-test--run "" nil nil nil "(provide-me)"))))
+
 (ert-deftest package-lint-test-error-no-commentary ()
   (should
    (equal
