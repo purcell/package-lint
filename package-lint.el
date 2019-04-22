@@ -932,8 +932,10 @@ The returned list is of the form (SYMBOL-NAME . POSITION)."
   "Return the first-provided feature name, as a string, or nil if none."
   (save-excursion
     (goto-char (point-max))
-    (when (re-search-backward (rx "(provide '" (group (1+ (or (syntax word) (syntax symbol))))) nil t)
-      (match-string-no-properties 1))))
+    (cond ((re-search-backward (rx "(provide '" (group (1+ (or (syntax word) (syntax symbol))))) nil t)
+           (match-string-no-properties 1))
+          ((re-search-backward "(provide-me)" nil t)
+           (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
 
 (defun package-lint--get-package-prefix ()
   "Return package prefix string (i.e. the symbol the package `provide's).
