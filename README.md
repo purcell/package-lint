@@ -47,7 +47,6 @@ Additional checks for future versions:
 - WARN: header line formatting / capitalisation
 - trailing line presence / formatting
 - WARN: library is called *-mode but doesn't provide a major mode
-- non-use of standard keywords
 - checkdoc failures for interactive functions / defcustoms
 - trailing whitespace?
 - themes which aren't in a matching *-theme.el file
