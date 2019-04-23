@@ -224,7 +224,21 @@ This is bound dynamically while the checks run.")
           window-preserve-size
           window-scroll-bar-height
           with-displayed-buffer-window
-          with-file-modes)))
+          with-file-modes))
+   (cons '(26)
+         (package-lint--match-symbols
+          read-answer
+          list-at-point
+          list-timers
+          replace-buffer-contents
+          apropos-local-variable
+          apropos-local-value
+          dired-mouse-find-file
+          dired-mouse-find-file-other-frame))
+   (cons '(26 2)
+         (package-lint--match-symbols
+          read-answer
+          assoc-delete-all)))
   "An alist of function/macro names and when they were added to Emacs.")
 
 (defconst package-lint--sane-prefixes
