@@ -696,19 +696,21 @@ DESC is a struct as returned by `package-buffer-info'."
        1 1
        'warning
        "Package should have a non-empty summary."))
-     ((> (length summary) 60)
-      (package-lint--error
-       1 1
-       'warning
-       "The package summary is too long. It should be at most 60 characters.")))
-    (when (save-match-data
-            (let ((case-fold-search t))
-              (and (string-match "[^.]\\<emacs\\>" summary)
-                   (not (string-match-p "[[:space:]]+lisp" summary (match-end 0))))))
-      (package-lint--error
-       1 1
-       'warning
-       "Including \"Emacs\" in the package summary is usually redundant."))))
+     (t
+      (when (> (length summary) 60)
+        (package-lint--error
+         1 1
+         'warning
+         "The package summary is too long. It should be at most 60 characters."))
+      (when (save-match-data
+              (let ((case-fold-search t))
+                (and (string-match "[^.]\\<emacs\\>" summary)
+                     (not (string-match-p "[[:space:]]+lisp"
+                                          summary (match-end 0))))))
+        (package-lint--error
+         1 1
+         'warning
+         "Including \"Emacs\" in the package summary is usually redundant."))))))
 
 (defun package-lint--check-provide-form (desc)
   "Check the provide form for package with descriptor DESC.
