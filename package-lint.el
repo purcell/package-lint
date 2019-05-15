@@ -708,7 +708,7 @@ DESC is a struct as returned by `package-buffer-info'."
       (package-lint--error
        1 1
        'warning
-       "Including \"Emacs\" in the package description is usually redundant."))))
+       "Including \"Emacs\" in the package summary is usually redundant."))))
 
 (defun package-lint--check-provide-form (desc)
   "Check the provide form for package with descriptor DESC.

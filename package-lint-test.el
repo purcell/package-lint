@@ -228,7 +228,7 @@ it's nil, the default is used."
 (ert-deftest package-lint-test-warn-emacs-in-summary ()
   (should
    (equal
-    '((1 1 warning "Including \"Emacs\" in the package description is usually redundant."))
+    '((1 1 warning "Including \"Emacs\" in the package summary is usually redundant."))
     (package-lint-test--run "" ";;; test.el --- A package for Emacs\n"))))
 
 (ert-deftest package-lint-test-accept-emacs-lisp-in-summary ()
