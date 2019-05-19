@@ -1,4 +1,4 @@
-;;; package-lint-test.el --- package-lint test suite
+;;; package-lint-test.el --- Test suite for package-lint
 
 ;; Copyright (C) 2016-2017  Steve Purcell, Fanael Linithien
 
@@ -220,7 +220,8 @@ it's nil, the default is used."
 (ert-deftest package-lint-test-warn-too-long-summary ()
   (should
    (equal
-    '((1 1 warning "The package summary is too long. It should be at most 60 characters."))
+    '((1 1 warning "The package summary is too long. It should be at most 60 characters.")
+      (1 1 warning "The package summary should start with an uppercase letter or a digit."))
     (package-lint-test--run
      ""
      ";;; test.el --- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"))))
@@ -228,7 +229,7 @@ it's nil, the default is used."
 (ert-deftest package-lint-test-warn-emacs-in-summary ()
   (should
    (equal
-    '((1 1 warning "Including \"Emacs\" in the package description is usually redundant."))
+    '((1 1 warning "Including \"Emacs\" in the package summary is usually redundant."))
     (package-lint-test--run "" ";;; test.el --- A package for Emacs\n"))))
 
 (ert-deftest package-lint-test-accept-emacs-lisp-in-summary ()
