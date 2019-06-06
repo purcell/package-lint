@@ -770,7 +770,8 @@ Valid definition names are:
       (let ((prefix-re
              (rx-to-string
               `(seq string-start
-                    (or (seq ,prefix (or "-" string-end))
+                    (or (seq (opt (or "define-" "defun-" "defvar-"))
+                             ,prefix (or "-" string-end))
                         (seq "global-"
                              ,prefix
                              (or "-mode"
