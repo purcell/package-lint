@@ -270,12 +270,12 @@ This is bound dynamically while the checks run.")
            "(define-minor-mode\\s-"
            #'package-lint--check-minor-mode)
           (package-lint--check-objects-by-regexp
-           "(define-global\\(?:ized\\)?-minor-mode\\s-"
-           #'package-lint--check-globalized-minor-mode)
-          (package-lint--check-objects-by-regexp
            "(defgroup\\s-" #'package-lint--check-defgroup)
           (let ((desc (package-lint--check-package-el-can-parse)))
             (when desc
+              (package-lint--check-objects-by-regexp
+               "(define-global\\(?:ized\\)?-minor-mode\\s-"
+               #'package-lint--check-globalized-minor-mode)
               (package-lint--check-package-summary desc)
               (package-lint--check-provide-form desc)))
           (package-lint--check-no-use-of-cl)
