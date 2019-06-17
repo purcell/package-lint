@@ -270,6 +270,9 @@ This is bound dynamically while the checks run.")
            "(define-minor-mode\\s-"
            #'package-lint--check-minor-mode)
           (package-lint--check-objects-by-regexp
+           (concat "(" (regexp-opt '("defalias" "defvaralias")) "\\s-")
+           #'package-lint--check-defalias)
+          (package-lint--check-objects-by-regexp
            "(defgroup\\s-" #'package-lint--check-defgroup)
           (let ((desc (package-lint--check-package-el-can-parse)))
             (when desc
@@ -744,20 +747,22 @@ DESC is a struct as returned by `package-buffer-info'."
            (format "`%s' contains a non-standard separator `%s', use hyphens instead (see Elisp Coding Conventions)."
                    name (substring-no-properties name match-pos (1+ match-pos)))))))))
 
-(defun package-lint--valid-definition-name-p (name prefix-re position)
+(defun package-lint--valid-definition-name-p (name prefix &optional position)
   "Return non-nil if NAME denotes a valid definition name.
 
 Valid definition names are:
 
-- a NAME starting with PREFIX-RE, a regular expression
-  representing the current package prefix,
+- a NAME starting with PREFIX, a string representing the current
+  package prefix,
 
 - a NAME matching `package-lint--sane-prefixes', or
 
 - a NAME whose POSITION in the buffer denotes a global definition."
-  (or (string-match-p prefix-re name)
+  (or (string-prefix-p prefix name)
       (string-match-p package-lint--sane-prefixes name)
-      (progn
+      (string-match-p (rx-to-string `(seq string-start (or "define" "defun" "defvar") "-" ,prefix)) name)
+      (string-match-p (rx-to-string  `(seq string-start "global-" ,prefix (or "-mode" (seq "-" (* any) "-mode")) string-end)) name)
+      (when position
         (goto-char position)
         (looking-at-p (rx (*? space) "(" (*? space)
                           (or "defadvice" "cl-defmethod")
@@ -767,23 +772,13 @@ Valid definition names are:
   "Verify that symbol DEFINITIONS start with package prefix."
   (let ((prefix (package-lint--get-package-prefix)))
     (when prefix
-      (let ((prefix-re
-             (rx-to-string
-              `(seq string-start
-                    (or (seq (opt (or "define-" "defun-" "defvar-"))
-                             ,prefix (or "-" string-end))
-                        (seq "global-"
-                             ,prefix
-                             (or "-mode"
-                                 (seq "-" (* any) "-mode"))
-                             string-end))))))
-        (pcase-dolist (`(,name . ,position) definitions)
-          (unless (package-lint--valid-definition-name-p name prefix-re position)
-            (let ((line-no (line-number-at-pos position)))
-              (package-lint--error
-               line-no 1 'error
-               (format "\"%s\" doesn't start with package's prefix \"%s\"."
-                       name prefix)))))))))
+      (pcase-dolist (`(,name . ,position) definitions)
+        (unless (package-lint--valid-definition-name-p name prefix position)
+          (let ((line-no (line-number-at-pos position)))
+            (package-lint--error
+             line-no 1 'error
+             (format "\"%s\" doesn't start with package's prefix \"%s\"."
+                     name prefix))))))))
 
 (defun package-lint--check-minor-mode (def)
   "Offer up concerns about the minor mode definition DEF."
@@ -819,6 +814,16 @@ Valid definition names are:
     (package-lint--error-at-point
      'error
      "Customization groups should specify a parent via `:group'.")))
+
+(defun package-lint--check-defalias (def)
+  "Offer up concerns about the customization group definition DEF."
+  (let ((prefix (package-lint--get-package-prefix)))
+    (pcase (cadr def)
+      (`(quote ,alias)
+       (unless (package-lint--valid-definition-name-p (symbol-name alias) prefix)
+         (package-lint--error-at-point
+          'error
+          (concat "Aliases should start with the package's prefix \"" prefix "\".")))))))
 
 
 ;;; Helpers

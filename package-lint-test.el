@@ -494,5 +494,24 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((6 0 error "Customization groups should specify a parent via `:group'."))
     (package-lint-test--run "(defgroup test nil \"\")"))))
 
+(ert-deftest package-lint-test-error-defalias-name ()
+  (should
+   (equal
+    '((6 0 error "Aliases should start with the package's prefix \"test\"."))
+    (package-lint-test--run "(defalias 'foobar 'string-equal)")))
+  (should
+   (equal
+    '((6 0 error "Aliases should start with the package's prefix \"test\"."))
+    (package-lint-test--run "(defvaralias 'foobar 'string-equal)")))
+  (should
+   (equal
+    '()
+    (package-lint-test--run "(defalias 'test-foobar 'string-equal)")))
+  (should
+   (equal
+    '()
+    (package-lint-test--run "(defvaralias 'test-foobar 'string-equal)"))))
+
+
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
