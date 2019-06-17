@@ -273,6 +273,9 @@ This is bound dynamically while the checks run.")
            "(define-global\\(?:ized\\)?-minor-mode\\s-"
            #'package-lint--check-globalized-minor-mode)
           (package-lint--check-objects-by-regexp
+           (concat "(" (regexp-opt '("defalias" "defvaralias")) "\\s-")
+           #'package-lint--check-defalias)
+          (package-lint--check-objects-by-regexp
            "(defgroup\\s-" #'package-lint--check-defgroup)
           (let ((desc (package-lint--check-package-el-can-parse)))
             (when desc
@@ -811,6 +814,16 @@ Valid definition names are:
     (package-lint--error-at-point
      'error
      "Customization groups should specify a parent via `:group'.")))
+
+(defun package-lint--check-defalias (def)
+  "Offer up concerns about the customization group definition DEF."
+  (let ((prefix (package-lint--get-package-prefix)))
+    (pcase (cadr def)
+      (`(quote ,alias)
+       (unless (package-lint--valid-definition-name-p (symbol-name alias) prefix)
+         (package-lint--error-at-point
+          'error
+          (concat "Aliases should start with the package's prefix \"" prefix "\".")))))))
 
 
 ;;; Helpers
