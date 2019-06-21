@@ -787,17 +787,19 @@ Valid definition names are:
 
 (defun package-lint--check-globalized-minor-mode (def)
   "Offer up concerns about the global minor mode definition DEF."
-  (let ((feature (intern (package-lint--provided-feature)))
-        (autoloaded (save-excursion
-                      (forward-line -1)
-                      (beginning-of-line)
-                      (looking-at ";;;###autoload"))))
-    (unless (or autoloaded
-                (cl-search `(:require ',feature) def :test #'equal))
-      (package-lint--error-at-point
-       'error
-       (format
-        "Global minor modes should be autoloaded or, rarely, `:require' their defining file (i.e. \":require '%s\"), to support the customization variable of the same name." feature)))))
+  (let ((feature-name (package-lint--provided-feature)))
+    (when feature-name
+      (let ((feature (intern feature-name))
+            (autoloaded (save-excursion
+                          (forward-line -1)
+                          (beginning-of-line)
+                          (looking-at ";;;###autoload"))))
+        (unless (or autoloaded
+                    (cl-search `(:require ',feature) def :test #'equal))
+          (package-lint--error-at-point
+           'error
+           (format
+            "Global minor modes should be autoloaded or, rarely, `:require' their defining file (i.e. \":require '%s\"), to support the customization variable of the same name." feature)))))))
 
 (defun package-lint--check-defgroup (def)
   "Offer up concerns about the customization group definition DEF."
@@ -818,12 +820,13 @@ Valid definition names are:
 (defun package-lint--check-defalias (def)
   "Offer up concerns about the customization group definition DEF."
   (let ((prefix (package-lint--get-package-prefix)))
-    (pcase (cadr def)
-      (`(quote ,alias)
-       (unless (package-lint--valid-definition-name-p (symbol-name alias) prefix)
-         (package-lint--error-at-point
-          'error
-          (concat "Aliases should start with the package's prefix \"" prefix "\".")))))))
+    (when prefix
+      (pcase (cadr def)
+        (`(quote ,alias)
+         (unless (package-lint--valid-definition-name-p (symbol-name alias) prefix)
+           (package-lint--error-at-point
+            'error
+            (concat "Aliases should start with the package's prefix \"" prefix "\"."))))))))
 
 
 ;;; Helpers
