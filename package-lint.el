@@ -234,7 +234,9 @@ This is bound dynamically while the checks run.")
           apropos-local-variable
           apropos-local-value
           dired-mouse-find-file
-          dired-mouse-find-file-other-frame))
+          dired-mouse-find-file-other-frame
+          if-let*
+          when-let*))
    (cons '(26 2)
          (package-lint--match-symbols
           read-answer
