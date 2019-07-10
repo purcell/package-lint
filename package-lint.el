@@ -1030,6 +1030,24 @@ Current buffer is used if none is specified."
       (view-mode 1))
     (display-buffer buf)))
 
+(defun package-lint-batch-and-exit-1 (filenames)
+  "Internal helper function for `package-lint-batch-and-exit'.
+
+The main loop is this separate function so it's easier to test."
+  ;; Make sure package.el is initialized so we can query its database.
+  (package-initialize)
+  (let ((success t))
+    (dolist (file filenames success)
+      (with-temp-buffer
+        (insert-file-contents file t)
+        (emacs-lisp-mode)
+        (let ((checking-result (package-lint-buffer)))
+          (when checking-result
+            (setq success nil)
+            (message "In `%s':" file)
+            (pcase-dolist (`(,line ,col ,type ,message) checking-result)
+              (message "  at %d:%d: %s: %s" line col type message))))))))
+
 ;;;###autoload
 (defun package-lint-batch-and-exit ()
   "Run `package-lint-buffer' on the files remaining on the command line.
@@ -1039,19 +1057,7 @@ When done, exit Emacs with status 0 if there were no errors nor warnings or 1
 otherwise."
   (unless noninteractive
     (error "`package-lint-batch-and-exit' is to be used only with -batch"))
-  ;; Make sure package.el is initialized so we can query its database.
-  (package-initialize)
-  (let ((success t))
-    (dolist (file command-line-args-left)
-      (with-temp-buffer
-        (insert-file-contents file t)
-        (emacs-lisp-mode)
-        (let ((checking-result (package-lint-buffer)))
-          (when checking-result
-            (setq success nil)
-            (message "In `%s':" file)
-            (pcase-dolist (`(,line ,col ,type ,message) checking-result)
-              (message "  at %d:%d: %s: %s" line col type message))))))
+  (let ((success (package-lint-batch-and-exit-1 command-line-args-left)))
     (kill-emacs (if success 0 1))))
 
 ;;;###autoload
