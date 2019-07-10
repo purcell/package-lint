@@ -1038,15 +1038,16 @@ The main loop is this separate function so it's easier to test."
   (package-initialize)
   (let ((success t))
     (dolist (file filenames success)
-      (with-temp-buffer
-        (insert-file-contents file t)
-        (emacs-lisp-mode)
-        (let ((checking-result (package-lint-buffer)))
-          (when checking-result
-            (setq success nil)
-            (message "In `%s':" file)
-            (pcase-dolist (`(,line ,col ,type ,message) checking-result)
-              (message "  at %d:%d: %s: %s" line col type message))))))))
+      (let ((file (expand-file-name file)))
+        (with-temp-buffer
+          (insert-file-contents file t)
+          (emacs-lisp-mode)
+          (let ((checking-result (package-lint-buffer)))
+            (when checking-result
+              (setq success nil)
+              (message "In `%s':" file)
+              (pcase-dolist (`(,line ,col ,type ,message) checking-result)
+                (message "  at %d:%d: %s: %s" line col type message)))))))))
 
 ;;;###autoload
 (defun package-lint-batch-and-exit ()
