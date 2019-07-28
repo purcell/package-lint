@@ -237,6 +237,44 @@ This is bound dynamically while the checks run.")
           dired-mouse-find-file-other-frame
           if-let*
           when-let*))
+   (cons '(26 1)
+         (package-lint--match-symbols
+          add-variable-watcher
+          buffer-hash
+          call-shell-region
+          char-from-name
+          cl-generic-p
+          define-symbol-prop
+          display-buffer-reuse-mode-window
+          file-local-name
+          file-name-case-insensitive-p
+          file-name-quote
+          file-name-unquote
+          frame-list-z-order
+          frame-restack
+          frame-size-changed-p
+          func-arity
+          lgstring-remove-glyph
+          line-number-display-width
+          make-nearby-temp-file
+          mapbacktrace
+          read-multiple-choice
+          region-bounds
+          secondary-selection-from-region
+          secondary-selection-to-region
+          secure-hash-algorithms
+          seq-set-equal-p
+          string-version-lessp
+          sxhash-eq
+          sxhash-eql
+          sxhash-equal
+          temporary-file-directory
+          undo-amalgamate-change-group
+          url-cookie-delete-cookies
+          window-largest-empty-rectangle
+          window-lines-pixel-dimensions
+          window-pixel-height-before-size-change
+          window-pixel-width-before-size-change))
    (cons '(26 2)
          (package-lint--match-symbols
           read-answer
