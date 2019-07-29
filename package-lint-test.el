@@ -270,16 +270,18 @@ headers and provide form."
     (package-lint-test--run ";; Package-Requires: ((example-nonexistent-package \"1\"))"))))
 
 (ert-deftest package-lint-test-warn-snapshot-dep ()
-  (should
-   (equal
-    '((6 24 warning "Use a snapshot version for melpa package \"package-lint\"."))
-    (package-lint-test--run ";; Package-Requires: ((package-lint \"0.2\"))"))))
+  (when (version-list-<= (version-to-list "24.4") (version-to-list emacs-version))
+    (should
+     (equal
+      '((6 24 warning "Use a snapshot version for melpa package \"package-lint\"."))
+      (package-lint-test--run ";; Package-Requires: ((package-lint \"0.2\"))")))))
 
 (ert-deftest package-lint-test-warn-non-snapshot-dep ()
-  (should
-   (member
-    '(6 24 warning "Use a non-snapshot version for non-melpa package \"org\".")
-    (package-lint-test--run ";; Package-Requires: ((org \"20190707\"))"))))
+  (when (version-list-<= (version-to-list "24.4") (version-to-list emacs-version))
+    (should
+     (member
+      '(6 24 warning "Use a non-snapshot version for non-melpa package \"org\".")
+      (package-lint-test--run ";; Package-Requires: ((org \"20190707\"))")))))
 
 (ert-deftest package-lint-test-dual-listing-dep ()
   (should (equal '() (package-lint-test--run ";; Package-Requires: ((which-key \"20190707\"))")))
