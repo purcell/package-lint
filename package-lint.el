@@ -41,6 +41,7 @@
 (require 'finder)
 (require 'imenu)
 (require 'let-alist)
+(require 'subr-x)
 
 
 ;;; Compatibility
@@ -303,7 +304,7 @@ Return a list of well-formed dependencies, same as
                "More than one expression provided."))
             (let ((deps (package-lint--check-well-formed-dependencies position line-no parsed-deps)))
               (package-lint--check-packages-installable deps)
-              (package-lint--check-deps-use-non-snapshot-version deps)
+              (package-lint--check-deps-use-proper-version deps)
               (package-lint--check-deps-do-not-use-zero-versions deps)
               (package-lint--check-do-not-depend-on-cl-lib-1.0 deps)
               deps))
@@ -382,14 +383,23 @@ LINE-NO at OFFSET."
            line-no offset 'error
            (format "Package %S is not installable." package-name)))))))
 
-(defun package-lint--check-deps-use-non-snapshot-version (valid-deps)
+(defsubst package-lint--snapshot-p (package-version)
+  "Return t if PACKAGE-VERSION is a melpa-imposed datetime."
+  (version-list-< '(19001201 1) package-version))
+
+(defun package-lint--check-deps-use-proper-version (valid-deps)
   "Warn about any VALID-DEPS on snapshot versions of packages."
   (pcase-dolist (`(,package-name ,package-version ,line-no ,offset) valid-deps)
-    (unless (version-list-< package-version '(19001201 1))
-      (package-lint--error
-       line-no offset 'warning
-       (format "Use a non-snapshot version number for dependency on \"%S\" if possible."
-               package-name)))))
+    (let* ((archive (when-let ((archive-entry
+                                (car (alist-get package-name package-archive-contents))))
+                      (package-desc-archive archive-entry)))
+           (melpa-p (string= archive "melpa"))
+           (snapshot-p (package-lint--snapshot-p package-version)))
+      (when (not (eq melpa-p snapshot-p))
+        (package-lint--error
+         line-no offset 'warning
+         (format "Use a %ssnapshot version for %smelpa package \"%S\"."
+                 (if melpa-p "" "non-") (if melpa-p "" "non-") package-name))))))
 
 (defun package-lint--check-deps-do-not-use-zero-versions (valid-deps)
   "Warn about VALID-DEPS on \"0\" versions of packages."
