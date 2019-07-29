@@ -390,12 +390,12 @@ LINE-NO at OFFSET."
 (defun package-lint--check-deps-use-proper-version (valid-deps)
   "Warn about any VALID-DEPS on snapshot versions of packages."
   (pcase-dolist (`(,package-name ,package-version ,line-no ,offset) valid-deps)
-    (let* ((archive (when-let ((archive-entry
-                                (car (alist-get package-name package-archive-contents))))
-                      (package-desc-archive archive-entry)))
-           (melpa-p (string= archive "melpa"))
+    (let* ((archive-entries (cdr (assq package-name package-archive-contents)))
+           (dual-p (> (length archive-entries) 1))
+           (melpa-p (and (= (length archive-entries) 1)
+                         (string= (package-desc-archive (car archive-entries)) "melpa")))
            (snapshot-p (package-lint--snapshot-p package-version)))
-      (when (not (eq melpa-p snapshot-p))
+      (when (and (not dual-p) (not (eq melpa-p snapshot-p)))
         (package-lint--error
          line-no offset 'warning
          (format "Use a %ssnapshot version for %smelpa package \"%S\"."

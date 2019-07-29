@@ -272,14 +272,24 @@ headers and provide form."
 (ert-deftest package-lint-test-warn-snapshot-dep ()
   (should
    (equal
-    '((6 24 warning "Use a non-snapshot version number for dependency on \"package-lint\" if possible."))
-    (package-lint-test--run ";; Package-Requires: ((package-lint \"20160101.1234\"))"))))
+    '((6 24 warning "Use a snapshot version for melpa package \"package-lint\"."))
+    (package-lint-test--run ";; Package-Requires: ((package-lint \"0.2\"))"))))
+
+(ert-deftest package-lint-test-warn-non-snapshot-dep ()
+  (should
+   (member
+    '(6 24 warning "Use a non-snapshot version for non-melpa package \"org\".")
+    (package-lint-test--run ";; Package-Requires: ((org \"20190707\"))"))))
+
+(ert-deftest package-lint-test-dual-listing-dep ()
+  (should (equal '() (package-lint-test--run ";; Package-Requires: ((which-key \"20190707\"))")))
+  (should (equal '() (package-lint-test--run ";; Package-Requires: ((which-key \"3.3.0\"))"))))
 
 (ert-deftest package-lint-test-warn-unversioned-dep ()
   (should
    (equal
-    '((6 24 warning "Use a properly versioned dependency on \"package-lint\" if possible."))
-    (package-lint-test--run ";; Package-Requires: ((package-lint \"0\"))"))))
+    '((6 24 warning "Use a properly versioned dependency on \"rainbow-mode\" if possible."))
+    (package-lint-test--run ";; Package-Requires: ((rainbow-mode \"0\"))"))))
 
 (ert-deftest package-lint-test-warn-dependency-too-high ()
   (let ((package-archive-contents nil))
@@ -319,7 +329,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 
 (ert-deftest package-lint-test-accept-normal-deps ()
   (should (equal '() (package-lint-test--run
-                      ";; Package-Requires: ((package-lint \"0.2\") (cl-lib \"0.5\"))"))))
+                      ";; Package-Requires: ((package-lint \"20190707\") (cl-lib \"0.5\"))"))))
 
 (ert-deftest package-lint-test-error-new-functions ()
   (should
