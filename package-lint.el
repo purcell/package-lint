@@ -506,8 +506,9 @@ LINE-NO at OFFSET."
         (`(package ,archive-entry)
          (package-lint--check-package-installable archive-entry package-version line-no offset))
         (`(straight ,_recipe)
-         ;; nothing for now
-         )
+         (package-lint--error
+          line-no offset 'warning
+          (format "Can't test version for %S since it was installed with straight.el." package-name)))
         (_
          (package-lint--error
           line-no offset 'error
