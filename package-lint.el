@@ -489,7 +489,8 @@ LINE-NO at OFFSET."
    (let ((archive-entry (assq package-name package-archive-contents)))
      (when archive-entry
        `(package ,archive-entry)))
-   (let ((recipe (and (hash-table-p straight--recipe-cache)
+   (let ((recipe (and (boundp straight--recipe-cache)
+                      (hash-table-p straight--recipe-cache)
                       (gethash package-name straight--recipe-cache))))
      (when recipe
        `(straight ,recipe)))))
