@@ -476,7 +476,19 @@ LINE-NO at OFFSET."
       (package-lint--error
        line-no offset 'warning
        (format "Version dependency for %s appears too high: try %s" package-name
-               (package-version-join best-version))))))
+          (package-version-join best-version))))))
+
+(defun package-lint--package-manager-for (package-name)
+  "Return the type of package manager for PACKAGE-NAME.
+
+`(package ,archive-entry) for package.el
+`(straight ,recipe) for straight.el"
+  (or
+   (if-let ((archive-entry (assq package-name package-archive-contents)))
+       `(package ,archive-entry))
+   (if-let ((recipe (and (boundp 'straight--recipe-cache)
+                         (gethash package-name straight--recipe-cache))))
+       `(straight ,recipe))))
 
 (defun package-lint--check-packages-installable (valid-deps)
   "Check that all VALID-DEPS are available for installation."
@@ -487,12 +499,16 @@ LINE-NO at OFFSET."
            line-no offset 'error
            "You can only depend on Emacs version 24 or greater: package.el for Emacs 23 does not support the \"emacs\" pseudopackage."))
       ;; Not 'emacs
-      (let ((archive-entry (assq package-name package-archive-contents)))
-        (if archive-entry
-            (package-lint--check-package-installable archive-entry package-version line-no offset)
-          (package-lint--error
-           line-no offset 'error
-           (format "Package %S is not installable." package-name)))))))
+      (pcase (package-lint--package-manager-for package-name)
+        (`(package ,archive-entry)
+         (package-lint--check-package-installable archive-entry package-version line-no offset))
+        (`(straight ,_recipe)
+         ;; nothing for now
+         )
+        (_
+         (package-lint--error
+          line-no offset 'error
+          (format "Package %S is not installable." package-name)))))))
 
 (defun package-lint--check-deps-use-non-snapshot-version (valid-deps)
   "Warn about any VALID-DEPS on snapshot versions of packages."
