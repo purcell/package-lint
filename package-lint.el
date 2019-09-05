@@ -40,7 +40,6 @@
 (require 'lisp-mnt)
 (require 'finder)
 (require 'imenu)
-(require 'subr-x)
 
 
 ;;; Compatibility
@@ -487,11 +486,13 @@ LINE-NO at OFFSET."
 `(package ,archive-entry) for package.el
 `(straight ,recipe) for straight.el"
   (or
-   (if-let ((archive-entry (assq package-name package-archive-contents)))
-       `(package ,archive-entry))
-   (if-let ((recipe (and (hash-table-p straight--recipe-cache)
-                         (gethash package-name straight--recipe-cache))))
-       `(straight ,recipe))))
+   (let ((archive-entry (assq package-name package-archive-contents)))
+     (when archive-entry
+       `(package ,archive-entry)))
+   (let ((recipe (and (hash-table-p straight--recipe-cache)
+                      (gethash package-name straight--recipe-cache))))
+     (when recipe
+       `(straight ,recipe)))))
 
 (defun package-lint--check-packages-installable (valid-deps)
   "Check that all VALID-DEPS are available for installation."
