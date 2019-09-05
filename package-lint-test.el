@@ -512,6 +512,12 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '()
     (package-lint-test--run "(defvaralias 'test-foobar 'string-equal)"))))
 
+(ert-deftest package-lint-test-accept-quasiquoted-defalias ()
+  (should
+   (equal
+    '()
+    (package-lint-test--run "(defalias ',foo 'bar)"))))
+
 
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here

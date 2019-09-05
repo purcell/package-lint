@@ -824,7 +824,7 @@ Valid definition names are:
   (let ((prefix (package-lint--get-package-prefix)))
     (when prefix
       (pcase (cadr def)
-        (`(quote ,alias)
+        ((and `(quote ,alias) (guard (symbolp alias)))
          (unless (package-lint--valid-definition-name-p (symbol-name alias) prefix)
            (package-lint--error-at-point
             'error
