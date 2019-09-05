@@ -40,6 +40,7 @@
 (require 'lisp-mnt)
 (require 'finder)
 (require 'imenu)
+(require 'subr-x)
 
 
 ;;; Compatibility
@@ -478,6 +479,8 @@ LINE-NO at OFFSET."
        (format "Version dependency for %s appears too high: try %s" package-name
           (package-version-join best-version))))))
 
+(defvar straight--recipe-cache)
+
 (defun package-lint--package-manager-for (package-name)
   "Return the type of package manager for PACKAGE-NAME.
 
@@ -486,7 +489,7 @@ LINE-NO at OFFSET."
   (or
    (if-let ((archive-entry (assq package-name package-archive-contents)))
        `(package ,archive-entry))
-   (if-let ((recipe (and (boundp 'straight--recipe-cache)
+   (if-let ((recipe (and (hash-table-p straight--recipe-cache)
                          (gethash package-name straight--recipe-cache))))
        `(straight ,recipe))))
 
