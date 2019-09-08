@@ -38,23 +38,28 @@ VERSION is a list of numbers, e.g., (0 5 0) to represent version
                                       (:url . "https://gitlab.com/somewhere"))])
    (or archive "melpa-stable")))
 
-(defun package-lint-test--run (contents &optional header version footer provide commentary url)
+(defun package-lint-test--run (contents &optional header version footer provide commentary url featurename)
   "Run `package-lint-buffer' on a temporary buffer with given CONTENTS.
 
 HEADER, VERSION, FOOTER, PROVIDE, COMMENTARY, and URL can be
 either strings or nil; when one is a string, the corresponding
 package boilerplate part is replaced with the passed string, when
-it's nil, the default is used."
+it's nil, the default is used.
+
+FEATURENAME defaults to \"test\", and is used in the file name,
+headers and provide form."
+  (unless featurename
+    (setq featurename "test"))
   (with-temp-buffer
     (emacs-lisp-mode)
-    (insert (or header ";;; test.el --- A test\n"))
+    (insert (or header (format ";;; %s.el --- A test\n" featurename)))
     (insert (or version ";; Package-Version: 0\n"))
     (insert (or url ";; URL: https://package-lint.test/p?q#f\n"))
     (insert (or commentary ";;; Commentary:\n;; A test package, for testing.\n"))
     (insert contents)
-    (insert "\n" (or provide "(provide 'test)\n"))
-    (insert (or footer "\n\n;;; test.el ends here\n"))
-    (let ((buffer-file-name "test.el"))
+    (insert "\n" (or provide (format "(provide '%s)\n" featurename)))
+    (insert (or footer (format "\n\n;;; %s.el ends here\n" featurename)))
+    (let ((buffer-file-name (format "%s.el" featurename)))
       (package-lint-buffer))))
 
 (ert-deftest package-lint-test-reserved-keybindings ()
@@ -517,6 +522,12 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
    (equal
     '()
     (package-lint-test--run "(defalias ',foo 'bar)"))))
+
+(ert-deftest package-lint-test-no-emacs-in-package-name ()
+  (should
+   (equal
+    '((1 1 warning "The word \"emacs\" is redundant in Emacs package names."))
+    (package-lint-test--run "" nil nil nil nil nil nil "emacs-package"))))
 
 
 (provide 'package-lint-test)

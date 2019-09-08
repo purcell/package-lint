@@ -282,7 +282,8 @@ This is bound dynamically while the checks run.")
           (let ((desc (package-lint--check-package-el-can-parse)))
             (when desc
               (package-lint--check-package-summary desc)
-              (package-lint--check-provide-form desc)))
+              (package-lint--check-provide-form desc)
+              (package-lint--check-no-emacs-in-package-name desc)))
           (package-lint--check-no-use-of-cl)
           (package-lint--check-no-use-of-cl-lib-sublibraries)
           (package-lint--check-eval-after-load)
@@ -733,6 +734,16 @@ DESC is a struct as returned by `package-buffer-info'."
        1 1
        'error
        (format "There is no (provide '%s) form." name)))))
+
+(defun package-lint--check-no-emacs-in-package-name (desc)
+  "Check that the package name doesn't contain \"emacs\".
+DESC is a struct as returned by `package-buffer-info'."
+  (let ((name (package-lint--package-desc-name desc)))
+    (when (string-match-p "emacs" (symbol-name name))
+      (package-lint--error
+       1 1
+       'warning
+       "The word \"emacs\" is redundant in Emacs package names."))))
 
 (defun package-lint--check-symbol-separators (definitions)
   "Check that symbol DEFINITIONS don't contain non-standard separators."
