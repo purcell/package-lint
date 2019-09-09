@@ -510,7 +510,7 @@ LINE-NO at OFFSET."
         (`(straight ,_recipe)
          (package-lint--error
           line-no offset 'warning
-          (format "Can't test version for %S since it was installed with straight.el." package-name)))
+          (format "Dependency '%S is not listed in package archive (installed with straight.el)" package-name)))
         (_
          (package-lint--error
           line-no offset 'error
