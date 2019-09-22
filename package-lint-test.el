@@ -517,6 +517,21 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '()
     (package-lint-test--run "(defvaralias 'test-foobar 'string-equal)"))))
 
+(ert-deftest package-lint-test-error-format-string ()
+  (should
+   (equal
+    '((6 0 error "You should depend on (emacs \"26.1\") if you need format field numbers."))
+    (package-lint-test--run "(format \"%1$s\" \"foo\")")))
+  (should
+   (equal
+    '()
+    (package-lint-test--run "(format \"%s\" \"foo\")")))
+  (should
+   (equal
+    '()
+    (package-lint-test--run ";; Package-Requires: ((emacs \"26.1\"))
+(format \"%1$s\" \"foo\")"))))
+
 (ert-deftest package-lint-test-accept-quasiquoted-defalias ()
   (should
    (equal
