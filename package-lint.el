@@ -852,7 +852,12 @@ Valid definition names are:
                ;; We give up on trying to warn about format strings that are
                ;; evaluated at runtime.
                (stringp fmt-str)
-               (string-match "%[0-9]+\\$" fmt-str))
+               ;; The usual regexp strategy for finding unescaped matches
+               ;; requires negative lookbehind:
+               ;;  (?<!%)(?:%%)*[0-9]+\$
+               ;; So instead we make sure the count of escape chars is odd
+               (string-match "\\(%+\\)[0-9]+\\$" fmt-str)
+               (cl-oddp (length (match-string 1 fmt-str))))
       (package-lint--error-at-point
        'error
        "You should depend on (emacs \"26.1\") if you need format field numbers."))))

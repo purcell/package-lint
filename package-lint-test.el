@@ -529,6 +529,10 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should
    (equal
     '()
+    (package-lint-test--run "(format \"%%1$s\" \"foo\")")))
+  (should
+   (equal
+    '()
     (package-lint-test--run ";; Package-Requires: ((emacs \"26.1\"))
 (format \"%1$s\" \"foo\")"))))
 
