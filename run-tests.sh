@@ -4,7 +4,8 @@ EMACS="${EMACS:=emacs}"
 
 INIT_PACKAGE_EL="(progn
   (require 'package)
-  (push '(\"melpa\" . \"http://melpa.org/packages/\") package-archives)
+  (push '(\"melpa\" . \"https://melpa.org/packages/\") package-archives)
+  (setq package-check-signature nil)
   (package-initialize))"
 
 # Refresh package archives, because the test suite needs to see at least
