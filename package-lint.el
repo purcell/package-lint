@@ -290,7 +290,10 @@ This is bound dynamically while the checks run.")
           (let ((deps (package-lint--check-dependency-list)))
             (package-lint--check-lexical-binding-requires-emacs-24 deps)
             (package-lint--check-libraries-available-in-emacs deps)
-            (package-lint--check-macros-functions-available-in-emacs deps))
+            (package-lint--check-macros-functions-available-in-emacs deps)
+            (package-lint--check-objects-by-regexp
+             (concat "(" (regexp-opt '("format" "message" "error")) "\\s-")
+             (lambda (def) (package-lint--check-format-string deps def))))
           (package-lint--check-for-literal-emacs-path)
           (package-lint--check-commentary-existence)
           (let ((definitions (package-lint--get-defs)))
@@ -840,6 +843,24 @@ Valid definition names are:
            (package-lint--error-at-point
             'error
             (concat "Aliases should start with the package's prefix \"" prefix "\"."))))))))
+
+(defun package-lint--check-format-string (valid-deps def)
+  "Offer up concerns about the format string used in DEF, depending on VALID-DEPS."
+  (let ((fmt-str (cadr def))
+        (emacs-version-dep (or (cadr (assq 'emacs valid-deps)) '(0))))
+    (when (and (version-list-< emacs-version-dep '(26 1))
+               ;; We give up on trying to warn about format strings that are
+               ;; evaluated at runtime.
+               (stringp fmt-str)
+               ;; The usual regexp strategy for finding unescaped matches
+               ;; requires negative lookbehind:
+               ;;  (?<!%)(?:%%)*[0-9]+\$
+               ;; So instead we make sure the count of escape chars is odd
+               (string-match "\\(%+\\)[0-9]+\\$" fmt-str)
+               (cl-oddp (length (match-string 1 fmt-str))))
+      (package-lint--error-at-point
+       'error
+       "You should depend on (emacs \"26.1\") if you need format field numbers."))))
 
 
 ;;; Helpers
