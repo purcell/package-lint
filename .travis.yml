@@ -4,6 +4,7 @@ install:
   - bash <(curl https://raw.githubusercontent.com/purcell/nix-emacs-ci/master/travis-install)
 
 env:
+  - EMACS_CI=emacs-24-1 EMACS_LINT_IGNORE=1
   - EMACS_CI=emacs-24-2 EMACS_LINT_IGNORE=1
   - EMACS_CI=emacs-24-3
   - EMACS_CI=emacs-24-4
