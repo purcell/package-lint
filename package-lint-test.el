@@ -345,6 +345,29 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     (when-let blah)
   (bloop))"))))
 
+(ert-deftest package-lint-test-error-new-backported-functions ()
+  (should
+   (equal
+    '((6 1 error "You should depend on (emacs \"25.1\") or the seq package if you need `seq-length'."))
+    (package-lint-test--run
+     "(seq-length '(foo))"))))
+
+(ert-deftest package-lint-test-accepts-new-backported-functions-with-emacs-dep ()
+  (should
+   (equal
+    '()
+    (package-lint-test--run
+     ";; Package-Requires: ((emacs \"25.1\"))
+(seq-length '(foo))"))))
+
+(ert-deftest package-lint-test-accepts-new-backported-functions-with-backport-dep ()
+  (should
+   (equal
+    '()
+    (package-lint-test--run
+     ";; Package-Requires: ((seq \"1\"))
+(seq-length '(foo))"))))
+
 (ert-deftest package-lint-test-error-nonstandard-symbol-separator ()
   (should
    (equal
@@ -386,6 +409,20 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-accept-new-libraries-with-dep ()
   (should (equal '() (package-lint-test--run
                       ";; Package-Requires: ((emacs \"24.4\"))\n(require 'nadvice)"))))
+
+(ert-deftest package-lint-test-error-new-backported-libraries ()
+  (should
+   (equal
+    '((6 10 error "You should depend on (emacs \"25.1\") or the seq package if you need `seq'."))
+    (package-lint-test--run "(require 'seq)"))))
+
+(ert-deftest package-lint-test-accept-new-backported-libraries-with-emacs-dep ()
+  (should (equal '() (package-lint-test--run
+                      ";; Package-Requires: ((emacs \"25.1\"))\n(require 'seq)"))))
+
+(ert-deftest package-lint-test-accept-new-backported-libraries-with-backport-dep ()
+  (should (equal '() (package-lint-test--run
+                      ";; Package-Requires: ((seq \"1\"))\n(require 'seq)"))))
 
 (ert-deftest package-lint-test-accept-new-libraries-with-optional-require ()
   (should (equal '() (package-lint-test--run "(require 'nadvice nil t)"))))
