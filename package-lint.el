@@ -7,7 +7,7 @@
 ;; URL: https://github.com/purcell/package-lint
 ;; Keywords: lisp
 ;; Version: 0
-;; Package-Requires: ((cl-lib "0.5") (emacs "24") (let-alist "1.0.6"))
+;; Package-Requires: ((cl-lib "0.5") (emacs "24.1") (let-alist "1.0.6"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -94,7 +94,7 @@ This is bound dynamically while the checks run.")
 
     (defconst package-lint--functions-and-macros-added-alist
       (cons
-       (cons '(24)
+       (cons '(24 1)
              (package-lint--match-symbols
               '(bidi-string-mark-left-to-right
                 condition-case-unless-debug
