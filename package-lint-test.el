@@ -334,7 +334,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '()
     (package-lint-test--run
      ";; Package-Requires: ((emacs \"25.1\"))
-\(when-let ((foo (bar))) (message \"ok\"))"))))
+(when-let ((foo (bar))) (message \"ok\"))"))))
 
 (ert-deftest package-lint-test-accept-new-functions-with-fboundp ()
   (should
