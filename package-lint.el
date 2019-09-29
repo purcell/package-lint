@@ -426,10 +426,10 @@ LINE-NO at OFFSET."
 
 (defun package-lint--check-version-regexp-list (valid-deps list symbol-regexp type)
   "Warn if symbols matched by SYMBOL-REGEXP are unavailable in the target Emacs.
-The target Emacs version is taken from VALID-DEPS, which is the declared
-dependencies of this package..  LIST is an alist of (VERSION
-. PRED), where PRED is passed the sym.
-TYPE is the type of the symbol, either FUNCTION or FEATURE."
+The target Emacs version is taken from VALID-DEPS, which are the
+declared dependencies of this package.  LIST is an alist
+of (VERSION . PRED), where PRED is passed the sym.  TYPE is the
+type of the symbol, either FUNCTION or FEATURE."
   (let ((emacs-version-dep (or (cadr (assq 'emacs valid-deps)) '(0))))
     (pcase-dolist (`(,added-in-version . ,pred) list)
       (when (version-list-< emacs-version-dep added-in-version)
