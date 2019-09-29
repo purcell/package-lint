@@ -29,7 +29,7 @@
     (dolist (dir path)
       (when (file-accessible-directory-p dir)
         (dolist (f (directory-files dir t "\\.elc?\\'" t))
-          (let ((lib (intern (file-name-base f))))
+          (let ((lib (intern (file-name-sans-extension (file-name-nondirectory f)))))
             ;; Skip files that aren't loadable libraries, e.g. blessmail, edt-mapper, dunnet
             (when (with-temp-buffer
                     (insert-file-contents f)
