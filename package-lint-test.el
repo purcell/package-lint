@@ -324,7 +324,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-new-functions ()
   (should
    (equal
-    '((6 1 error "You should depend on (emacs \"25\") if you need `when-let'."))
+    '((6 1 error "You should depend on (emacs \"25.1\") if you need `when-let'."))
     (package-lint-test--run
      "(when-let ((foo (bar))) (message \"ok\"))"))))
 
@@ -333,7 +333,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
    (equal
     '()
     (package-lint-test--run
-     ";; Package-Requires: ((emacs \"25\"))
+     ";; Package-Requires: ((emacs \"25.1\"))
 \(when-let ((foo (bar))) (message \"ok\"))"))))
 
 (ert-deftest package-lint-test-accept-new-functions-with-fboundp ()
@@ -450,7 +450,8 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should (equal '() (package-lint-test--run "   (  defadvice \t\n\n foo (before ignore))"))))
 
 (ert-deftest package-lint-test-accept-unprefixed-cl-defmethod ()
-  (should (equal '() (package-lint-test--run "(cl-defmethod foo ()"))))
+  (should (equal '() (package-lint-test--run ";; Package-Requires: ((emacs \"25.1\"))
+(cl-defmethod foo ()"))))
 
 (ert-deftest package-lint-test-minor-mode-global-t ()
   (should

@@ -12,7 +12,8 @@ INIT_PACKAGE_EL="(progn
 "$EMACS" -Q -batch \
          --eval "$INIT_PACKAGE_EL" \
          --eval '(package-refresh-contents)' \
-         --eval "(unless (package-installed-p 'cl-lib) (package-install 'cl-lib))"
+         --eval "(unless (package-installed-p 'cl-lib) (package-install 'cl-lib))" \
+         --eval "(unless (package-installed-p 'let-alist) (package-install 'let-alist))"
 
 # Byte compile, failing on byte compiler errors, or on warnings unless ignored
 if [ -n "${EMACS_LINT_IGNORE+x}" ]; then
