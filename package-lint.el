@@ -64,9 +64,14 @@ This is bound dynamically while the checks run.")
 
 (defconst package-lint-backport-libraries
   (list (cons 'cl-lib "\\`cl-")
+        (cons 'cl-generic "\\`cl-\\(?:def\\)?generic")
+        (cons 'map "\\`map-")
+        (cons 'nadvice "\\`advice-")
         (cons 'seq "\\`seq-")
         (cons 'let-alist "\\`let-alist"))
-  "A sequence of (FEATURE . NAME-MATCH) for backport libraries.")
+  "A sequence of (FEATURE . SYMBOL-NAME-MATCH) for backport libraries.
+These are libraries that are built into newer Emacsen and also
+published in ELPA for use by older Emacsen.")
 
 (eval-and-compile
   (defun package-lint--match-symbols (symbols)
