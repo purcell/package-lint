@@ -65,6 +65,7 @@ This is bound dynamically while the checks run.")
 (defconst package-lint-backport-libraries
   (list (cons 'cl-lib "\\`cl-")
         (cons 'cl-generic "\\`cl-\\(?:def\\)?generic")
+        (cons 'cl-print "\\`cl-print")
         (cons 'map "\\`map-")
         (cons 'nadvice "\\`advice-")
         (cons 'seq "\\`seq-")
