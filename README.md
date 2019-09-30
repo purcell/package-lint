@@ -10,13 +10,19 @@ This library provides a linter for the metadata in Emacs Lisp files
 which are intended to be packages. You can integrate it into your
 build process.
 
-See [flycheck-package](https://github.com/purcell/flycheck-package),
-which uses this code to conveniently display packaging errors while
-writing elisp packages. This code was extracted from
-`flycheck-package.el`. We eventually want to use it for MELPA -- it
-will need to learn how to check multi-file packages, which was always
-going to be out of scope for `flycheck-package`.
+`package-lint` detects various issues that may make your package
+uninstallable or unusable for some users, and it warns about
+significant deviations from the [Elisp coding
+conventions](https://www.gnu.org/software/emacs/manual/html_node/elisp/Coding-Conventions.html),
+such as non-compliant symbol naming, and use of reserved
+keybindings. Among other community uses, `package-lint` is a
+prerequisite for submission of packages to MELPA.
 
+`package-lint` can be used standalone, but see also the
+[flycheck-package](https://github.com/purcell/flycheck-package) and
+`package-lint-flymake` packages, which both use `package-lint` to
+conveniently display packaging errors directly in the buffer while
+writing elisp packages.
 
 Installation
 ------------
@@ -51,7 +57,6 @@ Additional checks for future versions:
 - trailing whitespace?
 - themes which aren't in a matching *-theme.el file
 - use of unsafe local variables
-- use of emacs version dependencies
 - local variable set in header line
 - using commentary to talk about load[- ]path and installation
 - lack of autoloads
