@@ -29,14 +29,11 @@ fi
          -f batch-byte-compile \
          package-lint.el package-lint-test.el
 # Lint ourselves
-# Lint failures are ignored if EMACS_LINT_IGNORE is defined, so that lint
-# failures on Emacs 24.2 and below don't cause the tests to fail, as these
-# versions have buggy imenu that reports (defvar foo) as a definition of foo.
 "$EMACS" -Q -batch \
          --eval "$INIT_PACKAGE_EL" \
          -l package-lint.el \
          -f package-lint-batch-and-exit \
-         package-lint.el package-lint-test.el || [ -n "${EMACS_LINT_IGNORE+x}" ]
+         package-lint.el package-lint-test.el
 # Finally, run the testsuite
 "$EMACS" -Q -batch \
          --eval "$INIT_PACKAGE_EL" \
