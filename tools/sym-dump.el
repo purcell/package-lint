@@ -50,13 +50,11 @@
   (let (libs)
     (dolist (dir path)
       (when (file-accessible-directory-p dir)
-        (dolist (f (directory-files dir t "\\.elc?\\'" t))
+        (dolist (f (directory-files dir t "\\.elc\\'" t))
           (let ((lib (intern (file-name-sans-extension (file-name-nondirectory f)))))
             ;; Skip files that aren't loadable libraries, e.g. blessmail, edt-mapper, dunnet
-            (when (with-temp-buffer
-                    (insert-file-contents f)
-                    (goto-char 0)
-                    (re-search-forward (format "(provide '%s)" lib) nil t))
+            ;; Additionally, loading secrets and tramp-gvfs causes a hard exit if no dbus support
+            (unless (memq lib '(blessmail edt-mapper dunnet secrets tramp-gvfs))
               (push lib libs))))))
     libs))
 
@@ -71,7 +69,8 @@
     (message "Loading %s" lib)
     (with-demoted-errors (require lib nil t)))
   (message "Loaded all")
-  (pp (sym-dump-loaded)))
+  (let (print-level print-length) ; avoid truncation
+    (pp (sym-dump-loaded))))
 
 (sym-dump-go-crazy)
 
