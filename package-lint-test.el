@@ -324,7 +324,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-new-functions ()
   (should
    (equal
-    '((6 1 error "You should depend on (emacs \"25\") if you need `when-let'."))
+    '((6 1 error "You should depend on (emacs \"25.1\") if you need `when-let'."))
     (package-lint-test--run
      "(when-let ((foo (bar))) (message \"ok\"))"))))
 
@@ -333,8 +333,8 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
    (equal
     '()
     (package-lint-test--run
-     ";; Package-Requires: ((emacs \"25\"))
-\(when-let ((foo (bar))) (message \"ok\"))"))))
+     ";; Package-Requires: ((emacs \"25.1\"))
+(when-let ((foo (bar))) (message \"ok\"))"))))
 
 (ert-deftest package-lint-test-accept-new-functions-with-fboundp ()
   (should
@@ -344,6 +344,29 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
      "(if (fboundp 'when-let)
     (when-let blah)
   (bloop))"))))
+
+(ert-deftest package-lint-test-error-new-backported-functions ()
+  (should
+   (equal
+    '((6 1 error "You should depend on (emacs \"25.1\") or the seq package if you need `seq-length'."))
+    (package-lint-test--run
+     "(seq-length '(foo))"))))
+
+(ert-deftest package-lint-test-accepts-new-backported-functions-with-emacs-dep ()
+  (should
+   (equal
+    '()
+    (package-lint-test--run
+     ";; Package-Requires: ((emacs \"25.1\"))
+(seq-length '(foo))"))))
+
+(ert-deftest package-lint-test-accepts-new-backported-functions-with-backport-dep ()
+  (should
+   (equal
+    '()
+    (package-lint-test--run
+     ";; Package-Requires: ((seq \"1\"))
+(seq-length '(foo))"))))
 
 (ert-deftest package-lint-test-error-nonstandard-symbol-separator ()
   (should
@@ -386,6 +409,20 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-accept-new-libraries-with-dep ()
   (should (equal '() (package-lint-test--run
                       ";; Package-Requires: ((emacs \"24.4\"))\n(require 'nadvice)"))))
+
+(ert-deftest package-lint-test-error-new-backported-libraries ()
+  (should
+   (equal
+    '((6 10 error "You should depend on (emacs \"25.1\") or the seq package if you need `seq'."))
+    (package-lint-test--run "(require 'seq)"))))
+
+(ert-deftest package-lint-test-accept-new-backported-libraries-with-emacs-dep ()
+  (should (equal '() (package-lint-test--run
+                      ";; Package-Requires: ((emacs \"25.1\"))\n(require 'seq)"))))
+
+(ert-deftest package-lint-test-accept-new-backported-libraries-with-backport-dep ()
+  (should (equal '() (package-lint-test--run
+                      ";; Package-Requires: ((seq \"1\"))\n(require 'seq)"))))
 
 (ert-deftest package-lint-test-accept-new-libraries-with-optional-require ()
   (should (equal '() (package-lint-test--run "(require 'nadvice nil t)"))))
@@ -450,7 +487,8 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should (equal '() (package-lint-test--run "   (  defadvice \t\n\n foo (before ignore))"))))
 
 (ert-deftest package-lint-test-accept-unprefixed-cl-defmethod ()
-  (should (equal '() (package-lint-test--run "(cl-defmethod foo ()"))))
+  (should (equal '() (package-lint-test--run ";; Package-Requires: ((emacs \"25.1\"))
+(cl-defmethod foo ()"))))
 
 (ert-deftest package-lint-test-minor-mode-global-t ()
   (should

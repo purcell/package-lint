@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+set -e
+
+rootdir=$(cd "$(dirname $0)/.." && pwd)
+
+function emacs_bin () {
+    local ver
+    ver=$(echo "$1" | tr '.' '-')
+    echo "$(nix-build --no-out-link -A "emacs-$ver" https://github.com/purcell/nix-emacs-ci/archive/master.tar.gz)"/bin/emacs
+}
+
+symbol_dump_dir="$rootdir/.symbol-dumps"
+mkdir -p "$symbol_dump_dir"
+for v in 24.1 24.2 24.3 24.4 24.5 25.1 25.2 25.3 26.1 26.2 26.3; do
+    echo "Dumping $v"
+    $(emacs_bin $v) -Q --script "$rootdir/tools/sym-dump.el" > "$symbol_dump_dir/$v";
+done
+
+echo "Calculating changes between versions"
+
+diff_expr=$(cat - <<EOF
+(progn
+  (setq default-directory "$symbol_dump_dir")
+  (pp
+  \`(((24 2) . ,(sym-diff-dumps "24.1" "24.2"))
+     ((24 3) . ,(sym-diff-dumps "24.2" "24.3"))
+     ((24 4) . ,(sym-diff-dumps "24.3" "24.4"))
+     ((24 5) . ,(sym-diff-dumps "24.4" "24.5"))
+     ((25 1) . ,(sym-diff-dumps "24.5" "25.1"))
+     ((25 2) . ,(sym-diff-dumps "25.1" "25.2"))
+     ((25 3) . ,(sym-diff-dumps "25.2" "25.3"))
+     ((26 1) . ,(sym-diff-dumps "25.3" "26.1"))
+     ((26 2) . ,(sym-diff-dumps "26.1" "26.2"))
+     ((26 3) . ,(sym-diff-dumps "26.2" "26.3"))
+     )))
+EOF
+)
+
+mkdir -p "$rootdir/data"
+$(emacs_bin 26.3) -Q -batch --load "$rootdir/tools/sym-diff.el" --eval "$diff_expr"|gzip > "$rootdir/data/stdlib-changes.gz"
