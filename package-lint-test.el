@@ -403,12 +403,12 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-new-libraries ()
   (should
    (equal
-    '((6 10 error "You should depend on (emacs \"24.4\") if you need `nadvice'."))
-    (package-lint-test--run "(require 'nadvice)"))))
+    '((6 10 error "You should depend on (emacs \"24.4\") if you need `subr-x'."))
+    (package-lint-test--run "(require 'subr-x)"))))
 
 (ert-deftest package-lint-test-accept-new-libraries-with-dep ()
   (should (equal '() (package-lint-test--run
-                      ";; Package-Requires: ((emacs \"24.4\"))\n(require 'nadvice)"))))
+                      ";; Package-Requires: ((emacs \"24.4\"))\n(require 'subr-x)"))))
 
 (ert-deftest package-lint-test-error-new-backported-libraries ()
   (should
