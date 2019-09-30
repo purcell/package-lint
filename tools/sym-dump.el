@@ -1,4 +1,26 @@
-;;; sym-dump.el --- Insert description here -*- lexical-binding: t -*-
+;;; sym-dump.el --- Dump data about symbols and features available in this Emacs -*- lexical-binding: t -*-
+
+;; Copyright (C) 2019  Steve Purcell
+
+;; Author: Steve Purcell <steve@sanityinc.com>
+;; URL: https://github.com/purcell/package-lint
+;; Keywords: lisp
+;; Version: 0
+;; Package-Requires: ((emacs "24.1"))
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 ;;; Commentary:
 
 ;; This is all written in a weird way in order to minimise the code loaded
@@ -51,8 +73,6 @@
   (message "Loaded all")
   (pp (sym-dump-loaded)))
 
-(setq debug-on-signal t
-      debug-on-quit t)
 (sym-dump-go-crazy)
 
 ;;; sym-dump.el ends here

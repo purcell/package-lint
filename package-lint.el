@@ -88,7 +88,7 @@ This is bound dynamically while the checks run.")
       (mapcar (lambda (version-data)
                 (let ((version (car version-data))
                       (added-functions (let-alist (cdr version-data) .features.added)))
-                  (cons version (funcall 'package-lint--match-symbols added-functions))))
+                  (cons version (package-lint--match-symbols added-functions))))
               stdlib-changes)
       "An alist of library names and when they were added to Emacs.")
 
