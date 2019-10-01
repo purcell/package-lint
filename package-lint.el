@@ -441,23 +441,26 @@ type of the symbol, either FUNCTION or FEATURE."
       (when (version-list-< emacs-version-dep added-in-version)
         (goto-char (point-min))
         (while (re-search-forward symbol-regexp nil t)
-          (unless (package-lint--inside-comment-or-string-p)
-            (let ((sym (match-string-no-properties 1)))
-              (when (funcall pred (intern sym))
-                (unless (and (eq type 'function) (package-lint--seen-fboundp-check-for sym))
-                  (let ((available-backport
-                         (cond
-                          ((eq type 'feature)
-                           (cl-some (lambda (bp)
-                                      (when (string= (car bp) sym)
-                                        (car bp)))
-                                    package-lint-backport-libraries))
-                          ((eq type 'function)
-                           (cl-some (lambda (bp)
-                                      (when (string-match-p (cdr bp) sym)
-                                        (car bp)))
-                                    package-lint-backport-libraries)))))
-                    (unless (and available-backport (assoc available-backport valid-deps))
+          (let ((sym (match-string-no-properties 1)))
+            (when (funcall pred (intern sym))
+              (unless (and (eq type 'function) (package-lint--seen-fboundp-check-for sym))
+                (let ((available-backport
+                       (cond
+                        ((eq type 'feature)
+                         (cl-some (lambda (bp)
+                                    (when (string= (car bp) sym)
+                                      (car bp)))
+                                  package-lint-backport-libraries))
+                        ((eq type 'function)
+                         (cl-some (lambda (bp)
+                                    (when (string-match-p (cdr bp) sym)
+                                      (car bp)))
+                                  package-lint-backport-libraries)))))
+                  (unless (and available-backport (assoc available-backport valid-deps))
+                    ;; Check this as late as possible, just before reporting,
+                    ;; because otherwise the checking process is extremely slow,
+                    ;; being bottlenecked by `syntax-ppss'.
+                    (unless (package-lint--inside-comment-or-string-p)
                       (save-excursion
                         (goto-char (match-beginning 1))
                         (package-lint--error-at-point
