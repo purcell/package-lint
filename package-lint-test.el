@@ -334,7 +334,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '()
     (package-lint-test--run
      ";; Package-Requires: ((emacs \"25.1\"))
-(when-let ((foo (bar))) (message \"ok\"))"))))
+\(when-let ((foo (bar))) (message \"ok\"))"))))
 
 (ert-deftest package-lint-test-accept-new-functions-with-fboundp ()
   (should
@@ -358,7 +358,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '()
     (package-lint-test--run
      ";; Package-Requires: ((emacs \"25.1\"))
-(seq-length '(foo))"))))
+\(seq-length '(foo))"))))
 
 (ert-deftest package-lint-test-accepts-new-backported-functions-with-backport-dep ()
   (should
@@ -366,7 +366,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '()
     (package-lint-test--run
      ";; Package-Requires: ((seq \"1\"))
-(seq-length '(foo))"))))
+\(seq-length '(foo))"))))
 
 (ert-deftest package-lint-test-error-nonstandard-symbol-separator ()
   (should
@@ -488,7 +488,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 
 (ert-deftest package-lint-test-accept-unprefixed-cl-defmethod ()
   (should (equal '() (package-lint-test--run ";; Package-Requires: ((emacs \"25.1\"))
-(cl-defmethod foo ()"))))
+\(cl-defmethod foo ()"))))
 
 (ert-deftest package-lint-test-minor-mode-global-t ()
   (should
@@ -572,7 +572,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
    (equal
     '()
     (package-lint-test--run ";; Package-Requires: ((emacs \"26.1\"))
-(format \"%1$s\" \"foo\")"))))
+\(format \"%1$s\" \"foo\")"))))
 
 (ert-deftest package-lint-test-accept-quasiquoted-defalias ()
   (should
