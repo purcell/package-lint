@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    paths:
-    - '!**/*.md'
-    - '!tools/*'
+    paths-ignore:
+    - '**/*.md'
+    - 'tools/*'
 
 env:
   EMACS_CI: emacs-26-3 
