@@ -24,7 +24,7 @@ jobs:
           - emacs-26-1
           - emacs-26-2
           - emacs-26-3
-          - emacs-26-snapshot
+          - emacs-snapshot
         include:
           - emacs_ci: emacs-24-1
             lint_ignore: 1
