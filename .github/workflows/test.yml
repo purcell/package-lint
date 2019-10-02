@@ -26,9 +26,9 @@ jobs:
           - emacs-26-3
           - emacs-26-snapshot
         include:
-          - emacs: emacs-24-1
+          - emacs_ci: emacs-24-1
             lint_ignore: 1
-          - emacs: emacs-24-2
+          - emacs_ci: emacs-24-2
             lint_ignore: 1
     env:
       EMACS_CI: ${{ matrix.emacs_ci }}
