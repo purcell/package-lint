@@ -29,7 +29,8 @@
 (require 'ert)
 
 (defun package-lint-test-add-package-lint-foobar-to-archive (version &optional archive)
-  "Add a package-lint-foobar package to melpa-stable archive.
+  "Add a package-lint-foobar package to ARCHIVE.
+ARCHIVE defaults to \"melpa-stable\".
 VERSION is a list of numbers, e.g., (0 5 0) to represent version
 0.5.0."
   (package--add-to-archive-contents
