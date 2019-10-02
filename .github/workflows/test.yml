@@ -31,11 +31,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: Setup
+    - name: Run tests
       # TODO: move the setup to a single handy script in the nix-emacs-ci repo
       run: |
         sh <(curl https://nixos.org/nix/install)
         source ~/.nix-profile/etc/profile.d/nix.sh
         bash <(curl https://raw.githubusercontent.com/purcell/nix-emacs-ci/master/travis-install)
-    - name: Run tests
-      run: ./run-tests.sh
+        ./run-tests.sh
