@@ -332,7 +332,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-new-functions-as-quote ()
   (should
    (equal
-    '((6 20 error "You should depend on (emacs \"24.4\") if you need `string-prefix-p'."))
+    '((6 20 error "You should depend on (emacs \"24.1\") if you need `string-prefix-p'."))
     (package-lint-test--run
      "(defconst test-fn #'string-prefix-p)"))))
 
