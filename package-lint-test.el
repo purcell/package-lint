@@ -413,6 +413,12 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((6 10 error "The `awk-mode' library was removed in Emacs version 26.1."))
     (package-lint-test--run "(require 'awk-mode)"))))
 
+(ert-deftest package-lint-test-error-removed-functions ()
+  (should
+   (equal
+    '((6 1 error "`y-or-n-minibuffer' was removed in Emacs version 26.1."))
+    (package-lint-test--run "(y-or-n-minibuffer)"))))
+
 (ert-deftest package-lint-test-accept-new-libraries-with-dep ()
   (should (equal '() (package-lint-test--run
                       ";; Package-Requires: ((emacs \"24.4\"))\n(require 'subr-x)"))))

@@ -139,7 +139,15 @@ published in ELPA for use by older Emacsen.")
                        (added-functions (let-alist (cdr version-data) .functions.added)))
                    (cons version (funcall 'package-lint--match-symbols added-functions))))
                stdlib-changes))
-      "An alist of function/macro names and when they were added to Emacs.")))
+      "An alist of function/macro names and when they were added to Emacs.")
+
+    (defconst package-lint--functions-and-macros-removed-alist
+      (mapcar (lambda (version-data)
+                (let ((version (car version-data))
+                      (removed-functions (let-alist (cdr version-data) .functions.removed)))
+                  (cons version (funcall 'package-lint--match-symbols removed-functions))))
+              stdlib-changes)
+      "An alist of function/macro names and when they were removed from Emacs.")))
 
 (defconst package-lint--sane-prefixes
   (rx
@@ -190,6 +198,7 @@ published in ELPA for use by older Emacsen.")
             (package-lint--check-libraries-available-in-emacs deps)
             (package-lint--check-libraries-removed-from-emacs)
             (package-lint--check-macros-functions-available-in-emacs deps)
+            (package-lint--check-macros-functions-removed-from-emacs)
             (package-lint--check-objects-by-regexp
              (concat "(" (regexp-opt '("format" "message" "error")) "\\s-")
              (lambda (def) (package-lint--check-format-string deps def))))
@@ -549,13 +558,31 @@ type of the symbol, either FUNCTION or FEATURE."
               (format "The `%s' library was removed in Emacs version %s."
                       sym (mapconcat #'number-to-string removed-in-version "."))))))))))
 
+(defconst package-lint--function-name-regexp
+  "(\\s-*?\\(.*?\\)\\_>"
+  "Regexp to match function names.")
+
 (defun package-lint--check-macros-functions-available-in-emacs (valid-deps)
   "Warn about use of functions/macros that are not available in the Emacs version in VALID-DEPS."
   (package-lint--check-version-regexp-list
    valid-deps
    package-lint--functions-and-macros-added-alist
-   "(\\s-*?\\(.*?\\)\\_>"
+   package-lint--function-name-regexp
    'function))
+
+(defun package-lint--check-macros-functions-removed-from-emacs ()
+  "Warn about use of functions/macros that have been removed from Emacs."
+  (package-lint--map-symbol-match
+   package-lint--function-name-regexp
+   (lambda (sym)
+     (cl-block return
+       (pcase-dolist (`(,removed-in-version . ,pred) package-lint--functions-and-macros-removed-alist)
+         (when (funcall pred (intern sym))
+           (cl-return-from return
+             (list
+              'error
+              (format "`%s' was removed in Emacs version %s."
+                      sym (mapconcat #'number-to-string removed-in-version "."))))))))))
 
 (defun package-lint--check-lexical-binding-is-on-first-line ()
   "Check that any `lexical-binding' declaration is on the first line of the file."
