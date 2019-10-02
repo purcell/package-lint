@@ -499,7 +499,7 @@ type of the symbol, either FUNCTION or FEATURE."
    "(\\s-*?\\(\\(?:with-\\)?eval-after-load\\)\\_>"
    (lambda (match)
      (list 'warning
-           (format "`%s' is for use in configurations, and should rarely be used in packages." (match-string 1))))))
+           (format "`%s' is for use in configurations, and should rarely be used in packages." match)))))
 
 (defun package-lint--check-no-use-of-cl ()
   "Warn about use of deprecated `cl' library."
