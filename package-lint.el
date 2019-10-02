@@ -559,7 +559,7 @@ type of the symbol, either FUNCTION or FEATURE."
                       sym (mapconcat #'number-to-string removed-in-version "."))))))))))
 
 (defconst package-lint--function-name-regexp
-  "(\\s-*?\\(.*?\\)\\_>"
+  "\\(?:#'\\|(\\s-*?\\)\\(.*?\\)\\_>"
   "Regexp to match function names.")
 
 (defun package-lint--check-macros-functions-available-in-emacs (valid-deps)
