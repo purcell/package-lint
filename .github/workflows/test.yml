@@ -10,11 +10,32 @@ jobs:
 
     runs-on: ubuntu-latest
     
+    strategy:
+      matrix:
+        emacs_ci:
+          - emacs-24-1
+          - emacs-24-2
+          - emacs-24-3
+          - emacs-24-4
+          - emacs-24-5
+          - emacs-25-1
+          - emacs-25-2
+          - emacs-25-3
+          - emacs-26-1
+          - emacs-26-2
+          - emacs-26-3
+          - emacs-26-snapshot
+
+    env:
+      EMACS_CI: ${{ matrix.emacs_ci }}
+
     steps:
     - uses: actions/checkout@v1
-    - name: Run a multi-line script
+    - name: Setup
+      # TODO: move the setup to a single handy script in the nix-emacs-ci repo
       run: |
         sh <(curl https://nixos.org/nix/install)
         source ~/.nix-profile/etc/profile.d/nix.sh
         bash <(curl https://raw.githubusercontent.com/purcell/nix-emacs-ci/master/travis-install)
-        ./run-tests.sh
+    - name: Run tests
+      run: ./run-tests.sh
