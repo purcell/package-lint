@@ -406,6 +406,12 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((6 10 error "You should depend on (emacs \"24.4\") if you need `subr-x'."))
     (package-lint-test--run "(require 'subr-x)"))))
 
+(ert-deftest package-lint-test-error-removed-libraries ()
+  (should
+   (equal
+    '((6 10 error "The `awk-mode' library was removed in Emacs version 26.1."))
+    (package-lint-test--run "(require 'awk-mode)"))))
+
 (ert-deftest package-lint-test-accept-new-libraries-with-dep ()
   (should (equal '() (package-lint-test--run
                       ";; Package-Requires: ((emacs \"24.4\"))\n(require 'subr-x)"))))
