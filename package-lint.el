@@ -93,16 +93,16 @@ published in ELPA for use by older Emacsen.")
     (defconst package-lint--libraries-added-alist
       (mapcar (lambda (version-data)
                 (let ((version (car version-data))
-                      (added-functions (let-alist (cdr version-data) .features.added)))
-                  (cons version (package-lint--match-symbols added-functions))))
+                      (added-libraries (let-alist (cdr version-data) .features.added)))
+                  (cons version (package-lint--match-symbols added-libraries))))
               stdlib-changes)
       "An alist of library names and when they were added to Emacs.")
 
     (defconst package-lint--libraries-removed-alist
       (mapcar (lambda (version-data)
                 (let ((version (car version-data))
-                      (added-functions (let-alist (cdr version-data) .features.removed)))
-                  (cons version (package-lint--match-symbols added-functions))))
+                      (removed-libraries (let-alist (cdr version-data) .features.removed)))
+                  (cons version (package-lint--match-symbols removed-libraries))))
               stdlib-changes)
       "An alist of library names and when they were added to Emacs.")
 
