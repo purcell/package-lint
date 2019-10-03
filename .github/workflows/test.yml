@@ -6,14 +6,9 @@ on:
     - '**/*.md'
     - 'tools/*'
 
-env:
-  EMACS_CI: emacs-26-3 
-
 jobs:
   build:
-
     runs-on: ubuntu-latest
-    
     strategy:
       matrix:
         emacs_ci:
@@ -35,15 +30,15 @@ jobs:
           - emacs_ci: emacs-24-2
             lint_ignore: 1
     env:
-      EMACS_CI: ${{ matrix.emacs_ci }}
       EMACS_LINT_IGNORE: ${{ matrix.lint_ignore }}
-
     steps:
     - uses: actions/checkout@v1
+    - uses: cachix/install-nix-action@v3
+    - uses: cachix/cachix-action@v2
+      with:
+        name: emacs-ci
     - name: Run tests
-      # TODO: move the setup to a single handy script in the nix-emacs-ci repo
+      # TODO: make an "install-emacs" action
       run: |
-        sh <(curl https://nixos.org/nix/install)
-        source ~/.nix-profile/etc/profile.d/nix.sh
-        bash <(curl https://raw.githubusercontent.com/purcell/nix-emacs-ci/master/travis-install)
+        nix-env -iA "${{ matrix.emacs_ci }}" -f https://github.com/purcell/nix-emacs-ci/archive/master.tar.gz
         ./run-tests.sh
