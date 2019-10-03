@@ -1,6 +1,6 @@
 [![Melpa Status](http://melpa.org/packages/package-lint-badge.svg)](http://melpa.org/#/package-lint)
 [![Melpa Stable Status](http://stable.melpa.org/packages/package-lint-badge.svg)](http://stable.melpa.org/#/package-lint)
-[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fpurcell%2Fpackage-lint%2Fbadge&style=flat)](https://actions-badge.atrox.dev/purcell/package-lint/goto)
+[![Build Status](https://github.com/purcell/package-lint/workflows/CI/badge.svg)](https://github.com/purcell/package-lint/actions)
 [![Build Status](https://travis-ci.org/purcell/package-lint.svg?branch=master)](https://travis-ci.org/purcell/package-lint)
 <a href="https://www.patreon.com/sanityinc"><img alt="Support me" src="https://img.shields.io/badge/Support%20Me-%F0%9F%92%97-ff69b4.svg"></a>
 
