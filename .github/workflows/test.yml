@@ -11,34 +11,31 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        emacs_ci:
-          - emacs-24-1
-          - emacs-24-2
-          - emacs-24-3
-          - emacs-24-4
-          - emacs-24-5
-          - emacs-25-1
-          - emacs-25-2
-          - emacs-25-3
-          - emacs-26-1
-          - emacs-26-2
-          - emacs-26-3
-          - emacs-snapshot
+        emacs_version:
+          - 24.1
+          - 24.2
+          - 24.3
+          - 24.4
+          - 24.5
+          - 25.1
+          - 25.2
+          - 25.3
+          - 26.1
+          - 26.2
+          - 26.3
+          - snapshot
         include:
-          - emacs_ci: emacs-24-1
+          - emacs_version: 24.1
             lint_ignore: 1
-          - emacs_ci: emacs-24-2
+          - emacs_version: 24.2
             lint_ignore: 1
     env:
       EMACS_LINT_IGNORE: ${{ matrix.lint_ignore }}
     steps:
-    - uses: actions/checkout@v1
-    - uses: cachix/install-nix-action@v3
-    - uses: cachix/cachix-action@v2
+    - uses: purcell/setup-emacs@master
       with:
-        name: emacs-ci
+        version: ${{ matrix.emacs_version }}
+
+    - uses: actions/checkout@v1
     - name: Run tests
-      # TODO: make an "install-emacs" action
-      run: |
-        nix-env -iA "${{ matrix.emacs_ci }}" -f https://github.com/purcell/nix-emacs-ci/archive/master.tar.gz
-        ./run-tests.sh
+      run: './run-tests.sh'
