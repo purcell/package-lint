@@ -151,7 +151,7 @@ headers and provide form."
 (ert-deftest package-lint-test-warn-no-standard-keyword ()
   (should
    (equal
-    '((6 1 warning "You should include standard keywords: see the variable `finder-known-keywords'."))
+    '((6 3 warning "You should include standard keywords: see the variable `finder-known-keywords'."))
     (package-lint-test--run ";; Keywords: foo"))))
 
 (ert-deftest package-lint-test-no-warning-if-at-least-one-standard-keyword ()
@@ -161,15 +161,15 @@ headers and provide form."
 (ert-deftest package-lint-test-error-if-no-url ()
   (should
    (equal
-    '((1 1 error "Package should have a Homepage or URL header."))
+    '((1 0 error "Package should have a Homepage or URL header."))
     (package-lint-test--run "" nil nil nil nil nil "")))
   (should
    (equal
-    '((3 9 error "Package URLs should be a single HTTPS or HTTP URL."))
+    '((3 8 error "Package URLs should be a single HTTPS or HTTP URL."))
     (package-lint-test--run "" nil nil nil nil nil ";; URL: not a URL\n")))
   (should
    (equal
-    '((3 9 error "Package URLs should be a single HTTPS or HTTP URL."))
+    '((3 8 error "Package URLs should be a single HTTPS or HTTP URL."))
     (package-lint-test--run "" nil nil nil nil nil
                             ";; URL: git://test/test.git\n"))))
 
@@ -180,13 +180,13 @@ headers and provide form."
 (ert-deftest package-lint-test-warn-invalid-version ()
   (should
    (member
-    '(2 21 warning "\"invalid\" is not a valid version. MELPA will handle this, but other archives will not.")
+    '(2 20 warning "\"invalid\" is not a valid version. MELPA will handle this, but other archives will not.")
     (package-lint-test--run "" nil ";; Package-Version: invalid\n"))))
 
 (ert-deftest package-lint-test-warn-no-version ()
   (should
    (member
-    '(1 1 warning "\"Version:\" or \"Package-Version:\" header is missing. MELPA will handle this, but other archives will not.")
+    '(1 0 warning "\"Version:\" or \"Package-Version:\" header is missing. MELPA will handle this, but other archives will not.")
     (package-lint-test--run ";; Package-Requires: ((example \"0\"))" nil ""))))
 
 (ert-deftest package-lint-test-accept-valid-version ()
@@ -195,7 +195,7 @@ headers and provide form."
 (ert-deftest package-lint-test-error-lexical-binding-not-at-end ()
   (should
    (equal
-    '((1 1 error "`lexical-binding' must be set in the first line."))
+    '((1 0 error "`lexical-binding' must be set in the first line."))
     (package-lint-test--run
      ";; Local Variables:
 ;; lexical-binding: t
@@ -204,7 +204,7 @@ headers and provide form."
 (ert-deftest package-lint-test-warn-lexical-binding-without-emacs-24-dep ()
   (should
    (equal
-    '((1 28 warning "You should depend on (emacs \"24\") if you need lexical-binding."))
+    '((1 27 warning "You should depend on (emacs \"24\") if you need lexical-binding."))
     (package-lint-test--run
      ""
      ";;; test.el --- A test -*- lexical-binding: t -*-\n"))))
@@ -220,14 +220,14 @@ headers and provide form."
 (ert-deftest package-lint-test-warn-empty-summary ()
   (should
    (equal
-    '((1 1 warning "Package should have a non-empty summary."))
+    '((1 0 warning "Package should have a non-empty summary."))
     (package-lint-test--run "" ";;; test.el ---\n"))))
 
 (ert-deftest package-lint-test-warn-too-long-summary ()
   (should
    (equal
-    '((1 1 warning "The package summary is too long. It should be at most 60 characters.")
-      (1 1 warning "The package summary should start with an uppercase letter or a digit."))
+    '((1 0 warning "The package summary is too long. It should be at most 60 characters.")
+      (1 0 warning "The package summary should start with an uppercase letter or a digit."))
     (package-lint-test--run
      ""
      ";;; test.el --- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"))))
@@ -235,7 +235,7 @@ headers and provide form."
 (ert-deftest package-lint-test-warn-emacs-in-summary ()
   (should
    (equal
-    '((1 1 warning "Including \"Emacs\" in the package summary is usually redundant."))
+    '((1 0 warning "Including \"Emacs\" in the package summary is usually redundant."))
     (package-lint-test--run "" ";;; test.el --- A package for Emacs\n"))))
 
 (ert-deftest package-lint-test-accept-emacs-lisp-in-summary ()
@@ -247,17 +247,17 @@ headers and provide form."
 (ert-deftest package-lint-test-error-invalid-dependency ()
   (should
    (member
-    '(6 1 error "Expected (package-name \"version-num\"), but found invalid.")
+    '(6 0 error "Expected (package-name \"version-num\"), but found invalid.")
     (package-lint-test--run ";; Package-Requires: (invalid)")))
   (should
    (member
-    '(6 24 error "\"invalid\" is not a valid version string: see `version-to-list'.")
+    '(6 23 error "\"invalid\" is not a valid version string: see `version-to-list'.")
     (package-lint-test--run ";; Package-Requires: ((package-lint \"invalid\"))"))))
 
 (ert-deftest package-lint-test-error-emacs-23-dep ()
   (should
    (equal
-    '((6 24 error "You can only depend on Emacs version 24 or greater: package.el for Emacs 23 does not support the \"emacs\" pseudopackage."))
+    '((6 23 error "You can only depend on Emacs version 24 or greater: package.el for Emacs 23 does not support the \"emacs\" pseudopackage."))
     (package-lint-test--run ";; Package-Requires: ((emacs \"23\"))"))))
 
 (ert-deftest package-lint-test-accept-emacs-24+-dep ()
@@ -267,19 +267,19 @@ headers and provide form."
 (ert-deftest package-lint-test-error-uninstallable-dep ()
   (should
    (equal
-    '((6 24 error "Package example-nonexistent-package is not installable."))
+    '((6 23 error "Package example-nonexistent-package is not installable."))
     (package-lint-test--run ";; Package-Requires: ((example-nonexistent-package \"1\"))"))))
 
 (ert-deftest package-lint-test-warn-snapshot-dep ()
   (should
    (equal
-    '((6 24 warning "Use a non-snapshot version number for dependency on \"package-lint\" if possible."))
+    '((6 23 warning "Use a non-snapshot version number for dependency on \"package-lint\" if possible."))
     (package-lint-test--run ";; Package-Requires: ((package-lint \"20160101.1234\"))"))))
 
 (ert-deftest package-lint-test-warn-unversioned-dep ()
   (should
    (equal
-    '((6 24 warning "Use a properly versioned dependency on \"package-lint\" if possible."))
+    '((6 23 warning "Use a properly versioned dependency on \"package-lint\" if possible."))
     (package-lint-test--run ";; Package-Requires: ((package-lint \"0\"))"))))
 
 (ert-deftest package-lint-test-warn-dependency-too-high ()
@@ -287,7 +287,7 @@ headers and provide form."
     (package-lint-test-add-package-lint-foobar-to-archive '(0 5 0))
     (should
      (equal
-      '((6 24 warning "Version dependency for package-lint-foobar appears too high: try 0.5.0"))
+      '((6 23 warning "Version dependency for package-lint-foobar appears too high: try 0.5.0"))
       (package-lint-test--run ";; Package-Requires: ((package-lint-foobar \"0.6.0\"))")))))
 
 (ert-deftest package-lint-test-dont-warn-dependency-too-high-1 ()
@@ -314,7 +314,7 @@ headers and provide form."
 (ert-deftest package-lint-test-error-cl-lib-1.0-dep ()
   (should
    (member
-    '(6 24 error "Depend on the latest 0.x version of cl-lib rather than on version \"(1)\".
+    '(6 23 error "Depend on the latest 0.x version of cl-lib rather than on version \"(1)\".
 Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled.")
     (package-lint-test--run ";; Package-Requires: ((cl-lib \"1\"))"))))
 
@@ -379,8 +379,8 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-nonstandard-symbol-separator ()
   (should
    (equal
-    '((6 1 error "`test-thing/bar' contains a non-standard separator `/', use hyphens instead (see Elisp Coding Conventions).")
-      (7 1 error "`test-thing:bar' contains a non-standard separator `:', use hyphens instead (see Elisp Coding Conventions)."))
+    '((6 0 error "`test-thing/bar' contains a non-standard separator `/', use hyphens instead (see Elisp Coding Conventions).")
+      (7 0 error "`test-thing:bar' contains a non-standard separator `:', use hyphens instead (see Elisp Coding Conventions)."))
     (package-lint-test--run
      "(defun test-thing/bar () t)\n(defun test-thing:bar () nil)")))
   ;; But accept /= when at the end.
@@ -389,11 +389,11 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-unprefixed-definitions ()
   (should
    (equal
-    '((6 1 error "\"foo\" doesn't start with package's prefix \"test\"."))
+    '((6 0 error "\"foo\" doesn't start with package's prefix \"test\"."))
     (package-lint-test--run "(defun foo ())")))
   (should
    (equal
-    '((6 1 error "\"global-testfoo-mode\" doesn't start with package's prefix \"test\"."))
+    '((6 0 error "\"global-testfoo-mode\" doesn't start with package's prefix \"test\"."))
     (package-lint-test--run "(define-globalized-minor-mode global-testfoo-mode ignore ignore :require 'test)"))))
 
 (ert-deftest package-lint-test-accept-prefixed-definitions ()
@@ -469,19 +469,19 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-unmatched-first-and-last-lines ()
   (should
    (member
-    '(1 1 error "package.el cannot parse this buffer: Search failed: \";;; test.el ends here\"")
+    '(1 0 error "package.el cannot parse this buffer: Search failed: \";;; test.el ends here\"")
     (package-lint-test--run "" nil nil "\n\n;;; Test.el ends here\n"))))
 
 (ert-deftest package-lint-test-error-missing-provide-form ()
   (should
    (equal
-    '((1 1 error "There is no (provide 'test) form."))
+    '((1 0 error "There is no (provide 'test) form."))
     (package-lint-test--run "" nil nil nil ""))))
 
 (ert-deftest package-lint-test-error-mismatched-provide-form ()
   (should
    (equal
-    '((1 1 error "There is no (provide 'test) form."))
+    '((1 0 error "There is no (provide 'test) form."))
     (package-lint-test--run "" nil nil nil "(provide 'blargh)"))))
 
 (ert-deftest package-lint-test-accept-provide-me ()
@@ -491,7 +491,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-no-commentary ()
   (should
    (equal
-    '((1 1 error "Package should have a ;;; Commentary section."))
+    '((1 0 error "Package should have a ;;; Commentary section."))
     (package-lint-test--run "" nil nil nil nil "\n"))))
 
 (ert-deftest package-lint-test-error-empty-commentary ()
@@ -603,7 +603,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-no-emacs-in-package-name ()
   (should
    (equal
-    '((1 1 warning "The word \"emacs\" is redundant in Emacs package names."))
+    '((1 0 warning "The word \"emacs\" is redundant in Emacs package names."))
     (package-lint-test--run "" nil nil nil nil nil nil "emacs-package"))))
 
 

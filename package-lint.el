@@ -222,9 +222,21 @@ published in ELPA for use by older Emacsen.")
   "Construct a datum for error at LINE and COL with TYPE and MESSAGE."
   (push (list line col type message) package-lint--errors))
 
-(defun package-lint--error-at-point (type message)
-  "Construct a datum for error at the point with TYPE and MESSAGE."
-  (package-lint--error (line-number-at-pos) (current-column) type message))
+(defun package-lint--error-at-point (type message &optional pos)
+  "Construct a datum for error at POS with TYPE and MESSAGE.
+POS defaults to `point'."
+  (save-excursion
+    (when pos
+      (goto-char pos))
+    (package-lint--error (line-number-at-pos) (current-column) type message)))
+
+(defun package-lint--error-at-bol (type message)
+  "Construct a datum for error at the beginning of the current line with TYPE and MESSAGE."
+  (package-lint--error (line-number-at-pos) 0 type message))
+
+(defun package-lint--error-at-bob (type message)
+  "Construct a datum for error at the beginning of the buffer with TYPE and MESSAGE."
+  (package-lint--error 1 0 type message))
 
 
 ;;; Checks
@@ -248,17 +260,17 @@ published in ELPA for use by older Emacsen.")
   "Warn about nonexistent or empty commentary section."
   (let ((start (lm-commentary-start)))
     (if (null start)
-        (package-lint--error
-         1 1 'error
+        (package-lint--error-at-bob
+         'error
          "Package should have a ;;; Commentary section.")
       ;; Skip over the section header.
       (goto-char start)
       (forward-line)
       (when (package-lint--region-empty-p (point) (lm-commentary-end))
-        (goto-char start)
         (package-lint--error-at-point
          'error
-         "Package should have a non-empty ;;; Commentary section.")))))
+         "Package should have a non-empty ;;; Commentary section."
+         start)))))
 
 (defun package-lint--check-autoloads-on-private-functions (definitions)
   "Verify that private functions DEFINITIONS don't have autoload cookies."
@@ -288,12 +300,13 @@ Instead it should use `user-emacs-directory' or `locate-user-emacs-file'."
 (defun package-lint--check-keywords-list ()
   "Verify that package keywords are listed in `finder-known-keywords'."
   (when (package-lint--goto-header "Keywords")
-    (let ((line-no (line-number-at-pos))
-          (keywords (lm-keywords-list)))
-      (unless (cl-some (lambda (keyword) (assoc (intern keyword) finder-known-keywords)) keywords)
-        (package-lint--error
-         line-no 1 'warning
-         (format "You should include standard keywords: see the variable `finder-known-keywords'."))))))
+    (let ((err-pos (match-beginning 2)))
+      (let ((keywords (lm-keywords-list)))
+        (unless (cl-some (lambda (keyword) (assoc (intern keyword) finder-known-keywords)) keywords)
+          (package-lint--error-at-point
+           'warning
+           (format "You should include standard keywords: see the variable `finder-known-keywords'.")
+           err-pos))))))
 
 (defun package-lint--check-url-header ()
   "Verify that the package has an HTTPS or HTTP Homepage/URL header."
@@ -302,13 +315,12 @@ Instead it should use `user-emacs-directory' or `locate-user-emacs-file'."
             (url-start (match-beginning 3)))
         (unless (and (equal (thing-at-point 'url) url)
                      (string-match-p "^https?://" url))
-          (package-lint--error
-           (line-number-at-pos)
-           (1+ (- url-start (line-beginning-position)))
+          (package-lint--error-at-point
            'error
-           "Package URLs should be a single HTTPS or HTTP URL.")))
-    (package-lint--error
-     1 1 'error
+           "Package URLs should be a single HTTPS or HTTP URL."
+           url-start)))
+    (package-lint--error-at-bob
+     'error
      "Package should have a Homepage or URL header.")))
 
 (defun package-lint--check-dependency-list ()
@@ -322,8 +334,8 @@ Return a list of well-formed dependencies, same as
       (condition-case err
           (pcase-let ((`(,parsed-deps . ,parse-end-pos) (read-from-string deps)))
             (unless (= parse-end-pos (length deps))
-              (package-lint--error
-               line-no 1 'error
+              (package-lint--error-at-bol
+               'error
                "More than one expression provided."))
             (let ((deps (package-lint--check-well-formed-dependencies position line-no parsed-deps)))
               (package-lint--check-packages-installable deps)
@@ -332,8 +344,8 @@ Return a list of well-formed dependencies, same as
               (package-lint--check-do-not-depend-on-cl-lib-1.0 deps)
               deps))
         (error
-         (package-lint--error
-          line-no 1 'error
+         (package-lint--error-at-bol
+          'error
           (format "Couldn't parse \"Package-Requires\" header: %s" (error-message-string err)))
          nil)))))
 
@@ -350,90 +362,92 @@ the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
               (guard (stringp package-version)))
          ;; Find the column at which the dependency is declared so we can
          ;; properly report the position of errors.
-         (let ((offset
+         (let ((dep-pos
                 (save-excursion
                   (goto-char position)
-                  (let ((line-start (line-beginning-position))
-                        (pattern
+                  (let ((pattern
                          (format "( *\\(%s\\)\\(?:)\\|[^[:alnum:]_\\-].*?)\\)"
                                  (regexp-quote (symbol-name package-name)))))
                     (if (re-search-forward pattern (line-end-position) t)
-                        (- (1+ (match-beginning 1)) line-start)
-                      1)))))
+                        (match-beginning 1)
+                      position)))))
            (if (ignore-errors (version-to-list package-version))
                (push (list package-name
                            (version-to-list package-version)
-                           line-no
-                           offset)
+                           dep-pos)
                      valid-deps)
-             (package-lint--error
-              line-no offset 'error
+             (package-lint--error-at-point
+              'error
               (format "%S is not a valid version string: see `version-to-list'."
-                      package-version)))))
+                      package-version)
+              dep-pos))))
         (_
-         (package-lint--error
-          line-no 1 'error
+         (package-lint--error-at-bol
+          'error
           (format "Expected (package-name \"version-num\"), but found %S." entry)))))
     valid-deps))
 
-(defun package-lint--check-package-installable (archive-entry package-version line-no offset)
+(defun package-lint--check-package-installable (archive-entry package-version dep-pos)
   "Check that ARCHIVE-ENTRY is installable from a configured package archive.
 
 Check that package described by ARCHIVE-ENTRY can be installed at
-required version PACKAGE-VERSION.  If not, raise an error for
-LINE-NO at OFFSET."
+required version PACKAGE-VERSION.  If not, raise an error for DEP-POS."
   (let* ((package-name (car archive-entry))
          (best-version (package-lint--highest-installable-version-of package-name)))
     (when (version-list-< best-version package-version)
-      (package-lint--error
-       line-no offset 'warning
+      (package-lint--error-at-point
+       'warning
        (format "Version dependency for %s appears too high: try %s" package-name
-               (package-version-join best-version))))))
+               (package-version-join best-version))
+       dep-pos))))
 
 (defun package-lint--check-packages-installable (valid-deps)
   "Check that all VALID-DEPS are available for installation."
-  (pcase-dolist (`(,package-name ,package-version ,line-no ,offset) valid-deps)
+  (pcase-dolist (`(,package-name ,package-version ,dep-pos) valid-deps)
     (if (eq 'emacs package-name)
         (unless (version-list-<= '(24) package-version)
-          (package-lint--error
-           line-no offset 'error
-           "You can only depend on Emacs version 24 or greater: package.el for Emacs 23 does not support the \"emacs\" pseudopackage."))
+          (package-lint--error-at-point
+           'error
+           "You can only depend on Emacs version 24 or greater: package.el for Emacs 23 does not support the \"emacs\" pseudopackage."
+           dep-pos))
       ;; Not 'emacs
       (let ((archive-entry (assq package-name package-archive-contents)))
         (if archive-entry
-            (package-lint--check-package-installable archive-entry package-version line-no offset)
-          (package-lint--error
-           line-no offset 'error
-           (format "Package %S is not installable." package-name)))))))
+            (package-lint--check-package-installable archive-entry package-version dep-pos)
+          (package-lint--error-at-point
+           'error
+           (format "Package %S is not installable." package-name)
+           dep-pos))))))
 
 (defun package-lint--check-deps-use-non-snapshot-version (valid-deps)
   "Warn about any VALID-DEPS on snapshot versions of packages."
-  (pcase-dolist (`(,package-name ,package-version ,line-no ,offset) valid-deps)
+  (pcase-dolist (`(,package-name ,package-version ,dep-pos) valid-deps)
     (unless (version-list-< package-version '(19001201 1))
-      (package-lint--error
-       line-no offset 'warning
+      (package-lint--error-at-point
+       'warning
        (format "Use a non-snapshot version number for dependency on \"%S\" if possible."
-               package-name)))))
+               package-name)
+       dep-pos))))
 
 (defun package-lint--check-deps-do-not-use-zero-versions (valid-deps)
   "Warn about VALID-DEPS on \"0\" versions of packages."
-  (pcase-dolist (`(,package-name ,package-version ,line-no ,offset) valid-deps)
+  (pcase-dolist (`(,package-name ,package-version ,dep-pos) valid-deps)
     (when (equal package-version '(0))
-      (package-lint--error
-       line-no offset 'warning
+      (package-lint--error-at-point
+       'warning
        (format "Use a properly versioned dependency on \"%S\" if possible."
-               package-name)))))
+               package-name)
+       dep-pos))))
 
 (defun package-lint--check-lexical-binding-requires-emacs-24 (valid-deps)
   "Warn about use of `lexical-binding' when Emacs 24 is not among VALID-DEPS."
   (goto-char (point-min))
   (when (package-lint--lexical-binding-declared-in-header-line-p)
-    (let* ((lexbind-line (line-number-at-pos))
-           (lexbind-col (1+ (- (match-beginning 1) (line-beginning-position)))))
-      (unless (assq 'emacs valid-deps)
-        (package-lint--error
-         lexbind-line lexbind-col 'warning
-         "You should depend on (emacs \"24\") if you need lexical-binding.")))))
+    (unless (assq 'emacs valid-deps)
+      (package-lint--error-at-point
+       'warning
+       "You should depend on (emacs \"24\") if you need lexical-binding."
+       (match-beginning 1)))))
 
 (defun package-lint--inside-comment-or-string-p ()
   "Return non-nil if point is inside a comment or string."
@@ -614,7 +628,7 @@ type of the symbol, either FUNCTION or FEATURE."
                   (setq lexical-binding-found-at-end
                         hack-local-variables--warned-lexical)))
             (error
-             (package-lint--error 1 1 'error (error-message-string err))
+             (package-lint--error-at-bob 'error (error-message-string err))
              (cl-return-from return nil)))
           (when (or lexical-binding-found-at-end
                     ;; In case this is an Emacs from before `hack-local-variables'
@@ -622,8 +636,8 @@ type of the symbol, either FUNCTION or FEATURE."
                     ;; than the first.
                     (and (cdr (assq 'lexical-binding file-local-variables-alist))
                          (not (package-lint--lexical-binding-declared-in-header-line-p))))
-            (package-lint--error
-             1 1 'error
+            (package-lint--error-at-bob
+             'error
              "`lexical-binding' must be set in the first line.")))))))
 
 (defun package-lint--check-do-not-depend-on-cl-lib-1.0 (valid-deps)
@@ -632,24 +646,24 @@ type of the symbol, either FUNCTION or FEATURE."
     (when cl-lib-dep
       (let ((cl-lib-version (nth 1 cl-lib-dep)))
         (when (version-list-<= '(1) cl-lib-version)
-          (package-lint--error
-           (nth 2 cl-lib-dep) (nth 3 cl-lib-dep) 'error
+          (package-lint--error-at-point
+           'error
            (format "Depend on the latest 0.x version of cl-lib rather than on version \"%S\".
 Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled."
-                   cl-lib-version)))))))
+                   cl-lib-version)
+           (nth 2 cl-lib-dep)))))))
 
 (defun package-lint--check-package-version-present ()
   "Check that a valid \"Version\" header is present."
   (let ((version (package-lint--goto-header (rx (? "Package-") "Version"))))
     (if version
         (unless (ignore-errors (version-to-list version))
-          (package-lint--error
-           (line-number-at-pos)
-           (1+ (- (match-beginning 3) (line-beginning-position)))
+          (package-lint--error-at-point
            'warning
-           (format "\"%s\" is not a valid version. MELPA will handle this, but other archives will not." version)))
-      (package-lint--error
-       1 1 'warning
+           (format "\"%s\" is not a valid version. MELPA will handle this, but other archives will not." version)
+           (match-beginning 3)))
+      (package-lint--error-at-bob
+       'warning
        "\"Version:\" or \"Package-Version:\" header is missing. MELPA will handle this, but other archives will not."))))
 
 (defun package-lint--check-package-el-can-parse ()
@@ -663,8 +677,7 @@ If it can, return the read metadata."
           (package-lint--update-or-insert-version "0")
           (package-buffer-info)))
     (error
-     (package-lint--error
-      1 1
+     (package-lint--error-at-bob
       'error
       (format "package.el cannot parse this buffer: %s" (error-message-string err)))
      nil)))
@@ -675,20 +688,17 @@ DESC is a struct as returned by `package-buffer-info'."
   (let ((summary (package-lint--package-desc-summary desc)))
     (cond
      ((string= summary "")
-      (package-lint--error
-       1 1
+      (package-lint--error-at-bob
        'warning
        "Package should have a non-empty summary."))
      (t
       (unless (let ((case-fold-search nil))
                 (string-match-p "^[A-Z0-9]" summary))
-        (package-lint--error
-         1 1
+        (package-lint--error-at-bob
          'warning
          "The package summary should start with an uppercase letter or a digit."))
       (when (> (length summary) 60)
-        (package-lint--error
-         1 1
+        (package-lint--error-at-bob
          'warning
          "The package summary is too long. It should be at most 60 characters."))
       (when (save-match-data
@@ -696,8 +706,7 @@ DESC is a struct as returned by `package-buffer-info'."
                 (and (string-match "[^.]\\<emacs\\>" summary)
                      (not (string-match-p "[[:space:]]+lisp"
                                           summary (match-end 0))))))
-        (package-lint--error
-         1 1
+        (package-lint--error-at-bob
          'warning
          "Including \"Emacs\" in the package summary is usually redundant."))))))
 
@@ -707,8 +716,7 @@ DESC is a struct as returned by `package-buffer-info'."
   (let ((name (package-lint--package-desc-name desc))
         (feature (package-lint--provided-feature)))
     (unless (string-equal (symbol-name name) feature)
-      (package-lint--error
-       1 1
+      (package-lint--error-at-bob
        'error
        (format "There is no (provide '%s) form." name)))))
 
@@ -717,8 +725,7 @@ DESC is a struct as returned by `package-buffer-info'."
 DESC is a struct as returned by `package-buffer-info'."
   (let ((name (package-lint--package-desc-name desc)))
     (when (string-match-p "emacs" (symbol-name name))
-      (package-lint--error
-       1 1
+      (package-lint--error-at-bob
        'warning
        "The word \"emacs\" is redundant in Emacs package names."))))
 
@@ -733,7 +740,7 @@ DESC is a struct as returned by `package-buffer-info'."
                   (/= match-pos (match-beginning 0)))
           (goto-char position)
           (package-lint--error
-           (line-number-at-pos) 1 'error
+           (line-number-at-pos) 0 'error
            (format "`%s' contains a non-standard separator `%s', use hyphens instead (see Elisp Coding Conventions)."
                    name (substring-no-properties name match-pos (1+ match-pos)))))))))
 
@@ -764,11 +771,11 @@ Valid definition names are:
     (when prefix
       (pcase-dolist (`(,name . ,position) definitions)
         (unless (package-lint--valid-definition-name-p name prefix position)
-          (let ((line-no (line-number-at-pos position)))
-            (package-lint--error
-             line-no 1 'error
-             (format "\"%s\" doesn't start with package's prefix \"%s\"."
-                     name prefix))))))))
+          (package-lint--error-at-point
+           'error
+           (format "\"%s\" doesn't start with package's prefix \"%s\"."
+                   name prefix)
+           position))))))
 
 (defun package-lint--check-minor-mode (def)
   "Offer up concerns about the minor mode definition DEF."
