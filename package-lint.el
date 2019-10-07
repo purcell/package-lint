@@ -329,7 +329,6 @@ Return a list of well-formed dependencies, same as
 `package-lint--check-well-formed-dependencies'."
   (when (package-lint--goto-header "Package-Requires")
     (let ((position (match-beginning 3))
-          (line-no (line-number-at-pos))
           (deps (match-string 3)))
       (condition-case err
           (pcase-let ((`(,parsed-deps . ,parse-end-pos) (read-from-string deps)))
@@ -337,7 +336,7 @@ Return a list of well-formed dependencies, same as
               (package-lint--error-at-bol
                'error
                "More than one expression provided."))
-            (let ((deps (package-lint--check-well-formed-dependencies position line-no parsed-deps)))
+            (let ((deps (package-lint--check-well-formed-dependencies position parsed-deps)))
               (package-lint--check-packages-installable deps)
               (package-lint--check-deps-use-non-snapshot-version deps)
               (package-lint--check-deps-do-not-use-zero-versions deps)
@@ -349,11 +348,11 @@ Return a list of well-formed dependencies, same as
           (format "Couldn't parse \"Package-Requires\" header: %s" (error-message-string err)))
          nil)))))
 
-(defun package-lint--check-well-formed-dependencies (position line-no parsed-deps)
-  "Check that dependencies listed at POSITION on LINE-NO are well-formed.
+(defun package-lint--check-well-formed-dependencies (position parsed-deps)
+  "Check that dependencies listed at POSITION are well-formed.
 These PARSED-DEPS must have the format (name \"version\").
 Return a list of well-formed dependencies, where each element is of
-the form (PACKAGE-NAME PACKAGE-VERSION LINE-NO LINE-BEGINNING-OFFSET)."
+the form (PACKAGE-NAME PACKAGE-VERSION DEP-POSITION)."
   (let (valid-deps)
     (dolist (entry parsed-deps)
       (pcase entry
