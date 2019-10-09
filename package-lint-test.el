@@ -39,6 +39,8 @@ VERSION is a list of numbers, e.g., (0 5 0) to represent version
                                       (:url . "https://gitlab.com/somewhere"))])
    (or archive "melpa-stable")))
 
+(defvar straight--recipe-cache)
+
 (defun package-lint-test-add-package-lint-foobar-to-straight.el ()
   "Like `package-lint-test-add-package-lint-foobar-to-archive', but for straight.
 
