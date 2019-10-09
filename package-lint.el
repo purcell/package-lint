@@ -400,6 +400,23 @@ required version PACKAGE-VERSION.  If not, raise an error for DEP-POS."
                (package-version-join best-version))
        dep-pos))))
 
+(defvar straight--recipe-cache)
+
+(defun package-lint--package-manager-for (package-name)
+  "Return the type of package manager for PACKAGE-NAME.
+
+`(package ,archive-entry) for package.el
+`(straight ,recipe) for straight.el"
+  (or
+   (let ((archive-entry (assq package-name package-archive-contents)))
+     (when archive-entry
+       `(package ,archive-entry)))
+   (let ((recipe (and (boundp 'straight--recipe-cache)
+                      (hash-table-p straight--recipe-cache)
+                      (gethash package-name straight--recipe-cache))))
+     (when recipe
+       `(straight ,recipe)))))
+
 (defun package-lint--check-packages-installable (valid-deps)
   "Check that all VALID-DEPS are available for installation."
   (pcase-dolist (`(,package-name ,package-version ,dep-pos) valid-deps)
@@ -409,11 +426,17 @@ required version PACKAGE-VERSION.  If not, raise an error for DEP-POS."
            'error
            "You can only depend on Emacs version 24 or greater: package.el for Emacs 23 does not support the \"emacs\" pseudopackage."
            dep-pos))
-      ;; Not 'emacs
-      (let ((archive-entry (assq package-name package-archive-contents)))
-        (if archive-entry
-            (package-lint--check-package-installable archive-entry package-version dep-pos)
-          (package-lint--error-at-point
+      ;; any other package that is not 'emacs
+      (pcase (package-lint--package-manager-for package-name)
+        (`(package ,archive-entry)
+         (package-lint--check-package-installable archive-entry package-version dep-pos))
+        (`(straight ,_recipe)
+         (package-lint--error-at-point
+          'warning
+          (format "Dependency '%S is not listed in package archive (installed with straight.el)" package-name)
+          dep-pos))
+        (_
+         (package-lint--error-at-point
            'error
            (format "Package %S is not installable." package-name)
            dep-pos))))))
