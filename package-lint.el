@@ -398,7 +398,7 @@ required version PACKAGE-VERSION.  If not, raise an error for DEP-POS."
       (package-lint--error-at-point
        'warning
        (format "Version dependency for %s appears too high: try %s" package-name
-               (package-version-join best-version))
+          (package-version-join best-version))
        dep-pos))))
 
 (defvar straight--recipe-cache)
