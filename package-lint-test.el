@@ -39,6 +39,21 @@ VERSION is a list of numbers, e.g., (0 5 0) to represent version
                                       (:url . "https://gitlab.com/somewhere"))])
    (or archive "melpa-stable")))
 
+(defun package-lint-test-add-package-lint-foobar-to-straight.el ()
+  "Like `package-lint-test-add-package-lint-foobar-to-archive', but for straight.
+
+This is actually a simulation of straight."
+  ;; ensure cache is a hash table
+  (setq straight--recipe-cache
+	(or straight--recipe-cache
+	    (make-hash-table)))
+  (puthash "package-lint-foobar" '(;; some stub recipe
+				   :type git :host github
+				   :repo "non-existent/package-lint-foobar"
+				   :package "package-lint-foobar"
+				   :local-repo "package-lint-foobar")
+	   straight--recipe-cache))
+
 (defun package-lint-test--run (contents &optional header version footer provide commentary url featurename)
   "Run `package-lint-buffer' on a temporary buffer with given CONTENTS.
 
@@ -269,6 +284,13 @@ headers and provide form."
    (equal
     '((6 23 error "Package example-nonexistent-package is not installable."))
     (package-lint-test--run ";; Package-Requires: ((example-nonexistent-package \"1\"))"))))
+
+(ert-deftest package-lint-test-warning-straight.el-installed-dep ()
+  (package-lint-test-add-package-lint-foobar-to-straight.el)
+  (should
+   (equal
+    '((6 23 warning "Dependency 'package-lint-foobar is not listed in package archive (installed with straight.el)"))
+    (package-lint-test--run ";; Package-Requires: ((package-lint-foobar \"0.6.0\"))"))))
 
 (ert-deftest package-lint-test-warn-snapshot-dep ()
   (should
