@@ -413,7 +413,7 @@ required version PACKAGE-VERSION.  If not, raise an error for DEP-POS."
        `(package ,archive-entry)))
    (let ((recipe (and (boundp 'straight--recipe-cache)
                       (hash-table-p straight--recipe-cache)
-                      (gethash package-name straight--recipe-cache))))
+                      (gethash (symbol-name package-name) straight--recipe-cache))))
      (when recipe
        `(straight ,recipe)))))
 
