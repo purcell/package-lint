@@ -1,4 +1,4 @@
-;;; sym-dump.el --- Dump data about symbols and features available in this Emacs -*- lexical-binding: t -*-
+;; sym-dump.el --- Dump data about symbols and features available in this Emacs -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2019  Steve Purcell
 
@@ -6,7 +6,6 @@
 ;; URL: https://github.com/purcell/package-lint
 ;; Keywords: lisp
 ;; Version: 0
-;; Package-Requires: ((emacs "24.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -26,6 +25,8 @@
 ;; This is all written in a weird way in order to minimise the code loaded
 ;; during its execution.
 
+;; Also, this code must work all the way back to Emacs 23.4.
+
 ;;; Code:
 
 (defun sym-dump-filter-atoms (pred)
@@ -33,7 +34,7 @@
     (mapatoms
      (lambda (f)
        (when (and (funcall pred f)
-                  (not (string-prefix-p "sym-dump-" (symbol-name f))))
+                  (not (string-match-p "\\`sym-dump-" (symbol-name f))))
          (push f result))))
     (sort result (lambda (a b) (string< (symbol-name a) (symbol-name b))))))
 
@@ -54,7 +55,7 @@
           (let ((lib (intern (file-name-sans-extension (file-name-nondirectory f)))))
             ;; Skip files that aren't loadable libraries, e.g. blessmail, edt-mapper, dunnet
             ;; Additionally, loading secrets and tramp-gvfs causes a hard exit if no dbus support
-            (unless (memq lib '(blessmail edt-mapper dunnet secrets tramp-gvfs))
+            (unless (memq lib '(blessmail edt-mapper dunnet secrets tramp-gvfs gnus-registry))
               (push lib libs))))))
     libs))
 
@@ -75,3 +76,4 @@
 (sym-dump-go-crazy)
 
 ;;; sym-dump.el ends here
+

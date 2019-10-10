@@ -6,6 +6,7 @@
 ;;         Fanael Linithien <fanael4@gmail.com>
 ;; URL: https://github.com/purcell/package-lint
 ;; Version: 0
+;; Package-Requires: ((emacs "24.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -332,9 +333,9 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-new-functions-as-quote ()
   (should
    (equal
-    '((6 20 error "You should depend on (emacs \"24.1\") if you need `string-prefix-p'."))
+    '((6 20 error "You should depend on (emacs \"24.1\") if you need `window-resize'."))
     (package-lint-test--run
-     "(defconst test-fn #'string-prefix-p)"))))
+     "(defconst test-fn #'window-resize)"))))
 
 (ert-deftest package-lint-test-accept-new-functions-with-dep ()
   (should
@@ -423,8 +424,8 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-removed-functions ()
   (should
    (equal
-    '((6 1 error "`y-or-n-minibuffer' was removed in Emacs version 26.1."))
-    (package-lint-test--run "(y-or-n-minibuffer)"))))
+    '((6 1 error "`spell-buffer' was removed in Emacs version 26.1."))
+    (package-lint-test--run "(spell-buffer)"))))
 
 (ert-deftest package-lint-test-accept-new-libraries-with-dep ()
   (should (equal '() (package-lint-test--run

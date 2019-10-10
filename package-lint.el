@@ -107,38 +107,11 @@ published in ELPA for use by older Emacsen.")
       "An alist of library names and when they were added to Emacs.")
 
     (defconst package-lint--functions-and-macros-added-alist
-      (cons
-       (cons '(24 1)
-             (package-lint--match-symbols
-              '(bidi-string-mark-left-to-right
-                condition-case-unless-debug
-                current-bidi-paragraph-direction
-                file-selinux-context
-                letrec
-                make-composed-keymap
-                pcase
-                pcase-dolist
-                pcase-let
-                pcase-let*
-                prog-mode
-                read-char-choice
-                run-hook-wrapped
-                server-eval-at
-                set-file-selinux-context
-                special-variable-p
-                string-prefix-p
-                url-queue-retrieve
-                window-body-height
-                window-stage-get
-                window-stage-put
-                window-total-width
-                window-valid-p
-                with-wrapper-hook)))
-       (mapcar (lambda (version-data)
-                 (let ((version (car version-data))
-                       (added-functions (let-alist (cdr version-data) .functions.added)))
-                   (cons version (funcall 'package-lint--match-symbols added-functions))))
-               stdlib-changes))
+      (mapcar (lambda (version-data)
+                (let ((version (car version-data))
+                      (added-functions (let-alist (cdr version-data) .functions.added)))
+                  (cons version (funcall 'package-lint--match-symbols added-functions))))
+              stdlib-changes)
       "An alist of function/macro names and when they were added to Emacs.")
 
     (defconst package-lint--functions-and-macros-removed-alist
