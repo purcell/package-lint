@@ -1,4 +1,4 @@
-;; sym-dump.el --- Dump data about symbols and features available in this Emacs -*- lexical-binding: t -*-
+;;; sym-dump.el --- Dump data about symbols and features available in this Emacs -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2019  Steve Purcell
 
@@ -34,7 +34,7 @@
     (mapatoms
      (lambda (f)
        (when (and (funcall pred f)
-                  (not (string-match-p "\\`sym-dump-" (symbol-name f))))
+                  (not (string-prefix-p "sym-dump-" (symbol-name f))))
          (push f result))))
     (sort result (lambda (a b) (string< (symbol-name a) (symbol-name b))))))
 
