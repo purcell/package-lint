@@ -39,4 +39,4 @@ EOF
 )
 
 mkdir -p "$rootdir/data"
-$(emacs_bin 26.3) -Q -batch --load "$rootdir/tools/sym-diff.el" --eval "$diff_expr"|gzip > "$rootdir/data/stdlib-changes.gz"
+$(emacs_bin 26.3) -Q -batch --load "$rootdir/tools/sym-diff.el" --eval "$diff_expr" > "$rootdir/data/stdlib-changes"

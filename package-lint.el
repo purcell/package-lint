@@ -84,7 +84,7 @@ published in ELPA for use by older Emacsen.")
 
   (let ((stdlib-changes (with-temp-buffer
                           (insert-file-contents
-                           (expand-file-name "data/stdlib-changes.gz"
+                           (expand-file-name "data/stdlib-changes"
                                              (if load-file-name
                                                  (file-name-directory load-file-name)
                                                default-directory)))
