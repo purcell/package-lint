@@ -1018,6 +1018,8 @@ Current buffer is used if none is specified."
 (defun package-lint-batch-and-exit-1 (filenames)
   "Internal helper function for `package-lint-batch-and-exit'.
 
+Checks FILENAMES using package-lint.
+
 The main loop is this separate function so it's easier to test."
   ;; Make sure package.el is initialized so we can query its database.
   (package-initialize)
