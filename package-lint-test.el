@@ -538,6 +538,16 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((6 0 error "Global minor modes should be autoloaded or, rarely, `:require' their defining file (i.e. \":require 'test\"), to support the customization variable of the same name."))
     (package-lint-test--run "(define-globalized-minor-mode test-mode ignore ignore :require 'blargh)"))))
 
+(ert-deftest package-lint-test-warning-eval-after-load ()
+  (should
+   (equal
+    '((6 1 warning "`eval-after-load' is for use in configurations, and should rarely be used in packages."))
+    (package-lint-test--run "(eval-after-load 'foobar\n body)")))
+  (should
+   (equal
+    '((7 1 warning "`with-eval-after-load' is for use in configurations, and should rarely be used in packages."))
+    (package-lint-test--run ";; Package-Requires: ((emacs \"24.4\"))\n(with-eval-after-load 'foobar\n body)"))))
+
 (ert-deftest package-lint-test-error-defgroup-name ()
   (should
    (equal
