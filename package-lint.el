@@ -180,7 +180,8 @@ published in ELPA for use by older Emacsen.")
           (let ((definitions (package-lint--get-defs)))
             (package-lint--check-autoloads-on-private-functions definitions)
             (package-lint--check-defs-prefix definitions)
-            (package-lint--check-symbol-separators definitions)))))
+            (package-lint--check-symbol-separators definitions))
+          (package-lint--check-lonely-parens))))
     (sort package-lint--errors
           (lambda (a b)
             (pcase-let ((`(,a-line ,a-column ,_ ,a-message) a)
@@ -814,6 +815,15 @@ Valid definition names are:
       (package-lint--error-at-point
        'error
        "You should depend on (emacs \"26.1\") if you need format field numbers."))))
+
+(defun package-lint--check-lonely-parens ()
+  "Warn about dangling closing parens."
+  (package-lint--map-symbol-match
+   "^\\s-*?\\()\\)"
+   (lambda (_)
+     (list 'warning
+           "Closing parens should not be wrapped onto new lines."))))
+
 
 
 ;;; Helpers

@@ -607,6 +607,23 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((1 0 warning "The word \"emacs\" is redundant in Emacs package names."))
     (package-lint-test--run "" nil nil nil nil nil nil "emacs-package"))))
 
+(ert-deftest package-lint-warn-about-lonely-parens ()
+  (should
+   (equal
+    '((7 0 warning "Closing parens should not be wrapped onto new lines."))
+    (package-lint-test--run "(hello\n)")))
+  (should
+   (equal
+    '()
+    (package-lint-test--run "(hello\n 'world)")))
+  (should
+   (equal
+    '((7 5 warning "Closing parens should not be wrapped onto new lines."))
+    (package-lint-test--run "(foo (hello\n     ) bar)")))
+  (should
+   (equal
+    '((7 2 warning "Closing parens should not be wrapped onto new lines."))
+    (package-lint-test--run "(hello\n  )    ; foo"))))
 
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
