@@ -617,7 +617,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((1 0 warning "The word \"emacs\" is redundant in Emacs package names."))
     (package-lint-test--run "" nil nil nil nil nil nil "emacs-package"))))
 
-(ert-deftest package-lint-warn-about-lonely-parens ()
+(ert-deftest package-lint-test-warn-about-lonely-parens ()
   (should
    (equal
     '((7 0 warning "Closing parens should not be wrapped onto new lines."))
