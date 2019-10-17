@@ -181,7 +181,8 @@ published in ELPA for use by older Emacsen.")
             (package-lint--check-autoloads-on-private-functions definitions)
             (package-lint--check-defs-prefix definitions)
             (package-lint--check-symbol-separators definitions))
-          (package-lint--check-lonely-parens))))
+          (package-lint--check-lonely-parens)
+          (package-lint--check-consistent-indentation))))
     (sort package-lint--errors
           (lambda (a b)
             (pcase-let ((`(,a-line ,a-column ,_ ,a-message) a)
@@ -824,6 +825,21 @@ Valid definition names are:
      (list 'warning
            "Closing parens should not be wrapped onto new lines."))))
 
+(defun package-lint--check-consistent-indentation ()
+  "Warn about dangling closing parens."
+  (let ((contents (buffer-string)))
+    (unless (let ((delay-mode-hooks t))
+              (with-temp-buffer
+                (insert contents)
+                (emacs-lisp-mode)
+                (let ((mod-tick (buffer-modified-tick)))
+                  (funcall (if (fboundp 'lisp-indent-region)
+                               'lisp-indent-region
+                             'indent-region)
+                           (point-min)
+                           (point-max))
+                  (= mod-tick (buffer-modified-tick)))))
+      (package-lint--error-at-bob 'warning "Code in this file is inconsistently indented."))))
 
 
 ;;; Helpers

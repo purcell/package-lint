@@ -116,7 +116,7 @@ headers and provide form."
     (should-not (package-lint-test--run "(defcustom test-something (kbd \"C-g\"))"))
 
     ;; Don't bind a key sequence ending in <ESC> except following another <ESC>
-    (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC>\")")
+    (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC>\"))")
                    `((6 43 warning ,reserved-message))))
     (should-not (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC> <ESC>\"))"))))
 
@@ -499,17 +499,17 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should
    (equal
     '((4 0 error "Package should have a non-empty ;;; Commentary section."))
-    (package-lint-test--run "" nil nil nil nil ";;; Commentary:\n ;;   \n \n\n;;; Code:\n"))))
+    (package-lint-test--run "" nil nil nil nil ";;; Commentary:\n;;   \n\n\n;;; Code:\n"))))
 
 (ert-deftest package-lint-test-accept-unprefixed-defadvice ()
   (should (equal '() (package-lint-test--run "(defadvice foo (before ignore))")))
   ;; Test if the special case we use for `defadvice' doesn't get
   ;; confused by weird spacing.
-  (should (equal '() (package-lint-test--run "   (  defadvice \t\n\n foo (before ignore))"))))
+  (should (equal '() (package-lint-test--run "(eval-when-compile\n  (  defadvice \t\n\n      foo (before ignore)))"))))
 
 (ert-deftest package-lint-test-accept-unprefixed-cl-defmethod ()
   (should (equal '() (package-lint-test--run ";; Package-Requires: ((emacs \"25.1\"))
-\(cl-defmethod foo ()"))))
+\(cl-defmethod foo ())"))))
 
 (ert-deftest package-lint-test-minor-mode-global-t ()
   (should
@@ -542,11 +542,11 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should
    (equal
     '((6 1 warning "`eval-after-load' is for use in configurations, and should rarely be used in packages."))
-    (package-lint-test--run "(eval-after-load 'foobar\n body)")))
+    (package-lint-test--run "(eval-after-load 'foobar\n  body)")))
   (should
    (equal
     '((7 1 warning "`with-eval-after-load' is for use in configurations, and should rarely be used in packages."))
-    (package-lint-test--run ";; Package-Requires: ((emacs \"24.4\"))\n(with-eval-after-load 'foobar\n body)"))))
+    (package-lint-test--run ";; Package-Requires: ((emacs \"24.4\"))\n(with-eval-after-load 'foobar\n  body)"))))
 
 (ert-deftest package-lint-test-error-defgroup-name ()
   (should
@@ -620,20 +620,28 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-warn-about-lonely-parens ()
   (should
    (equal
-    '((7 0 warning "Closing parens should not be wrapped onto new lines."))
-    (package-lint-test--run "(hello\n)")))
+    '((7 1 warning "Closing parens should not be wrapped onto new lines."))
+    (package-lint-test--run "(hello\n )")))
   (should
    (equal
     '()
-    (package-lint-test--run "(hello\n 'world)")))
+    (package-lint-test--run "(hello
+ 'world)")))
   (should
    (equal
-    '((7 5 warning "Closing parens should not be wrapped onto new lines."))
-    (package-lint-test--run "(foo (hello\n     ) bar)")))
+    '((7 6 warning "Closing parens should not be wrapped onto new lines."))
+    (package-lint-test--run "(foo (hello
+      ) bar)")))
   (should
    (equal
-    '((7 2 warning "Closing parens should not be wrapped onto new lines."))
-    (package-lint-test--run "(hello\n  )    ; foo"))))
+    '((7 1 warning "Closing parens should not be wrapped onto new lines."))
+    (package-lint-test--run "(hello\n )    ; foo"))))
+
+(ert-deftest package-lint-test-warn-about-bad-indentation ()
+  (should
+   (equal
+    '((1 0 warning "Code in this file is inconsistently indented."))
+    (package-lint-test--run "(hello\n'world)"))))
 
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
