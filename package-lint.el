@@ -435,13 +435,13 @@ required version PACKAGE-VERSION.  If not, raise an error for DEP-POS."
             (concat "(fboundp\\s-+'" (regexp-quote sym) "\\_>") (point-min) t)
            (not (package-lint--inside-comment-or-string-p))))))
 
-(defun package-lint--map-symbol-match (symbol-regexp callback)
-  "For every match of SYMBOL-REGEXP, call CALLBACK with the first match group.
+(defun package-lint--map-regexp-match (regexp callback)
+  "For every match of REGEXP, call CALLBACK with the first match group.
 If callback returns non-nil, the return value - which must be a
 list - will be applied to `package-lint--error-at-point'."
   (save-excursion
     (goto-char (point-min))
-    (while (re-search-forward symbol-regexp nil t)
+    (while (re-search-forward regexp nil t)
       (let ((sym (match-string-no-properties 1)))
         (save-excursion
           (goto-char (match-beginning 1))
@@ -462,7 +462,7 @@ type of the symbol, either FUNCTION or FEATURE."
   (let ((emacs-version-dep (or (cadr (assq 'emacs valid-deps)) '(0))))
     (pcase-dolist (`(,added-in-version . ,pred) list)
       (when (version-list-< emacs-version-dep added-in-version)
-        (package-lint--map-symbol-match
+        (package-lint--map-regexp-match
          symbol-regexp
          (lambda (sym)
            (when (funcall pred (intern sym))
@@ -491,7 +491,7 @@ type of the symbol, either FUNCTION or FEATURE."
 
 (defun package-lint--check-eval-after-load ()
   "Warn about use of `eval-after-load' and co."
-  (package-lint--map-symbol-match
+  (package-lint--map-regexp-match
    "(\\s-*?\\(\\(?:with-\\)?eval-after-load\\)\\_>"
    (lambda (match)
      (list 'warning
@@ -499,7 +499,7 @@ type of the symbol, either FUNCTION or FEATURE."
 
 (defun package-lint--check-no-use-of-cl ()
   "Warn about use of deprecated `cl' library."
-  (package-lint--map-symbol-match
+  (package-lint--map-regexp-match
    "(\\s-*?require\\s-*?'cl\\_>"
    (lambda (_)
      (list
@@ -508,7 +508,7 @@ type of the symbol, either FUNCTION or FEATURE."
 
 (defun package-lint--check-no-use-of-cl-lib-sublibraries ()
   "Warn about use of `cl-macs', `cl-seq' etc."
-  (package-lint--map-symbol-match
+  (package-lint--map-regexp-match
    "(\\s-*?require\\s-*?'cl-\\(?:macs\\|seq\\)\\_>"
    (lambda (_)
      (list
@@ -533,7 +533,7 @@ type of the symbol, either FUNCTION or FEATURE."
 
 (defun package-lint--check-libraries-removed-from-emacs ()
   "Warn about use of libraries that have been removed from Emacs."
-  (package-lint--map-symbol-match
+  (package-lint--map-regexp-match
    package-lint--unconditional-require-regexp
    (lambda (sym)
      (cl-block return
@@ -559,7 +559,7 @@ type of the symbol, either FUNCTION or FEATURE."
 
 (defun package-lint--check-macros-functions-removed-from-emacs ()
   "Warn about use of functions/macros that have been removed from Emacs."
-  (package-lint--map-symbol-match
+  (package-lint--map-regexp-match
    package-lint--function-name-regexp
    (lambda (sym)
      (cl-block return
@@ -818,7 +818,7 @@ Valid definition names are:
 
 (defun package-lint--check-lonely-parens ()
   "Warn about dangling closing parens."
-  (package-lint--map-symbol-match
+  (package-lint--map-regexp-match
    "^\\s-*?\\()\\)"
    (lambda (_)
      (list 'warning
