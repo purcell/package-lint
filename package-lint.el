@@ -451,7 +451,7 @@ list - will be applied to `package-lint--error-at-point'."
               ;; because otherwise the checking process is extremely slow,
               ;; being bottlenecked by `syntax-ppss'.
               (unless (package-lint--inside-comment-or-string-p)
-                (apply 'package-lint--error-at-point err)))))))))
+                (apply #'package-lint--error-at-point err)))))))))
 
 (defun package-lint--check-version-regexp-list (valid-deps list symbol-regexp type)
   "Warn if symbols matched by SYMBOL-REGEXP are unavailable in the target Emacs.
