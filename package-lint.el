@@ -821,8 +821,13 @@ Valid definition names are:
   (package-lint--map-regexp-match
    "^\\s-*?\\()\\)"
    (lambda (_)
-     (list 'warning
-           "Closing parens should not be wrapped onto new lines."))))
+     ;; Allow dangling parentheses if the preceding line ends with a comment, as
+     ;; it's not uncommon even in idiomatic lisp.
+     (when (save-excursion
+             (end-of-line 0)
+             (not (nth 4 (syntax-ppss))))
+       (list 'warning
+             "Closing parens should not be wrapped onto new lines.")))))
 
 
 

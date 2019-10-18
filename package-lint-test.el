@@ -635,5 +635,11 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((7 2 warning "Closing parens should not be wrapped onto new lines."))
     (package-lint-test--run "(hello\n  )    ; foo"))))
 
+(ert-deftest package-lint-test-accept-lonely-parens-with-preceding-comment ()
+  (should
+   (equal
+    '()
+    (package-lint-test--run "(hello 'world\n ;; a comment\n)"))))
+
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
