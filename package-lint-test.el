@@ -1,6 +1,6 @@
 ;;; package-lint-test.el --- Test suite for package-lint
 
-;; Copyright (C) 2016-2017  Steve Purcell, Fanael Linithien
+;; Copyright (C) 2016-2019  Steve Purcell, Fanael Linithien
 
 ;; Author: Steve Purcell <steve@sanityinc.com>
 ;;         Fanael Linithien <fanael4@gmail.com>
