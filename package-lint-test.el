@@ -1,11 +1,12 @@
 ;;; package-lint-test.el --- Test suite for package-lint
 
-;; Copyright (C) 2016-2017  Steve Purcell, Fanael Linithien
+;; Copyright (C) 2016-2019  Steve Purcell, Fanael Linithien
 
 ;; Author: Steve Purcell <steve@sanityinc.com>
 ;;         Fanael Linithien <fanael4@gmail.com>
 ;; URL: https://github.com/purcell/package-lint
 ;; Version: 0
+;; Package-Requires: ((emacs "24.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -354,9 +355,9 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-new-functions-as-quote ()
   (should
    (equal
-    '((6 20 error "You should depend on (emacs \"24.1\") if you need `string-prefix-p'."))
+    '((6 20 error "You should depend on (emacs \"24.1\") if you need `window-resize'."))
     (package-lint-test--run
-     "(defconst test-fn #'string-prefix-p)"))))
+     "(defconst test-fn #'window-resize)"))))
 
 (ert-deftest package-lint-test-accept-new-functions-with-dep ()
   (should
@@ -445,8 +446,8 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-removed-functions ()
   (should
    (equal
-    '((6 1 error "`y-or-n-minibuffer' was removed in Emacs version 26.1."))
-    (package-lint-test--run "(y-or-n-minibuffer)"))))
+    '((6 1 error "`spell-buffer' was removed in Emacs version 26.1."))
+    (package-lint-test--run "(spell-buffer)"))))
 
 (ert-deftest package-lint-test-accept-new-libraries-with-dep ()
   (should (equal '() (package-lint-test--run
@@ -559,6 +560,16 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((6 0 error "Global minor modes should be autoloaded or, rarely, `:require' their defining file (i.e. \":require 'test\"), to support the customization variable of the same name."))
     (package-lint-test--run "(define-globalized-minor-mode test-mode ignore ignore :require 'blargh)"))))
 
+(ert-deftest package-lint-test-warning-eval-after-load ()
+  (should
+   (equal
+    '((6 1 warning "`eval-after-load' is for use in configurations, and should rarely be used in packages."))
+    (package-lint-test--run "(eval-after-load 'foobar\n body)")))
+  (should
+   (equal
+    '((7 1 warning "`with-eval-after-load' is for use in configurations, and should rarely be used in packages."))
+    (package-lint-test--run ";; Package-Requires: ((emacs \"24.4\"))\n(with-eval-after-load 'foobar\n body)"))))
+
 (ert-deftest package-lint-test-error-defgroup-name ()
   (should
    (equal
@@ -628,6 +639,29 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((1 0 warning "The word \"emacs\" is redundant in Emacs package names."))
     (package-lint-test--run "" nil nil nil nil nil nil "emacs-package"))))
 
+(ert-deftest package-lint-test-warn-about-lonely-parens ()
+  (should
+   (equal
+    '((7 0 warning "Closing parens should not be wrapped onto new lines."))
+    (package-lint-test--run "(hello\n)")))
+  (should
+   (equal
+    '()
+    (package-lint-test--run "(hello\n 'world)")))
+  (should
+   (equal
+    '((7 5 warning "Closing parens should not be wrapped onto new lines."))
+    (package-lint-test--run "(foo (hello\n     ) bar)")))
+  (should
+   (equal
+    '((7 2 warning "Closing parens should not be wrapped onto new lines."))
+    (package-lint-test--run "(hello\n  )    ; foo"))))
+
+(ert-deftest package-lint-test-accept-lonely-parens-with-preceding-comment ()
+  (should
+   (equal
+    '()
+    (package-lint-test--run "(hello 'world\n ;; a comment\n)"))))
 
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here

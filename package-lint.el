@@ -1,6 +1,6 @@
 ;;; package-lint.el --- A linting library for elisp package authors -*- lexical-binding: t -*-
 
-;; Copyright (C) 2014-2017  Steve Purcell, Fanael Linithien
+;; Copyright (C) 2014-2019  Steve Purcell, Fanael Linithien
 
 ;; Author: Steve Purcell <steve@sanityinc.com>
 ;;         Fanael Linithien <fanael4@gmail.com>
@@ -84,7 +84,7 @@ published in ELPA for use by older Emacsen.")
 
   (let ((stdlib-changes (with-temp-buffer
                           (insert-file-contents
-                           (expand-file-name "data/stdlib-changes.gz"
+                           (expand-file-name "data/stdlib-changes"
                                              (if load-file-name
                                                  (file-name-directory load-file-name)
                                                default-directory)))
@@ -107,45 +107,18 @@ published in ELPA for use by older Emacsen.")
       "An alist of library names and when they were added to Emacs.")
 
     (defconst package-lint--functions-and-macros-added-alist
-      (cons
-       (cons '(24 1)
-             (package-lint--match-symbols
-              '(bidi-string-mark-left-to-right
-                condition-case-unless-debug
-                current-bidi-paragraph-direction
-                file-selinux-context
-                letrec
-                make-composed-keymap
-                pcase
-                pcase-dolist
-                pcase-let
-                pcase-let*
-                prog-mode
-                read-char-choice
-                run-hook-wrapped
-                server-eval-at
-                set-file-selinux-context
-                special-variable-p
-                string-prefix-p
-                url-queue-retrieve
-                window-body-height
-                window-stage-get
-                window-stage-put
-                window-total-width
-                window-valid-p
-                with-wrapper-hook)))
-       (mapcar (lambda (version-data)
-                 (let ((version (car version-data))
-                       (added-functions (let-alist (cdr version-data) .functions.added)))
-                   (cons version (funcall 'package-lint--match-symbols added-functions))))
-               stdlib-changes))
+      (mapcar (lambda (version-data)
+                (let ((version (car version-data))
+                      (added-functions (let-alist (cdr version-data) .functions.added)))
+                  (cons version (package-lint--match-symbols added-functions))))
+              stdlib-changes)
       "An alist of function/macro names and when they were added to Emacs.")
 
     (defconst package-lint--functions-and-macros-removed-alist
       (mapcar (lambda (version-data)
                 (let ((version (car version-data))
                       (removed-functions (let-alist (cdr version-data) .functions.removed)))
-                  (cons version (funcall 'package-lint--match-symbols removed-functions))))
+                  (cons version (package-lint--match-symbols removed-functions))))
               stdlib-changes)
       "An alist of function/macro names and when they were removed from Emacs.")))
 
@@ -207,7 +180,8 @@ published in ELPA for use by older Emacsen.")
           (let ((definitions (package-lint--get-defs)))
             (package-lint--check-autoloads-on-private-functions definitions)
             (package-lint--check-defs-prefix definitions)
-            (package-lint--check-symbol-separators definitions)))))
+            (package-lint--check-symbol-separators definitions))
+          (package-lint--check-lonely-parens))))
     (sort package-lint--errors
           (lambda (a b)
             (pcase-let ((`(,a-line ,a-column ,_ ,a-message) a)
@@ -484,13 +458,13 @@ required version PACKAGE-VERSION.  If not, raise an error for DEP-POS."
             (concat "(fboundp\\s-+'" (regexp-quote sym) "\\_>") (point-min) t)
            (not (package-lint--inside-comment-or-string-p))))))
 
-(defun package-lint--map-symbol-match (symbol-regexp callback)
-  "For every match of SYMBOL-REGEXP, call CALLBACK with the first match group.
+(defun package-lint--map-regexp-match (regexp callback)
+  "For every match of REGEXP, call CALLBACK with the first match group.
 If callback returns non-nil, the return value - which must be a
 list - will be applied to `package-lint--error-at-point'."
   (save-excursion
     (goto-char (point-min))
-    (while (re-search-forward symbol-regexp nil t)
+    (while (re-search-forward regexp nil t)
       (let ((sym (match-string-no-properties 1)))
         (save-excursion
           (goto-char (match-beginning 1))
@@ -500,7 +474,7 @@ list - will be applied to `package-lint--error-at-point'."
               ;; because otherwise the checking process is extremely slow,
               ;; being bottlenecked by `syntax-ppss'.
               (unless (package-lint--inside-comment-or-string-p)
-                (apply 'package-lint--error-at-point err)))))))))
+                (apply #'package-lint--error-at-point err)))))))))
 
 (defun package-lint--check-version-regexp-list (valid-deps list symbol-regexp type)
   "Warn if symbols matched by SYMBOL-REGEXP are unavailable in the target Emacs.
@@ -511,7 +485,7 @@ type of the symbol, either FUNCTION or FEATURE."
   (let ((emacs-version-dep (or (cadr (assq 'emacs valid-deps)) '(0))))
     (pcase-dolist (`(,added-in-version . ,pred) list)
       (when (version-list-< emacs-version-dep added-in-version)
-        (package-lint--map-symbol-match
+        (package-lint--map-regexp-match
          symbol-regexp
          (lambda (sym)
            (when (funcall pred (intern sym))
@@ -540,7 +514,7 @@ type of the symbol, either FUNCTION or FEATURE."
 
 (defun package-lint--check-eval-after-load ()
   "Warn about use of `eval-after-load' and co."
-  (package-lint--map-symbol-match
+  (package-lint--map-regexp-match
    "(\\s-*?\\(\\(?:with-\\)?eval-after-load\\)\\_>"
    (lambda (match)
      (list 'warning
@@ -548,7 +522,7 @@ type of the symbol, either FUNCTION or FEATURE."
 
 (defun package-lint--check-no-use-of-cl ()
   "Warn about use of deprecated `cl' library."
-  (package-lint--map-symbol-match
+  (package-lint--map-regexp-match
    "(\\s-*?require\\s-*?'cl\\_>"
    (lambda (_)
      (list
@@ -557,7 +531,7 @@ type of the symbol, either FUNCTION or FEATURE."
 
 (defun package-lint--check-no-use-of-cl-lib-sublibraries ()
   "Warn about use of `cl-macs', `cl-seq' etc."
-  (package-lint--map-symbol-match
+  (package-lint--map-regexp-match
    "(\\s-*?require\\s-*?'cl-\\(?:macs\\|seq\\)\\_>"
    (lambda (_)
      (list
@@ -582,7 +556,7 @@ type of the symbol, either FUNCTION or FEATURE."
 
 (defun package-lint--check-libraries-removed-from-emacs ()
   "Warn about use of libraries that have been removed from Emacs."
-  (package-lint--map-symbol-match
+  (package-lint--map-regexp-match
    package-lint--unconditional-require-regexp
    (lambda (sym)
      (cl-block return
@@ -608,7 +582,7 @@ type of the symbol, either FUNCTION or FEATURE."
 
 (defun package-lint--check-macros-functions-removed-from-emacs ()
   "Warn about use of functions/macros that have been removed from Emacs."
-  (package-lint--map-symbol-match
+  (package-lint--map-regexp-match
    package-lint--function-name-regexp
    (lambda (sym)
      (cl-block return
@@ -865,6 +839,20 @@ Valid definition names are:
        'error
        "You should depend on (emacs \"26.1\") if you need format field numbers."))))
 
+(defun package-lint--check-lonely-parens ()
+  "Warn about dangling closing parens."
+  (package-lint--map-regexp-match
+   "^\\s-*?\\()\\)"
+   (lambda (_)
+     ;; Allow dangling parentheses if the preceding line ends with a comment, as
+     ;; it's not uncommon even in idiomatic lisp.
+     (when (save-excursion
+             (end-of-line 0)
+             (not (nth 4 (syntax-ppss))))
+       (list 'warning
+             "Closing parens should not be wrapped onto new lines.")))))
+
+
 
 ;;; Helpers
 
@@ -1067,6 +1055,8 @@ Current buffer is used if none is specified."
 
 (defun package-lint-batch-and-exit-1 (filenames)
   "Internal helper function for `package-lint-batch-and-exit'.
+
+Checks FILENAMES using package-lint.
 
 The main loop is this separate function so it's easier to test."
   ;; Make sure package.el is initialized so we can query its database.
