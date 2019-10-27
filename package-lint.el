@@ -505,7 +505,7 @@ type of the symbol, either FUNCTION or FEATURE."
 (defun package-lint--check-no-use-of-cl ()
   "Warn about use of deprecated `cl' library."
   (package-lint--map-regexp-match
-   "(\\s-*?require\\s-*?'cl\\_>"
+   "(\\s-*?require\\s-*?'\\(cl\\)\\_>"
    (lambda (_)
      (list
       'warning
@@ -514,7 +514,7 @@ type of the symbol, either FUNCTION or FEATURE."
 (defun package-lint--check-no-use-of-cl-lib-sublibraries ()
   "Warn about use of `cl-macs', `cl-seq' etc."
   (package-lint--map-regexp-match
-   "(\\s-*?require\\s-*?'cl-\\(?:macs\\|seq\\)\\_>"
+   "(\\s-*?require\\s-*?'\\(cl-macs\\|cl-seq\\)\\_>"
    (lambda (_)
      (list
       'warning

@@ -319,6 +319,22 @@ headers and provide form."
 Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled.")
     (package-lint-test--run ";; Package-Requires: ((cl-lib \"1\"))"))))
 
+(ert-deftest package-lint-test-warning-cl ()
+  (should
+   (member
+    '(6 10 warning "Replace deprecated `cl' with `cl-lib'.  The `cl-libify' package can help with this.")
+    (package-lint-test--run "(require 'cl)"))))
+
+(ert-deftest package-lint-test-warning-cl-macs-etc ()
+  (should
+   (member
+    '(6 10 warning "This file is not in the `cl-lib' ELPA compatibility package: require `cl-lib' instead.")
+    (package-lint-test--run "(require 'cl-macs)")))
+  (should
+   (member
+    '(6 10 warning "This file is not in the `cl-lib' ELPA compatibility package: require `cl-lib' instead.")
+    (package-lint-test--run "(require 'cl-seq)"))))
+
 (ert-deftest package-lint-test-accept-normal-deps ()
   (should (equal '() (package-lint-test--run
                       ";; Package-Requires: ((package-lint \"0.2\") (cl-lib \"0.5\"))"))))
