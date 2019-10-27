@@ -438,13 +438,18 @@ required version PACKAGE-VERSION.  If not, raise an error for DEP-POS."
 (defun package-lint--map-regexp-match (regexp callback)
   "For every match of REGEXP, call CALLBACK with the first match group.
 If callback returns non-nil, the return value - which must be a
-list - will be applied to `package-lint--error-at-point'."
+list - will be applied to `package-lint--error-at-point'.  If
+REGEXP doesn't produce a match group 1, then match group
+0 (ie. the whole match string string) will be passed to
+CALLBACK."
   (save-excursion
     (goto-char (point-min))
     (while (re-search-forward regexp nil t)
-      (let ((sym (match-string-no-properties 1)))
+      (let ((sym (or (match-string-no-properties 1)
+                     (match-string-no-properties 0))))
         (save-excursion
-          (goto-char (match-beginning 1))
+          (goto-char (or (match-beginning 1)
+                         (match-beginning 0)))
           (let ((err (funcall callback sym)))
             (when err
               ;; Check this as late as possible, just before reporting,
