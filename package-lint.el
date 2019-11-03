@@ -735,7 +735,7 @@ Valid definition names are:
 - a NAME whose POSITION in the buffer denotes a global definition."
   (or (string-prefix-p prefix name)
       (string-match-p package-lint--sane-prefixes name)
-      (string-match-p (rx-to-string `(seq string-start (or "define" "defun" "defvar") "-" ,prefix)) name)
+      (string-match-p (rx-to-string `(seq string-start (or "define" "defun" "defvar" "with") "-" ,prefix)) name)
       (string-match-p (rx-to-string  `(seq string-start "global-" ,prefix (or "-mode" (seq "-" (* any) "-mode")) string-end)) name)
       (when position
         (goto-char position)
