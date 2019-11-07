@@ -43,6 +43,19 @@
 (require 'imenu)
 (require 'let-alist)
 
+;;; Custom
+(defgroup package-lint nil "Package linting."
+  :group 'tools)
+
+(defcustom package-lint-package-manager-function
+  'package-lint--default-package-manager
+  "Function that returns the tag for package management.
+
+This tag will be used for methods (specialization) of
+`package-lint--check-packages-installable'."
+  :type 'function
+  :group package-lint)
+
 
 ;;; Compatibility
 
@@ -312,7 +325,9 @@ Return a list of well-formed dependencies, same as
                'error
                "More than one expression provided."))
             (let ((deps (package-lint--check-well-formed-dependencies position parsed-deps)))
-              (package-lint--check-packages-installable deps)
+              (package-lint--check-packages-installable
+               (funcall package-lint-package-manager-function)
+               deps)
               (package-lint--check-deps-use-non-snapshot-version deps)
               (package-lint--check-deps-do-not-use-zero-versions deps)
               (package-lint--check-do-not-depend-on-cl-lib-1.0 deps)
@@ -375,8 +390,17 @@ required version PACKAGE-VERSION.  If not, raise an error for DEP-POS."
                (package-version-join best-version))
        dep-pos))))
 
-(defun package-lint--check-packages-installable (valid-deps)
-  "Check that all VALID-DEPS are available for installation."
+(defun package-lint--default-package-manager ()
+  "Always return tag for 'package."
+  'package)
+
+(cl-defgeneric package-lint--check-packages-installable (package-manager
+                                                         valid-deps)
+  "Check that all VALID-DEPS are available for installation.
+
+Use PACKAGE-MANAGER provided by `package-lint-package-manager-function' to
+implement your own method of this generic function to support your own package
+manager."
   (pcase-dolist (`(,package-name ,package-version ,dep-pos) valid-deps)
     (if (eq 'emacs package-name)
         (unless (version-list-<= '(24) package-version)
