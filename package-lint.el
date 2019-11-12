@@ -1,4 +1,3 @@
-;;; WIP: extension point for different package handler (namely straight.el)
 ;;; package-lint.el --- A linting library for elisp package authors -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2014-2019  Steve Purcell, Fanael Linithien
