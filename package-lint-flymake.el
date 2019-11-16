@@ -62,13 +62,16 @@ Use `package-lint-setup-flymake' to add this to
              finally (funcall report-fn diags))))
 
 ;;;###autoload
-(defun package-lint-setup-flymake ()
+(defun package-lint-flymake-setup ()
   "Setup package-lint integration with Flymake."
   (interactive)
   (if (< emacs-major-version 26)
       (error "Package-lint-flymake requires Emacs 26 or later")
     (add-hook 'flymake-diagnostic-functions #'package-lint-flymake nil t)
     (flymake-mode)))
+
+;;;###autoload
+(define-obsolete-function-alias 'package-lint-setup-flymake 'package-lint-flymake-setup)
 
 (provide 'package-lint-flymake)
 
