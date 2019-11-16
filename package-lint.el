@@ -147,40 +147,42 @@ published in ELPA for use by older Emacsen.")
           (package-lint--check-url-header)
           (package-lint--check-package-version-present)
           (package-lint--check-lexical-binding-is-on-first-line)
-          (package-lint--check-objects-by-regexp
-           "(define-minor-mode\\s-"
-           #'package-lint--check-minor-mode)
-          (package-lint--check-objects-by-regexp
-           "(define-global\\(?:ized\\)?-minor-mode\\s-"
-           #'package-lint--check-globalized-minor-mode)
-          (package-lint--check-objects-by-regexp
-           (concat "(" (regexp-opt '("defalias" "defvaralias")) "\\s-")
-           #'package-lint--check-defalias)
-          (package-lint--check-objects-by-regexp
-           "(defgroup\\s-" #'package-lint--check-defgroup)
-          (let ((desc (package-lint--check-package-el-can-parse)))
-            (when desc
-              (package-lint--check-package-summary desc)
-              (package-lint--check-provide-form desc)
-              (package-lint--check-no-emacs-in-package-name desc)))
-          (package-lint--check-no-use-of-cl)
-          (package-lint--check-no-use-of-cl-lib-sublibraries)
-          (package-lint--check-eval-after-load)
-          (let ((deps (package-lint--check-dependency-list)))
-            (package-lint--check-lexical-binding-requires-emacs-24 deps)
-            (package-lint--check-libraries-available-in-emacs deps)
-            (package-lint--check-libraries-removed-from-emacs)
-            (package-lint--check-macros-functions-available-in-emacs deps)
-            (package-lint--check-macros-functions-removed-from-emacs)
+          (let ((prefix (package-lint--get-package-prefix)))
             (package-lint--check-objects-by-regexp
-             (concat "(" (regexp-opt '("format" "message" "error")) "\\s-")
-             (lambda (def) (package-lint--check-format-string deps def))))
-          (package-lint--check-for-literal-emacs-path)
-          (package-lint--check-commentary-existence)
-          (let ((definitions (package-lint--get-defs)))
-            (package-lint--check-autoloads-on-private-functions definitions)
-            (package-lint--check-defs-prefix definitions)
-            (package-lint--check-symbol-separators definitions))
+             "(define-minor-mode\\s-"
+             #'package-lint--check-minor-mode)
+            (package-lint--check-objects-by-regexp
+             "(define-global\\(?:ized\\)?-minor-mode\\s-"
+             #'package-lint--check-globalized-minor-mode)
+            (when prefix
+              (package-lint--check-objects-by-regexp
+               (concat "(" (regexp-opt '("defalias" "defvaralias")) "\\s-")
+               (apply-partially #'package-lint--check-defalias prefix)))
+            (package-lint--check-objects-by-regexp
+             "(defgroup\\s-" #'package-lint--check-defgroup)
+            (let ((desc (package-lint--check-package-el-can-parse)))
+              (when desc
+                (package-lint--check-package-summary desc)
+                (package-lint--check-provide-form desc)
+                (package-lint--check-no-emacs-in-package-name desc)))
+            (package-lint--check-no-use-of-cl)
+            (package-lint--check-no-use-of-cl-lib-sublibraries)
+            (package-lint--check-eval-after-load)
+            (let ((deps (package-lint--check-dependency-list)))
+              (package-lint--check-lexical-binding-requires-emacs-24 deps)
+              (package-lint--check-libraries-available-in-emacs deps)
+              (package-lint--check-libraries-removed-from-emacs)
+              (package-lint--check-macros-functions-available-in-emacs deps)
+              (package-lint--check-macros-functions-removed-from-emacs)
+              (package-lint--check-objects-by-regexp
+               (concat "(" (regexp-opt '("format" "message" "error")) "\\s-")
+               (lambda (def) (package-lint--check-format-string deps def))))
+            (package-lint--check-for-literal-emacs-path)
+            (package-lint--check-commentary-existence)
+            (let ((definitions (package-lint--get-defs)))
+              (package-lint--check-autoloads-on-private-functions definitions)
+              (package-lint--check-defs-prefix prefix definitions)
+              (package-lint--check-symbol-separators definitions)))
           (package-lint--check-lonely-parens))))
     (sort package-lint--errors
           (lambda (a b)
@@ -743,17 +745,15 @@ Valid definition names are:
                           (or "defadvice" "cl-defmethod")
                           symbol-end)))))
 
-(defun package-lint--check-defs-prefix (definitions)
-  "Verify that symbol DEFINITIONS start with package prefix."
-  (let ((prefix (package-lint--get-package-prefix)))
-    (when prefix
-      (pcase-dolist (`(,name . ,position) definitions)
-        (unless (package-lint--valid-definition-name-p name prefix position)
-          (package-lint--error-at-point
-           'error
-           (format "\"%s\" doesn't start with package's prefix \"%s\"."
-                   name prefix)
-           position))))))
+(defun package-lint--check-defs-prefix (prefix definitions)
+  "Verify that symbol DEFINITIONS start with package PREFIX."
+  (pcase-dolist (`(,name . ,position) definitions)
+    (unless (package-lint--valid-definition-name-p name prefix position)
+      (package-lint--error-at-point
+       'error
+       (format "\"%s\" doesn't start with package's prefix \"%s\"."
+               name prefix)
+       position))))
 
 (defun package-lint--check-minor-mode (def)
   "Offer up concerns about the minor mode definition DEF."
@@ -792,16 +792,15 @@ Valid definition names are:
      'error
      "Customization groups should specify a parent via `:group'.")))
 
-(defun package-lint--check-defalias (def)
-  "Offer up concerns about the customization group definition DEF."
-  (let ((prefix (package-lint--get-package-prefix)))
-    (when prefix
-      (pcase (cadr def)
-        ((and `(quote ,alias) (guard (symbolp alias)))
-         (unless (package-lint--valid-definition-name-p (symbol-name alias) prefix)
-           (package-lint--error-at-point
-            'error
-            (concat "Aliases should start with the package's prefix \"" prefix "\"."))))))))
+(defun package-lint--check-defalias (prefix def)
+  "Offer up concerns about the customization group definition DEF.
+PREFIX is the package prefix."
+  (pcase (cadr def)
+    ((and `(quote ,alias) (guard (symbolp alias)))
+     (unless (package-lint--valid-definition-name-p (symbol-name alias) prefix)
+       (package-lint--error-at-point
+        'error
+        (concat "Aliases should start with the package's prefix \"" prefix "\"."))))))
 
 (defun package-lint--check-format-string (valid-deps def)
   "Offer up concerns about the format string used in DEF, depending on VALID-DEPS."
