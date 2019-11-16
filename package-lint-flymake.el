@@ -41,8 +41,6 @@
 (require 'flymake)
 (require 'package-lint)
 
-(defvar-local package-lint--flymake-proc nil)
-
 (declare-function flymake-diag-region "flymake")
 (declare-function flymake-make-diagnostic "flymake")
 
