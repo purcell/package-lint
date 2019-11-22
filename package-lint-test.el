@@ -233,6 +233,14 @@ headers and provide form."
      ""
      ";;; test.el --- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"))))
 
+(ert-deftest package-lint-test-warn-summary-end-with-period ()
+  (should
+   (equal
+    '((1 0 warning "The package summary should not end with a period."))
+    (package-lint-test--run
+     ""
+     ";;; test.el --- A test.\n"))))
+
 (ert-deftest package-lint-test-warn-emacs-in-summary ()
   (should
    (equal

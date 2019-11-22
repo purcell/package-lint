@@ -681,6 +681,10 @@ DESC is a struct as returned by `package-buffer-info'."
         (package-lint--error-at-bob
          'warning
          "The package summary is too long. It should be at most 60 characters."))
+      (when (string-match "\\.\\'" summary)
+        (package-lint--error-at-bob
+         'warning
+         "The package summary should not end with a period."))
       (when (save-match-data
               (let ((case-fold-search t))
                 (and (string-match "[^.]\\<emacs\\>" summary)
