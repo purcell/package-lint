@@ -425,6 +425,12 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should (equal '() (package-lint-test--run
                       "(defun org-dblock-write:test ())"))))
 
+(ert-deftest package-lint-test-accept-just-quoted-list ()
+  (should (equal '() (package-lint-test--run
+                      "(defvar test-some-list '((defun defvar defcustom)))")))
+  (should (equal '() (package-lint-test--run
+                      "(defvar test-some-list '(\n(defun defvar defcustom)))"))))
+
 (ert-deftest package-lint-test-error-new-libraries ()
   (should
    (equal
