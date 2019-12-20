@@ -176,7 +176,7 @@ published in ELPA for use by older Emacsen.")
               (package-lint--check-macros-functions-removed-from-emacs)
               (package-lint--check-objects-by-regexp
                (concat "(" (regexp-opt '("format" "message" "error")) "\\s-")
-               (lambda (def) (package-lint--check-format-string deps def))))
+               (apply-partially #'package-lint--check-format-string deps)))
             (package-lint--check-for-literal-emacs-path)
             (package-lint--check-commentary-existence)
             (let ((definitions (package-lint--get-defs)))
