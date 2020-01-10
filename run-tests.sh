@@ -3,6 +3,7 @@
 EMACS="${EMACS:=emacs}"
 
 INIT_PACKAGE_EL="(progn
+  (setq user-emacs-directory \"`pwd`\")
   (require 'package)
   (push '(\"melpa\" . \"https://melpa.org/packages/\") package-archives)
   (package-initialize))"
