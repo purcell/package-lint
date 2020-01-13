@@ -2,18 +2,22 @@
 
 EMACS="${EMACS:=emacs}"
 
-INIT_PACKAGE_EL="(progn
-  (require 'package)
-  (push '(\"melpa\" . \"https://melpa.org/packages/\") package-archives)
-  (package-initialize))"
+NEEDED_PACKAGES="cl-lib let-alist"
+
+INIT_PACKAGE_EL="(progn \
+  (require 'package) \
+  (push '(\"melpa\" . \"https://melpa.org/packages/\") package-archives) \
+  (package-initialize) \
+  (unless package-archive-contents \
+     (package-refresh-contents)) \
+  (dolist (pkg '(${NEEDED_PACKAGES})) \
+    (unless (package-installed-p pkg) \
+      (package-install pkg))))"
 
 # Refresh package archives, because the test suite needs to see at least
 # package-lint and cl-lib.
 "$EMACS" -Q -batch \
-         --eval "$INIT_PACKAGE_EL" \
-         --eval '(package-refresh-contents)' \
-         --eval "(unless (package-installed-p 'cl-lib) (package-install 'cl-lib))" \
-         --eval "(unless (package-installed-p 'let-alist) (package-install 'let-alist))"
+         --eval "$INIT_PACKAGE_EL"
 
 # Byte compile, failing on byte compiler errors, or on warnings unless ignored
 if [ -n "${EMACS_LINT_IGNORE+x}" ]; then
