@@ -204,7 +204,7 @@ POS defaults to `point'."
   (save-excursion
     (when pos
       (goto-char pos))
-    (package-lint--error (line-number-at-pos) (current-column) type message)))
+    (package-lint--error (line-number-at-pos) (- (point) (line-beginning-position)) type message)))
 
 (defun package-lint--error-at-bol (type message)
   "Construct a datum for error at the beginning of the current line with TYPE and MESSAGE."
