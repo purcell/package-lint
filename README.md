@@ -50,7 +50,7 @@ Roadmap
 
 Additional checks for future versions:
 
-- WARN: header line formatting / capitalisation
+- WARN: header line formatting
 - trailing line presence / formatting
 - WARN: library is called *-mode but doesn't provide a major mode
 - checkdoc failures for interactive functions / defcustoms

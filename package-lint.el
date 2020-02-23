@@ -672,11 +672,6 @@ DESC is a struct as returned by `package-buffer-info'."
        'warning
        "Package should have a non-empty summary."))
      (t
-      (unless (let ((case-fold-search nil))
-                (string-match-p "^[A-Z0-9]" summary))
-        (package-lint--error-at-bob
-         'warning
-         "The package summary should start with an uppercase letter or a digit."))
       (when (> (length summary) 60)
         (package-lint--error-at-bob
          'warning
