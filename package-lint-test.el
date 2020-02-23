@@ -68,12 +68,12 @@ headers and provide form."
   (let ((reserved-message "This key sequence is reserved (see Key Binding Conventions in the Emacs Lisp manual)"))
     ;; C-c and a letter (either upper or lower case)
     (should (equal (package-lint-test--run "(kbd \"C-c n\")")
-                   `((6 13 warning ,reserved-message))))
+                   `((6 13 error ,reserved-message))))
     (should (equal (package-lint-test--run "(local-set-key \"\\C-cF\" 'something)")
-                   `((6 34 warning ,reserved-message))))
+                   `((6 34 error ,reserved-message))))
     (should-not (package-lint-test--run "(kbd \"C-d n\")"))
     (should (equal (package-lint-test--run "(kbd \"C-c x n\")")
-                   `((6 15 warning ,reserved-message))))
+                   `((6 15 error ,reserved-message))))
 
     ;; [C-keyname] bindings should work fine
     (should-not (package-lint-test--run "(define-key map [C-return] 'something)"))
@@ -88,9 +88,9 @@ headers and provide form."
 
     ;; Function keys <F5> through <F9> without modifier keys
     (should (equal (package-lint-test--run "(define-key map (kbd \"<f5>\") 'something)")
-                   `((6 40 warning ,reserved-message))))
+                   `((6 40 error ,reserved-message))))
     (should (equal (package-lint-test--run "(global-set-key [f5] 'something)")
-                   `((6 32 warning ,reserved-message))))
+                   `((6 32 error ,reserved-message))))
     (should-not (package-lint-test--run "(global-set-key [f4] 'something)"))
     (should-not (package-lint-test--run "(global-set-key (kbd \"C-c <tab>\") 'something)"))
 
@@ -103,21 +103,21 @@ headers and provide form."
 
     ;; Don't bind C-h following any prefix character
     (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x C-h\"))")
-                   `((6 41 warning ,reserved-message))))
+                   `((6 41 error ,reserved-message))))
     (should-not (package-lint-test--run "(defcustom test-something (kbd \"C-h C-x\"))"))
 
     ;; Don't bind a key sequence ending in <C-g>
     (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x C-g\"))")
-                   `((6 41 warning ,reserved-message))))
+                   `((6 41 error ,reserved-message))))
     (should (equal (package-lint-test--run "(global-set-key \"\\C-c\\C-g\" 'something)")
-                   `((6 38 warning ,reserved-message))))
+                   `((6 38 error ,reserved-message))))
     (should-not (package-lint-test--run "(global-set-key \"C-x g\" 'something)"))
     ;; But we allow C-g alone, which is acceptable for some special cases
     (should-not (package-lint-test--run "(defcustom test-something (kbd \"C-g\"))"))
 
     ;; Don't bind a key sequence ending in <ESC> except following another <ESC>
     (should (equal (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC>\")")
-                   `((6 43 warning ,reserved-message))))
+                   `((6 43 error ,reserved-message))))
     (should-not (package-lint-test--run "(defcustom test-something (kbd \"C-x <ESC> <ESC>\"))"))))
 
 (ert-deftest package-lint-test-error-autoloads-on-private-functions ()
@@ -221,7 +221,7 @@ headers and provide form."
 (ert-deftest package-lint-test-warn-empty-summary ()
   (should
    (equal
-    '((1 0 warning "Package should have a non-empty summary."))
+    '((1 0 error "Package should have a non-empty summary."))
     (package-lint-test--run "" ";;; test.el ---\n"))))
 
 (ert-deftest package-lint-test-warn-too-long-summary ()

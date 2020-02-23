@@ -230,7 +230,7 @@ POS defaults to `point'."
           (when seq
             (let ((message (package-lint--test-keyseq seq)))
               (when message
-                (package-lint--error-at-point 'warning message)))))))))
+                (package-lint--error-at-point 'error message)))))))))
 
 (defun package-lint--check-commentary-existence ()
   "Warn about nonexistent or empty commentary section."
@@ -669,7 +669,7 @@ DESC is a struct as returned by `package-buffer-info'."
     (cond
      ((string= summary "")
       (package-lint--error-at-bob
-       'warning
+       'error
        "Package should have a non-empty summary."))
      (t
       (unless (let ((case-fold-search nil))
@@ -1056,7 +1056,7 @@ The main loop is this separate function so it's easier to test."
           (insert-file-contents file t)
           (emacs-lisp-mode)
           (let ((checking-result (package-lint-buffer)))
-            (when checking-result
+            (when (cl-some (lambda (err) (eq 'error (nth 2 err))) checking-result)
               (setq success nil)
               (unless (equal last-directory file-directory)
                 (setq last-directory file-directory)
@@ -1070,8 +1070,9 @@ The main loop is this separate function so it's easier to test."
   "Run `package-lint-buffer' on the files remaining on the command line.
 Use this only with -batch, it won't work interactively.
 
-When done, exit Emacs with status 0 if there were no errors nor warnings or 1
-otherwise."
+When done, exit Emacs with status 0 if there were no errors
+warnings or 1 otherwise.  If there were warnings but no errors,
+the exit code is still 0."
   (unless noninteractive
     (error "`package-lint-batch-and-exit' is to be used only with -batch"))
   (let ((success (package-lint-batch-and-exit-1 command-line-args-left)))
