@@ -56,12 +56,23 @@ echo "Assert clean package passes batch linting"
          -l package-lint.el \
          -f package-lint-batch-and-exit \
          batch-tests/is-clean.el
-echo "Assert package with warnings passes batch linting"
+"$EMACS" -Q -batch \
+echo "Assert package with demoted warnings passes batch linting"
 "$EMACS" -Q -batch \
          --eval "$INIT_PACKAGE_EL" \
+         --eval "(setq package-lint-batch-fail-on-warnings nil)" \
          -l package-lint.el \
          -f package-lint-batch-and-exit \
          batch-tests/just-warnings.el
+echo "Assert package with warnings fails batch linting"
+if "$EMACS" -Q -batch \
+         --eval "$INIT_PACKAGE_EL" \
+         -l package-lint.el \
+         -f package-lint-batch-and-exit \
+         batch-tests/just-warnings.el; then
+    echo "Didn't report failure when batch-linting file with errors"
+    exit 1
+fi
 echo "Assert package with errors fails batch linting"
 if "$EMACS" -Q -batch \
          --eval "$INIT_PACKAGE_EL" \
