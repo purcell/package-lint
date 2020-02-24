@@ -1070,9 +1070,9 @@ The main loop is this separate function so it's easier to test."
   "Run `package-lint-buffer' on the files remaining on the command line.
 Use this only with -batch, it won't work interactively.
 
-When done, exit Emacs with status 0 if there were no errors
-warnings or 1 otherwise.  If there were warnings but no errors,
-the exit code is still 0."
+When done, exit Emacs with status 1 in case of any errors, otherwise exit
+with status 0.  If there were warnings but no errors, the exit code is
+still 0."
   (unless noninteractive
     (error "`package-lint-batch-and-exit' is to be used only with -batch"))
   (let ((success (package-lint-batch-and-exit-1 command-line-args-left)))
