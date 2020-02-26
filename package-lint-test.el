@@ -433,6 +433,15 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should (equal '() (package-lint-test--run
                       "(defun org-dblock-write:test ())"))))
 
+(ert-deftest package-lint-test-error-redefining-builtins ()
+  (should
+   (equal
+    '((8 0 error "Define compatibility functions with a prefix, e.g. \"test--setq-local\", and use `defalias' where they exist."))
+    (package-lint-test--run "(eval-when-compile
+  (unless (fboundp 'setq-local)
+    (defmacro setq-local (var val)
+      (list 'set (list 'make-local-variable (list 'quote var)) val))))"))))
+
 (ert-deftest package-lint-test-error-new-libraries ()
   (should
    (equal

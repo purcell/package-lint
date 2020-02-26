@@ -120,7 +120,13 @@ published in ELPA for use by older Emacsen.")
                       (removed-functions (let-alist (cdr version-data) .functions.removed)))
                   (cons version (package-lint--match-symbols removed-functions))))
               stdlib-changes)
-      "An alist of function/macro names and when they were removed from Emacs.")))
+      "An alist of function/macro names and when they were removed from Emacs.")
+
+    (defun package-lint--added-or-removed-function-p (sym)
+      "Predicate that returns t if SYM is a function added/removed in any known emacs version."
+      (cl-some (lambda (x) (funcall (cdr x) sym))
+               (append package-lint--functions-and-macros-added-alist
+                       package-lint--functions-and-macros-removed-alist)))))
 
 (defconst package-lint--sane-prefixes
   (rx
@@ -753,11 +759,17 @@ Valid definition names are:
   "Verify that symbol DEFINITIONS start with package PREFIX."
   (pcase-dolist (`(,name . ,position) definitions)
     (unless (package-lint--valid-definition-name-p name prefix position)
-      (package-lint--error-at-point
-       'error
-       (format "\"%s\" doesn't start with package's prefix \"%s\"."
-               name prefix)
-       position))))
+      (if (package-lint--added-or-removed-function-p (intern name))
+          (package-lint--error-at-point
+           'error
+           (format "Define compatibility functions with a prefix, e.g. \"%s--%s\", and use `defalias' where they exist."
+                   prefix name)
+           position)
+        (package-lint--error-at-point
+         'error
+         (format "\"%s\" doesn't start with package's prefix \"%s\"."
+                 name prefix)
+         position)))))
 
 (defun package-lint--check-minor-mode (def)
   "Offer up concerns about the minor mode definition DEF."
