@@ -187,7 +187,8 @@ published in ELPA for use by older Emacsen.")
             (package-lint--check-commentary-existence)
             (let ((definitions (package-lint--get-defs)))
               (package-lint--check-autoloads-on-private-functions definitions)
-              (package-lint--check-defs-prefix prefix definitions)
+              (when prefix
+                (package-lint--check-defs-prefix prefix definitions))
               (package-lint--check-symbol-separators definitions)))
           (package-lint--check-lonely-parens))))
     (sort package-lint--errors
