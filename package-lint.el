@@ -41,6 +41,7 @@
 (require 'finder)
 (require 'imenu)
 (require 'let-alist)
+(require 'rx)
 
 
 ;;; Compatibility
@@ -560,7 +561,18 @@ type of the symbol, either FUNCTION or FEATURE."
                       sym (mapconcat #'number-to-string removed-in-version "."))))))))))
 
 (defconst package-lint--function-name-regexp
-  "\\(?:#'\\|(\\s-*?\\)\\(.*?\\)\\_>"
+  (rx
+   (seq
+    (or "#'"
+        (seq "(" (* (syntax whitespace))
+             (? (seq
+                 (or "funcall" "apply" "advice-add")
+                 (+
+                  (syntax whitespace))
+                 "'"))))
+    (group
+     (*\? nonl))
+    symbol-end))
   "Regexp to match function names.")
 
 (defun package-lint--check-macros-functions-available-in-emacs (valid-deps)

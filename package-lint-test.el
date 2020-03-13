@@ -361,6 +361,33 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     (package-lint-test--run
      "(defconst test-fn #'window-resize)"))))
 
+(ert-deftest package-lint-test-error-new-functions-as-arg ()
+  (should
+   (equal
+    '((6 10 error "You should depend on (emacs \"24.1\") if you need `window-resize'."))
+    (package-lint-test--run
+     "(funcall 'window-resize foo)")))
+  (should
+   (equal
+    '((6 11 error "You should depend on (emacs \"24.1\") if you need `window-resize'."))
+    (package-lint-test--run
+     "(funcall #'window-resize foo)")))
+  (should
+   (equal
+    '((6 8 error "You should depend on (emacs \"24.1\") if you need `window-resize'."))
+    (package-lint-test--run
+     "(apply 'window-resize foo)")))
+  (should
+   (equal
+    '((6 9 error "You should depend on (emacs \"24.1\") if you need `window-resize'."))
+    (package-lint-test--run
+     "(apply #'window-resize foo)")))
+  (should
+   (equal
+    '((6 13 error "You should depend on (emacs \"24.1\") if you need `window-resize'."))
+    (package-lint-test--run
+     "(advice-add 'window-resize foo)"))))
+
 (ert-deftest package-lint-test-accept-new-functions-with-dep ()
   (should
    (equal
