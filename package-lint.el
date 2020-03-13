@@ -180,7 +180,7 @@ published in ELPA for use by older Emacsen.")
               (package-lint--check-libraries-available-in-emacs deps)
               (package-lint--check-libraries-removed-from-emacs)
               (package-lint--check-macros-functions-available-in-emacs deps)
-              (package-lint--check-macros-functions-removed-from-emacs)
+              (package-lint--check-macros-functions-removed-from-emacs deps)
               (package-lint--check-objects-by-regexp
                (concat "(" (regexp-opt '("format" "message" "error")) "\\s-")
                (apply-partially #'package-lint--check-format-string deps)))
@@ -583,19 +583,28 @@ type of the symbol, either FUNCTION or FEATURE."
    package-lint--function-name-regexp
    'function))
 
-(defun package-lint--check-macros-functions-removed-from-emacs ()
-  "Warn about use of functions/macros that have been removed from Emacs."
+(defun package-lint--check-macros-functions-removed-from-emacs (valid-deps)
+  "Warn about use of functions/macros that have been removed from Emacs.
+If an Emacs version is specified in VALID-DEPS, don't warn about
+functions/macros that were removed and later re-added, as long as
+the Emacs dependency matches the re-addition."
   (package-lint--map-regexp-match
    package-lint--function-name-regexp
    (lambda (sym)
      (cl-block return
        (pcase-dolist (`(,removed-in-version . ,pred) package-lint--functions-and-macros-removed-alist)
          (when (funcall pred (intern sym))
-           (cl-return-from return
-             (list
-              'error
-              (format "`%s' was removed in Emacs version %s."
-                      sym (mapconcat #'number-to-string removed-in-version "."))))))))))
+           (let ((emacs-version-dep (or (cadr (assq 'emacs valid-deps)) '(0))))
+             (unless (cl-some (lambda (dep)
+                                (pcase-let ((`(,ver . ,pred) dep))
+                                  (and (version-list-<= ver emacs-version-dep)
+                                       (funcall pred (intern sym)))))
+                              package-lint--functions-and-macros-added-alist)
+               (cl-return-from return
+                 (list
+                  'error
+                  (format "`%s' was removed in Emacs version %s."
+                          sym (mapconcat #'number-to-string removed-in-version "."))))))))))))
 
 (defun package-lint--check-lexical-binding-is-on-first-line ()
   "Check that any `lexical-binding' declaration is on the first line of the file."

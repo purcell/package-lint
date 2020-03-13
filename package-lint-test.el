@@ -487,6 +487,23 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((6 1 error "`spell-buffer' was removed in Emacs version 26.1."))
     (package-lint-test--run "(spell-buffer)"))))
 
+(ert-deftest package-lint-test-allow-removed-and-readded-functions ()
+  (should
+   (equal
+    ;; This is clunky, but won't currently fix
+    '((6 1 error "You should depend on (emacs \"24.1\") if you need `mm-url-encode-multipart-form-data'.")
+      (6 1 error "You should depend on (emacs \"25.1\") if you need `mm-url-encode-multipart-form-data'.")
+      (6 1 error "`mm-url-encode-multipart-form-data' was removed in Emacs version 24.3."))
+    (package-lint-test--run "(mm-url-encode-multipart-form-data)")))
+  (equal
+   ;; This is clunky, but won't currently fix
+   '((6 1 error "You should depend on (emacs \"25.1\") if you need `mm-url-encode-multipart-form-data'.")
+     (6 1 error "`mm-url-encode-multipart-form-data' was removed in Emacs version 24.3."))
+   (package-lint-test--run ";; Package-Requires: ((emacs \"24.1\"))\n(mm-url-encode-multipart-form-data)"))  (should
+   (equal
+    '()
+    (package-lint-test--run ";; Package-Requires: ((emacs \"25.1\"))\n(mm-url-encode-multipart-form-data)"))))
+
 (ert-deftest package-lint-test-accept-new-libraries-with-dep ()
   (should (equal '() (package-lint-test--run
                       ";; Package-Requires: ((emacs \"24.4\"))\n(require 'subr-x)"))))
