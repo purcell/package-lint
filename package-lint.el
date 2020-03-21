@@ -161,6 +161,9 @@ published in ELPA for use by older Emacsen.")
             (package-lint--check-objects-by-regexp
              "(define-global\\(?:ized\\)?-minor-mode\\s-"
              #'package-lint--check-globalized-minor-mode)
+            (package-lint--check-objects-by-regexp
+             "(deftheme\\s-"
+             #'package-lint--check-deftheme)
             (when prefix
               (package-lint--check-objects-by-regexp
                (concat "(" (regexp-opt '("defalias" "defvaralias")) "\\s-")
@@ -722,15 +725,33 @@ DESC is a struct as returned by `package-buffer-info'."
          'warning
          "Including \"Emacs\" in the package summary is usually redundant."))))))
 
+(defun package-lint--check-deftheme (def)
+  "Offer up concerns about the theme definition DEF."
+  (when (symbolp (cadr def))
+    (let ((theme-name (symbol-name (cadr def)))
+          (file-name (file-name-sans-extension
+                      (file-name-nondirectory buffer-file-name))))
+      (unless (string-equal file-name (concat theme-name "-theme"))
+        (package-lint--error-at-point
+         'error
+         (format "This theme should be declared in a file named %s-theme.el."
+                 theme-name))))))
+
 (defun package-lint--check-provide-form (desc)
   "Check the provide form for package with descriptor DESC.
 DESC is a struct as returned by `package-buffer-info'."
   (let ((name (package-lint--package-desc-name desc))
-        (feature (package-lint--provided-feature)))
-    (unless (string-equal (symbol-name name) feature)
-      (package-lint--error-at-bob
-       'error
-       (format "There is no (provide '%s) form." name)))))
+        (feature (package-lint--provided-feature))
+        (theme-name (package-lint--theme-name-as-deftheme)))
+    (if theme-name
+        (unless (string-equal theme-name feature)
+          (package-lint--error-at-bob
+           'error
+           (format "There is no (provide-theme '%s) form." theme-name)))
+      (unless (string-equal (symbol-name name) feature)
+        (package-lint--error-at-bob
+         'error
+         (format "There is no (provide '%s) form." name))))))
 
 (defun package-lint--check-no-emacs-in-package-name (desc)
   "Check that the package name doesn't contain \"emacs\".
@@ -1006,12 +1027,31 @@ The returned list is of the form (SYMBOL-NAME . POSITION)."
 
 (defun package-lint--provided-feature ()
   "Return the first-provided feature name, as a string, or nil if none."
+  (let* ((filename (file-name-sans-extension (file-name-nondirectory buffer-file-name)))
+         (theme-name (package-lint--theme-name-as-deftheme))
+         (is-theme (and theme-name
+                        (string-equal (concat theme-name "-theme")
+                                      filename)))
+         (provide-rx (if is-theme "(provide-theme '" "(provide '")))
+    (save-excursion
+      (goto-char (point-max))
+      (cond ((re-search-backward
+              (concat provide-rx (rx (group (1+ (or (syntax word) (syntax symbol))))))
+              nil t)
+             (match-string-no-properties 1))
+            ((re-search-backward "(provide-me)" nil t)
+             filename)))))
+
+(defun package-lint--theme-name-as-deftheme ()
+  "Return the first-defined theme name, as a string, or nil if none."
   (save-excursion
-    (goto-char (point-max))
-    (cond ((re-search-backward (rx "(provide '" (group (1+ (or (syntax word) (syntax symbol))))) nil t)
-           (match-string-no-properties 1))
-          ((re-search-backward "(provide-me)" nil t)
-           (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
+    (goto-char (point-min))
+    (re-search-forward
+     (rx "(deftheme "
+         (group (1+ (or (syntax word) (syntax symbol))))
+         ")")
+     nil t)
+    (match-string-no-properties 1)))
 
 (defun package-lint--get-package-prefix ()
   "Return package prefix string (i.e. the symbol the package `provide's).
