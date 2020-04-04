@@ -1005,7 +1005,7 @@ The returned list is of the form (SYMBOL-NAME . POSITION)."
     (nreverse result)))
 
 (defun package-lint--provided-feature ()
-  "Return the first-provided feature name, as a string, or nil if none."
+  "Return the last-provided feature name, as a string, or nil if none."
   (save-excursion
     (goto-char (point-max))
     (cond ((re-search-backward (rx "(provide '" (group (1+ (or (syntax word) (syntax symbol))))) nil t)
