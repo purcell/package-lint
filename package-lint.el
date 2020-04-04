@@ -674,16 +674,21 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
        'warning
        "\"Version:\" or \"Package-Version:\" header is missing. MELPA will handle this, but other archives will not."))))
 
+(defun package-lint--liberal-package-buffer-info ()
+  "Like `package-buffer-info', but tolerate missing version header."
+  (let ((orig-buffer (current-buffer)))
+    ;; We've reported version header issues separately, so rule them out here
+    (with-temp-buffer
+      (insert-buffer-substring-no-properties orig-buffer)
+      (goto-char (point-min))
+      (package-lint--update-or-insert-version "0")
+      (package-buffer-info))))
+
 (defun package-lint--check-package-el-can-parse ()
   "Check that `package-buffer-info' can read metadata from this file.
 If it can, return the read metadata."
   (condition-case err
-      (let ((orig-buffer (current-buffer)))
-        ;; We've reported version header issues separately, so rule them out here
-        (with-temp-buffer
-          (insert-buffer-substring-no-properties orig-buffer)
-          (package-lint--update-or-insert-version "0")
-          (package-buffer-info)))
+      (package-lint--liberal-package-buffer-info)
     (error
      (package-lint--error-at-bob
       'error
