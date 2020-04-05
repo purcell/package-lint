@@ -43,6 +43,17 @@
 (require 'let-alist)
 (require 'rx)
 
+
+(defvar package-lint-main-file nil
+  "For multi-file packages, set this to the main .el or -pkg.el file.
+
+When set, the package prefix and dependencies are obtained from
+that file instead of the buffer being linted.  This allows
+package-lint to operate on secondary files in a package.
+
+The path can be absolute or relative to that of the linted file.")
+(put 'package-lint-main-file 'safe-local-variable #'stringp)
+
 
 ;;; Compatibility
 
@@ -141,6 +152,13 @@ published in ELPA for use by older Emacsen.")
     "pcomplete/"))
   "A regexp matching whitelisted non-standard symbol prefixes.")
 
+(defun package-lint--main-file-p ()
+  "Return non-nil if the current buffer corresponds to the package's main file."
+  (or (null package-lint-main-file)
+      (null (buffer-file-name))
+      (eq (file-truename (expand-file-name package-lint-main-file))
+          (file-truename (buffer-file-name)))))
+
 (defun package-lint--check-all ()
   "Return a list of errors/warnings for the current buffer."
   (let ((package-lint--errors '())
@@ -149,41 +167,65 @@ published in ELPA for use by older Emacsen.")
       (save-excursion
         (save-restriction
           (widen)
-          (package-lint--check-reserved-keybindings)
-          (package-lint--check-keywords-list)
-          (package-lint--check-url-header)
-          (package-lint--check-package-version-present)
-          (package-lint--check-lexical-binding-is-on-first-line)
-          (let ((prefix (package-lint--get-package-prefix)))
+          (let (prefix deps)
+            (if (package-lint--main-file-p)
+                (progn
+                  (package-lint--check-url-header)
+                  (package-lint--check-package-version-present)
+                  (setq prefix (package-lint--get-package-prefix))
+                  (let ((desc (package-lint--check-package-el-can-parse)))
+                    (when desc
+                      (package-lint--check-package-summary desc)
+                      ;; TODO: check provide form present even if this is not the main file
+                      (package-lint--check-provide-form desc)
+                      (package-lint--check-no-emacs-in-package-name desc)))
+                  (setq deps (package-lint--check-dependency-list)))
+              ;; Need to look at the main file to find prefix and dependencies
+              (setq prefix (replace-regexp-in-string
+                            "\\(-mode\\)?\\(-pkg\\)?\\'" ""
+                            (file-name-sans-extension
+                             (file-name-nondirectory package-lint-main-file))))
+              (if (string-match-p "-pkg\\.el\\'" package-lint-main-file)
+                  (let ((expr (read (current-buffer))))
+                    (if (eq (car-safe expr) 'define-package)
+                        (setq deps (package-desc-reqs (apply #'package-desc-from-define (cdr expr))))
+                      (package-lint--error-at-bob 'error (format "Malformed package descriptor file \"%s\"" package-lint-main-file))))
+                (with-temp-buffer
+                  ;; TODO: warn if there are Package-Requires headers here
+                  (insert-file-contents (expand-file-name package-lint-main-file))
+                  (condition-case _err
+                      (setq deps (package-desc-reqs (package-lint--liberal-package-buffer-info)))
+                    (error
+                     (package-lint--error-at-bob 'error (format "Error parsing main package file \"%s\"" package-lint-main-file)))))))
+
+            ;; Source code checks
+            (package-lint--check-keywords-list)
+            (package-lint--check-lexical-binding-is-on-first-line)
+            (package-lint--check-reserved-keybindings)
+            (when prefix
+              (package-lint--check-objects-by-regexp
+               (concat "(" (regexp-opt '("defalias" "defvaralias")) "\\s-")
+               (apply-partially #'package-lint--check-defalias prefix)))
             (package-lint--check-objects-by-regexp
              "(define-minor-mode\\s-"
              #'package-lint--check-minor-mode)
             (package-lint--check-objects-by-regexp
              "(define-global\\(?:ized\\)?-minor-mode\\s-"
              #'package-lint--check-globalized-minor-mode)
-            (when prefix
-              (package-lint--check-objects-by-regexp
-               (concat "(" (regexp-opt '("defalias" "defvaralias")) "\\s-")
-               (apply-partially #'package-lint--check-defalias prefix)))
             (package-lint--check-objects-by-regexp
              "(defgroup\\s-" #'package-lint--check-defgroup)
-            (let ((desc (package-lint--check-package-el-can-parse)))
-              (when desc
-                (package-lint--check-package-summary desc)
-                (package-lint--check-provide-form desc)
-                (package-lint--check-no-emacs-in-package-name desc)))
+
             (package-lint--check-no-use-of-cl)
             (package-lint--check-no-use-of-cl-lib-sublibraries)
             (package-lint--check-eval-after-load)
-            (let ((deps (package-lint--check-dependency-list)))
-              (package-lint--check-lexical-binding-requires-emacs-24 deps)
-              (package-lint--check-libraries-available-in-emacs deps)
-              (package-lint--check-libraries-removed-from-emacs)
-              (package-lint--check-macros-functions-available-in-emacs deps)
-              (package-lint--check-macros-functions-removed-from-emacs deps)
-              (package-lint--check-objects-by-regexp
-               (concat "(" (regexp-opt '("format" "message" "error")) "\\s-")
-               (apply-partially #'package-lint--check-format-string deps)))
+            (package-lint--check-lexical-binding-requires-emacs-24 deps)
+            (package-lint--check-libraries-available-in-emacs deps)
+            (package-lint--check-libraries-removed-from-emacs)
+            (package-lint--check-macros-functions-available-in-emacs deps)
+            (package-lint--check-macros-functions-removed-from-emacs deps)
+            (package-lint--check-objects-by-regexp
+             (concat "(" (regexp-opt '("format" "message" "error")) "\\s-")
+             (apply-partially #'package-lint--check-format-string deps))
             (package-lint--check-for-literal-emacs-path)
             (package-lint--check-commentary-existence)
             (let ((definitions (package-lint--get-defs)))
