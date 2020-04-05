@@ -170,8 +170,7 @@ published in ELPA for use by older Emacsen.")
           (let (prefix deps)
             (if (package-lint--main-file-p)
                 (progn
-                  (package-lint--check-url-header)
-                  (package-lint--check-package-version-present)
+                  ;; TODO: handle when the main file is a -pkg.el file
                   (setq prefix (package-lint--get-package-prefix))
                   (let ((desc (package-lint--check-package-el-can-parse)))
                     (when desc
@@ -179,7 +178,11 @@ published in ELPA for use by older Emacsen.")
                       ;; TODO: check provide form present even if this is not the main file
                       (package-lint--check-provide-form desc)
                       (package-lint--check-no-emacs-in-package-name desc)))
-                  (setq deps (package-lint--check-dependency-list)))
+                  (setq deps (package-lint--check-dependency-list))
+
+                  (package-lint--check-url-header)
+                  (package-lint--check-package-version-present)
+                  (package-lint--check-commentary-existence))
               ;; Need to look at the main file to find prefix and dependencies
               (setq prefix (replace-regexp-in-string
                             "\\(-mode\\)?\\(-pkg\\)?\\'" ""
@@ -227,7 +230,6 @@ published in ELPA for use by older Emacsen.")
              (concat "(" (regexp-opt '("format" "message" "error")) "\\s-")
              (apply-partially #'package-lint--check-format-string deps))
             (package-lint--check-for-literal-emacs-path)
-            (package-lint--check-commentary-existence)
             (let ((definitions (package-lint--get-defs)))
               (package-lint--check-autoloads-on-private-functions definitions)
               (when prefix
