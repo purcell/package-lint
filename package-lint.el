@@ -1101,6 +1101,8 @@ where TYPE is either 'warning or 'error.
 
 Current buffer is used if none is specified."
   (with-current-buffer (or buffer (current-buffer))
+    (unless (derived-mode-p 'emacs-lisp-mode)
+      (error "Buffer must be in emacs-lisp-mode"))
     (package-lint--check-all)))
 
 ;;;###autoload
