@@ -188,18 +188,23 @@ published in ELPA for use by older Emacsen.")
                             "\\(-mode\\)?\\(-pkg\\)?\\'" ""
                             (file-name-sans-extension
                              (file-name-nondirectory package-lint-main-file))))
-              (if (string-match-p "-pkg\\.el\\'" package-lint-main-file)
-                  (let ((expr (read (current-buffer))))
-                    (if (eq (car-safe expr) 'define-package)
-                        (setq deps (package-desc-reqs (apply #'package-desc-from-define (cdr expr))))
-                      (package-lint--error-at-bob 'error (format "Malformed package descriptor file \"%s\"" package-lint-main-file))))
-                (with-temp-buffer
+              (let ((main-file package-lint-main-file))
+                (if (string-match-p "-pkg\\.el\\'" main-file)
+                    (let ((expr (with-temp-buffer
+                                  (insert-file-contents (expand-file-name main-file))
+                                  (read (current-buffer)))))
+                      (if (eq (car-safe expr) 'define-package)
+                          (setq deps (package-desc-reqs (apply #'package-desc-from-define (cdr expr))))
+                        (package-lint--error-at-bob 'error (format "Malformed package descriptor file \"%s\"" main-file))))
                   ;; TODO: warn if there are Package-Requires headers here
-                  (insert-file-contents (expand-file-name package-lint-main-file))
-                  (condition-case _err
-                      (setq deps (package-desc-reqs (package-lint--liberal-package-buffer-info)))
+                  (condition-case err
+                      (with-temp-buffer
+                        (insert-file-contents (expand-file-name main-file))
+                        (setq deps (package-desc-reqs (package-lint--liberal-package-buffer-info))))
                     (error
-                     (package-lint--error-at-bob 'error (format "Error parsing main package file \"%s\"" package-lint-main-file)))))))
+                     (package-lint--error-at-bob
+                      'error
+                      (format "Error parsing main package file \"%s\": %s" main-file err)))))))
 
             ;; Source code checks
             (package-lint--check-keywords-list)
