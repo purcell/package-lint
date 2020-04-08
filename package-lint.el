@@ -1176,15 +1176,16 @@ whether or not warnings alone produce a non-zero exit code."
 ;;;###autoload
 (defun package-lint-looks-like-a-package-p ()
   "Return non-nil if the current buffer appears to be intended as a package."
-  (save-match-data
-    (save-excursion
-      (save-restriction
-        (widen)
-        (goto-char (point-min))
-        (re-search-forward
-         (concat lm-header-prefix
-                 (rx (or "Version" "Package-Version" "Package-Requires")))
-         nil t)))))
+  (or package-lint-main-file
+      (save-match-data
+        (save-excursion
+          (save-restriction
+            (widen)
+            (goto-char (point-min))
+            (re-search-forward
+             (concat lm-header-prefix
+                     (rx (or "Version" "Package-Version" "Package-Requires")))
+             nil t))))))
 
 (provide 'package-lint)
 ;; Local Variables:
