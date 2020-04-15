@@ -156,8 +156,8 @@ published in ELPA for use by older Emacsen.")
   "Return non-nil if the current buffer corresponds to the package's main file."
   (or (null package-lint-main-file)
       (null (buffer-file-name))
-      (eq (file-truename (expand-file-name package-lint-main-file))
-          (file-truename (buffer-file-name)))))
+      (string= (file-truename (expand-file-name package-lint-main-file))
+               (file-truename (buffer-file-name)))))
 
 (defun package-lint--check-all ()
   "Return a list of errors/warnings for the current buffer."
