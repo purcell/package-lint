@@ -196,7 +196,8 @@ published in ELPA for use by older Emacsen.")
                       (if (eq (car-safe expr) 'define-package)
                           (setq deps (package-desc-reqs (apply #'package-desc-from-define (cdr expr))))
                         (package-lint--error-at-bob 'error (format "Malformed package descriptor file \"%s\"" main-file))))
-                  ;; TODO: warn if there are Package-Requires headers here
+                  (when (package-lint--goto-header "Package-Requires")
+                    (package-lint--error-at-bol 'error "Package-Requires outside the main file have no effect"))
                   (condition-case err
                       (with-temp-buffer
                         (insert-file-contents (expand-file-name main-file))
