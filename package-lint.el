@@ -175,7 +175,6 @@ published in ELPA for use by older Emacsen.")
                   (let ((desc (package-lint--check-package-el-can-parse)))
                     (when desc
                       (package-lint--check-package-summary desc)
-                      ;; TODO: check provide form present even if this is not the main file
                       (package-lint--check-provide-form desc)
                       (package-lint--check-no-emacs-in-package-name desc)))
                   (setq deps (package-lint--check-dependency-list))
@@ -197,7 +196,8 @@ published in ELPA for use by older Emacsen.")
                           (setq deps (package-desc-reqs (apply #'package-desc-from-define (cdr expr))))
                         (package-lint--error-at-bob 'error (format "Malformed package descriptor file \"%s\"" main-file))))
                   (when (package-lint--goto-header "Package-Requires")
-                    (package-lint--error-at-bol 'error "Package-Requires outside the main file have no effect"))
+                    (package-lint--error-at-bol 'error "Package-Requires outside the main file have no effect."))
+                  (package-lint--check-provide-form-secondary-file)
                   (condition-case err
                       (with-temp-buffer
                         (insert-file-contents (expand-file-name main-file))
@@ -786,6 +786,15 @@ DESC is a struct as returned by `package-buffer-info'."
       (package-lint--error-at-bob
        'error
        (format "There is no (provide '%s) form." name)))))
+
+(defun package-lint--check-provide-form-secondary-file ()
+  "Check there is a provide form."
+  ;; We don't require that the provided feature have a name consistent
+  ;; with the overall package prefix, but this check may later be added.
+  (unless (package-lint--provided-feature)
+    (package-lint--error-at-bob
+     'error
+     "There is no `provide' form.")))
 
 (defun package-lint--check-no-emacs-in-package-name (desc)
   "Check that the package name doesn't contain \"emacs\".
