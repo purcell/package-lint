@@ -152,6 +152,11 @@ published in ELPA for use by older Emacsen.")
     "pcomplete/"))
   "A regexp matching whitelisted non-standard symbol prefixes.")
 
+(defvar package-lint--allowed-prefix-mappings
+  '(("ox-" . ("org-"))
+    ("ob-" . ("org-")))
+  "Alist containing mappings of package prefixes to symbol prefixes.")
+
 (defun package-lint--main-file-p ()
   "Return non-nil if the current buffer corresponds to the package's main file."
   (or (null package-lint-main-file)
@@ -820,6 +825,14 @@ DESC is a struct as returned by `package-buffer-info'."
            (format "`%s' contains a non-standard separator `%s', use hyphens instead (see Elisp Coding Conventions)."
                    name (substring-no-properties name match-pos (1+ match-pos)))))))))
 
+(defun package-lint--valid-prefix-mapping-p (short-prefix prefix name)
+  "Check if NAME corresponds to a valid mappings for PREFIX.
+Check is done according to the definitions in
+`package-lint--allowed-prefix-mappings' for SHORT-PREFIX."
+  (let ((regexp (concat "^" (regexp-opt
+                             (cdr (assoc short-prefix package-lint--allowed-prefix-mappings))))))
+    (string-prefix-p prefix (replace-regexp-in-string regexp short-prefix name))))
+
 (defun package-lint--valid-definition-name-p (name prefix &optional position)
   "Return non-nil if NAME denotes a valid definition name.
 
@@ -835,6 +848,10 @@ Valid definition names are:
       (string-match-p package-lint--sane-prefixes name)
       (string-match-p (rx-to-string `(seq string-start (or "define" "defun" "defvar" "defface" "with") "-" ,prefix)) name)
       (string-match-p (rx-to-string  `(seq string-start "global-" ,prefix (or "-mode" (seq "-" (* any) "-mode")) string-end)) name)
+      (let ((short-prefix (first (cl-remove-if-not (lambda (e) (string-prefix-p e prefix))
+                                             (mapcar #'car package-lint--allowed-prefix-mappings)))))
+        (when short-prefix
+          (package-lint--valid-prefix-mapping-p short-prefix prefix name)))
       (when position
         (goto-char position)
         (looking-at-p (rx (*? space) "(" (*? space)
