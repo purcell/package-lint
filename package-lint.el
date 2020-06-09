@@ -374,7 +374,7 @@ Return a list of well-formed dependencies, same as
               (package-lint--check-packages-installable deps)
               (package-lint--check-deps-use-non-snapshot-version deps)
               (package-lint--check-deps-do-not-use-zero-versions deps)
-              (package-lint--check-do-not-depend-on-cl-lib-1.0 deps)
+              (package-lint--check-cl-lib-version deps)
               deps))
         (error
          (package-lint--error-at-bol
@@ -698,18 +698,24 @@ the Emacs dependency matches the re-addition."
              'error
              "`lexical-binding' must be set in the first line.")))))))
 
-(defun package-lint--check-do-not-depend-on-cl-lib-1.0 (valid-deps)
+(defun package-lint--check-cl-lib-version (valid-deps)
   "Check that any dependency in VALID-DEPS on \"cl-lib\" is on a remotely-installable version."
-  (let ((cl-lib-dep (assq 'cl-lib valid-deps)))
+  (let ((emacs-version-dep (or (nth 1 (assq 'emacs valid-deps)) '(0)))
+        (cl-lib-dep (assq 'cl-lib valid-deps)))
     (when cl-lib-dep
       (let ((cl-lib-version (nth 1 cl-lib-dep)))
-        (when (version-list-<= '(1) cl-lib-version)
-          (package-lint--error-at-point
-           'error
-           (format "Depend on the latest 0.x version of cl-lib rather than on version \"%S\".
+        (cond ((version-list-<= '(1) cl-lib-version)
+               (package-lint--error-at-point
+                'error
+                (format "Depend on the latest 0.x version of cl-lib rather than on version \"%S\".
 Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled."
-                   cl-lib-version)
-           (nth 2 cl-lib-dep)))))))
+                        cl-lib-version)
+                (nth 2 cl-lib-dep)))
+              ((and (version-list-<= '(24 3) emacs-version-dep)
+                    (version-list-<= cl-lib-version '(0 5)))
+               (package-lint--error-at-point
+                'warning
+                "An explicit dependency on cl-lib <= 0.5 is not needed on Emacs >= 24.3.")))))))
 
 (defun package-lint--check-package-version-present ()
   "Check that a valid \"Version\" header is present."
