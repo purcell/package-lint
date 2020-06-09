@@ -848,7 +848,7 @@ Valid definition names are:
       (string-match-p package-lint--sane-prefixes name)
       (string-match-p (rx-to-string `(seq string-start (or "define" "defun" "defvar" "defface" "with") "-" ,prefix)) name)
       (string-match-p (rx-to-string  `(seq string-start "global-" ,prefix (or "-mode" (seq "-" (* any) "-mode")) string-end)) name)
-      (let ((short-prefix (first (cl-remove-if-not (lambda (e) (string-prefix-p e prefix))
+      (let ((short-prefix (car (cl-remove-if-not (lambda (e) (string-prefix-p e prefix))
                                              (mapcar #'car package-lint--allowed-prefix-mappings)))))
         (when short-prefix
           (package-lint--valid-prefix-mapping-p short-prefix prefix name)))
