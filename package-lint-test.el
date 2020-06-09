@@ -327,6 +327,12 @@ headers and provide form."
 Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled.")
     (package-lint-test--run ";; Package-Requires: ((cl-lib \"1\"))"))))
 
+(ert-deftest package-lint-test-warning-cl-lib-0.5-not-needed ()
+  (should
+   (member
+    '(6 52 warning "An explicit dependency on cl-lib <= 0.5 is not needed on Emacs >= 24.3.")
+    (package-lint-test--run ";; Package-Requires: ((emacs \"24.3\") (cl-lib \"0.5\"))"))))
+
 (ert-deftest package-lint-test-warning-cl ()
   (should
    (member
