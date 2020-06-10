@@ -1,6 +1,6 @@
 ;;; package-lint.el --- A linting library for elisp package authors -*- lexical-binding: t -*-
 
-;; Copyright (C) 2014-2019  Steve Purcell, Fanael Linithien
+;; Copyright (C) 2014-2020  Steve Purcell, Fanael Linithien
 
 ;; Author: Steve Purcell <steve@sanityinc.com>
 ;;         Fanael Linithien <fanael4@gmail.com>
@@ -66,6 +66,18 @@ The path can be absolute or relative to that of the linted file.")
   (if (fboundp 'package-desc-name)
       'package-desc-name
     (lambda (desc) (intern (elt desc 0)))))
+
+(defalias 'package-lint--package-desc-from-define
+  (if (fboundp 'package-desc-from-define)
+      'package-desc-from-define
+    (lambda (_name-string version-string docstring requirements &rest _args)
+      (vector
+       (version-to-list version-string)
+       (mapcar
+        (lambda (x)
+          (list (nth 0 x) (version-to-list (nth 1 x))))
+        (nth 1 requirements))
+       docstring))))
 
 
 ;;; Machinery
@@ -198,7 +210,7 @@ published in ELPA for use by older Emacsen.")
                                   (insert-file-contents (expand-file-name main-file))
                                   (read (current-buffer)))))
                       (if (eq (car-safe expr) 'define-package)
-                          (setq deps (package-desc-reqs (apply #'package-desc-from-define (cdr expr))))
+                          (setq deps (package-desc-reqs (apply #'package-lint--package-desc-from-define (cdr expr))))
                         (package-lint--error-at-bob 'error (format "Malformed package descriptor file \"%s\"" main-file))))
                   (when (package-lint--goto-header "Package-Requires")
                     (package-lint--error-at-bol 'error "Package-Requires outside the main file have no effect."))
