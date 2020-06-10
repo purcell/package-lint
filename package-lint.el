@@ -70,7 +70,7 @@ The path can be absolute or relative to that of the linted file.")
 (defalias 'package-lint--package-desc-from-define
   (if (fboundp 'package-desc-from-define)
       'package-desc-from-define
-    (lambda (_name-string version-string docstring requirements &rest _args)
+    (lambda (_name-string version-string &optional docstring requirements &rest _args)
       (vector
        (version-to-list version-string)
        (mapcar
