@@ -704,18 +704,19 @@ the Emacs dependency matches the re-addition."
         (cl-lib-dep (assq 'cl-lib valid-deps)))
     (when cl-lib-dep
       (let ((cl-lib-version (nth 1 cl-lib-dep)))
-        (cond ((version-list-<= '(1) cl-lib-version)
+        (cond ((and emacs-version-dep
+                    (version-list-<= '(24 3) emacs-version-dep)
+                    (version-list-<= cl-lib-version '(1 0)))
+               (package-lint--error-at-point
+                'warning
+                "An explicit dependency on cl-lib <= 1.0 is not needed on Emacs >= 24.3."))
+              ((version-list-<= '(1) cl-lib-version)
                (package-lint--error-at-point
                 'error
                 (format "Depend on the latest 0.x version of cl-lib rather than on version \"%S\".
 Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled."
                         cl-lib-version)
-                (nth 2 cl-lib-dep)))
-              ((and (version-list-<= '(24 3) emacs-version-dep)
-                    (version-list-<= cl-lib-version '(0 5)))
-               (package-lint--error-at-point
-                'warning
-                "An explicit dependency on cl-lib <= 0.5 is not needed on Emacs >= 24.3.")))))))
+                (nth 2 cl-lib-dep))))))))
 
 (defun package-lint--check-package-version-present ()
   "Check that a valid \"Version\" header is present."
