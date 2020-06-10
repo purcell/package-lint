@@ -732,5 +732,17 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '()
     (package-lint-test--run "(hello 'world\n ;; a comment\n)"))))
 
+(ert-deftest package-lint-test-accept-valid-prefix-mappings ()
+  (should
+   (equal
+    '()
+    (package-lint-test--run "(defun org-foobar-test ()) (provide 'ox-foobar)" nil nil nil "ox-foobar" nil nil "ox-foobar"))))
+
+(ert-deftest package-lint-test-error-invalid-prefix-mappings ()
+  (should
+   (equal
+    '((6 0 error "\"org-foobaz-test\" doesn't start with package's prefix \"ox-foobar\"."))
+    (package-lint-test--run "(defun org-foobaz-test ()) (provide 'ox-foobar)" nil nil nil "ox-foobar" nil nil "ox-foobar"))))
+
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
