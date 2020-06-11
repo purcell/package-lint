@@ -205,7 +205,7 @@ headers and provide form."
 (ert-deftest package-lint-test-warn-lexical-binding-without-emacs-24-dep ()
   (should
    (equal
-    '((1 27 warning "You should depend on (emacs \"24\") if you need lexical-binding."))
+    '((1 27 warning "You should depend on (emacs \"24.1\") if you need lexical-binding."))
     (package-lint-test--run
      ""
      ";;; test.el --- A test -*- lexical-binding: t -*-\n"))))

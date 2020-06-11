@@ -490,13 +490,13 @@ required version PACKAGE-VERSION.  If not, raise an error for DEP-POS."
        dep-pos))))
 
 (defun package-lint--check-lexical-binding-requires-emacs-24 (valid-deps)
-  "Warn about use of `lexical-binding' when Emacs 24 is not among VALID-DEPS."
+  "Warn about use of `lexical-binding' when Emacs 24.1 is not among VALID-DEPS."
   (goto-char (point-min))
   (when (package-lint--lexical-binding-declared-in-header-line-p)
     (unless (assq 'emacs valid-deps)
       (package-lint--error-at-point
        'warning
-       "You should depend on (emacs \"24\") if you need lexical-binding."
+       "You should depend on (emacs \"24.1\") if you need lexical-binding."
        (match-beginning 1)))))
 
 (defun package-lint--inside-comment-or-string-p ()
