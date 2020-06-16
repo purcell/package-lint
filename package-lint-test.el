@@ -269,9 +269,15 @@ headers and provide form."
     '((6 23 error "You can only depend on Emacs version 24 or greater: package.el for Emacs 23 does not support the \"emacs\" pseudopackage."))
     (package-lint-test--run ";; Package-Requires: ((emacs \"23\"))"))))
 
+(ert-deftest package-lint-test-warning-emacs-27-dep ()
+  (should
+   (equal
+    '((6 23 warning "This makes the package uninstallable in all released Emacs versions."))
+    (package-lint-test--run ";; Package-Requires: ((emacs \"27\"))"))))
+
 (ert-deftest package-lint-test-accept-emacs-24+-dep ()
   (should (equal '() (package-lint-test--run ";; Package-Requires: ((emacs \"24\"))")))
-  (should (equal '() (package-lint-test--run ";; Package-Requires: ((emacs \"26.7\"))"))))
+  (should (equal '() (package-lint-test--run ";; Package-Requires: ((emacs \"26.3\"))"))))
 
 (ert-deftest package-lint-test-error-uninstallable-dep ()
   (should

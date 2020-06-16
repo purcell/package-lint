@@ -388,6 +388,7 @@ Return a list of well-formed dependencies, same as
                'error
                "More than one expression provided."))
             (let ((deps (package-lint--check-well-formed-dependencies position parsed-deps)))
+              (package-lint--check-emacs-version deps)
               (package-lint--check-packages-installable deps)
               (package-lint--check-deps-use-non-snapshot-version deps)
               (package-lint--check-deps-do-not-use-zero-versions deps)
@@ -451,16 +452,26 @@ required version PACKAGE-VERSION.  If not, raise an error for DEP-POS."
                (package-version-join best-version))
        dep-pos))))
 
+(defun package-lint--check-emacs-version (valid-deps)
+  "Check that all VALID-DEPS are available for installation."
+  (pcase-dolist (`(,package-name ,package-version ,dep-pos) valid-deps)
+    (when (eq 'emacs package-name)
+      (cond
+       ((version-list-< package-version '(24))
+        (package-lint--error-at-point
+         'error
+         "You can only depend on Emacs version 24 or greater: package.el for Emacs 23 does not support the \"emacs\" pseudopackage."
+         dep-pos))
+       ((version-list-<= '(27) package-version)
+        (package-lint--error-at-point
+         'warning
+         "This makes the package uninstallable in all released Emacs versions."
+         dep-pos))))))
+
 (defun package-lint--check-packages-installable (valid-deps)
   "Check that all VALID-DEPS are available for installation."
   (pcase-dolist (`(,package-name ,package-version ,dep-pos) valid-deps)
-    (if (eq 'emacs package-name)
-        (unless (version-list-<= '(24) package-version)
-          (package-lint--error-at-point
-           'error
-           "You can only depend on Emacs version 24 or greater: package.el for Emacs 23 does not support the \"emacs\" pseudopackage."
-           dep-pos))
-      ;; Not 'emacs
+    (unless (eq 'emacs package-name)
       (let ((archive-entry (assq package-name package-archive-contents)))
         (if archive-entry
             (package-lint--check-package-installable archive-entry package-version dep-pos)
