@@ -1,0 +1,20 @@
+name: Update stdlib-changes
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: cachix/install-nix-action@v10
+    - uses: cachix/cachix-action@v6
+      with:
+        name: emacs-ci
+    - run: tools/sym-dump-all
+    - uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: Regenerate stdlib-changes
+        file-pattern: data/stdlib-changes
