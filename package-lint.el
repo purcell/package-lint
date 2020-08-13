@@ -146,6 +146,31 @@ published in ELPA for use by older Emacsen.")
               stdlib-changes)
       "An alist of function/macro names and when they were removed from Emacs.")
 
+    (defconst package-lint--check-symbol-hash-table
+      (let ((tbl (make-hash-table))
+            (tbl* (make-hash-table)))
+        (pcase-dolist (`(,ver . ,info) stdlib-changes)
+          (pcase-dolist (`(,kind (removed . ,removed) (added . ,added)) info)
+            (dolist (r removed)
+              (push `(,kind removed ,ver) (gethash r tbl)))
+            (dolist (a added)
+              (push `(,kind added ,ver) (gethash a tbl)))))
+        (maphash (lambda (key value)
+                   (let ((res (sort (nreverse value)
+                                    (lambda (a b)
+                                      (string< (symbol-name (car a)) (symbol-name (car b)))))))
+                     (puthash key res tbl*)))
+                 tbl)
+        tbl*)
+      "A hash-table contains symbol and added/removed info.")
+
+    (defconst package-lint--check-symbol-hash-table-keys
+      (let (keys)
+        (maphash (lambda (key _value) (push key keys))
+                 package-lint--check-symbol-hash-table)
+        (delete-dups keys))
+      "A key list of `package-lint--check-symbol-hash-table'.")
+
     (defun package-lint--added-or-removed-function-p (sym)
       "Predicate that returns t if SYM is a function added/removed in any known emacs version."
       (cl-some (lambda (x) (funcall (cdr x) sym))
@@ -1148,8 +1173,35 @@ otherwise invalid read forms are ignored."
                      (ignore-errors (read (current-buffer)))))))
         (when obj (funcall function obj))))))
 
+(defun package-lint--check-symbol-make-message (symbol info)
+  "Create message from INFO.
+INFO is added/removed info list of (KIND STATUS VER).
+KIND is one of (functions variables features) as symbol.
+STATUS is one of (added removed) as symbol.
+VER is list represents version."
+  (mapconcat
+   (lambda (elm)
+     (pcase-let ((`(,kind ,status ,ver) elm))
+       (format "%s(%s) is %s at Emacs-%s"
+               symbol kind status
+               (mapconcat #'number-to-string ver "."))))
+   info
+   "\n"))
+
 
 ;;; Public interface
+
+;;;###autoload
+(defun package-lint-check-symbol (symbol)
+  "Return SYMBOL is added/removed on what Emacs Version using package-lint database."
+  (interactive
+   (list (completing-read "Symbol: " package-lint--check-symbol-hash-table-keys)))
+  (let* ((symbol* (if (stringp symbol) (intern symbol) symbol))
+         (info (gethash symbol* package-lint--check-symbol-hash-table))
+         (msg (package-lint--check-symbol-make-message symbol info)))
+    (if (called-interactively-p 'interactive)
+        (message msg)
+      info)))
 
 ;;;###autoload
 (defun package-lint-buffer (&optional buffer)

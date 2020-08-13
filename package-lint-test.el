@@ -750,5 +750,26 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((6 0 error "\"org-foobaz-test\" doesn't start with package's prefix \"ox-foobar\"."))
     (package-lint-test--run "(defun org-foobaz-test ()) (provide 'ox-foobar)" nil nil nil "ox-foobar" nil nil "ox-foobar"))))
 
+(ert-deftest package-lint-test-check-symbol ()
+  (should
+   (equal
+    '((features added (24 3)))
+    (package-lint-check-symbol 'cl-lib)))
+  (should
+   (equal
+    '((features added (24 4)))
+    (package-lint-check-symbol 'subr-x)))
+  (should
+   (equal
+    '((features added (24 4)))
+    (package-lint-check-symbol 'subr-x)))
+  (should
+   (equal
+    '((functions added (24 1))
+      (functions removed (26 1))
+      (variables added (24 1))
+      (variables removed (26 1)))
+    (package-lint-check-symbol 'gnus-sync-unload-hook))))
+
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
