@@ -462,7 +462,7 @@ required version PACKAGE-VERSION.  If not, raise an error for DEP-POS."
          'error
          "You can only depend on Emacs version 24 or greater: package.el for Emacs 23 does not support the \"emacs\" pseudopackage."
          dep-pos))
-       ((version-list-<= '(27) package-version)
+       ((version-list-<= '(28) package-version)
         (package-lint--error-at-point
          'warning
          "This makes the package uninstallable in all released Emacs versions."
