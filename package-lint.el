@@ -106,13 +106,17 @@ published in ELPA for use by older Emacsen.")
         (puthash s t tbl))
       (lambda (v) (gethash v tbl))))
 
-  (let ((stdlib-changes (with-temp-buffer
-                          (insert-file-contents
-                           (expand-file-name "data/stdlib-changes"
-                                             (if load-file-name
-                                                 (file-name-directory load-file-name)
-                                               default-directory)))
-                          (read (current-buffer)))))
+  (defun package-lint--read-stdlib-changes ()
+    "Return contents of stdlib-changes file."
+    (with-temp-buffer
+      (insert-file-contents
+       (expand-file-name "data/stdlib-changes"
+                         (if load-file-name
+                             (file-name-directory load-file-name)
+                           default-directory)))
+      (read (current-buffer))))
+
+  (let ((stdlib-changes (package-lint--read-stdlib-changes)))
 
     (defconst package-lint--libraries-added-alist
       (mapcar (lambda (version-data)
@@ -145,28 +149,6 @@ published in ELPA for use by older Emacsen.")
                   (cons version (package-lint--match-symbols removed-functions))))
               stdlib-changes)
       "An alist of function/macro names and when they were removed from Emacs.")
-
-    (defconst package-lint--check-symbol-hash-table
-      (let ((tbl (make-hash-table))
-            (tbl-sorted (make-hash-table)))
-        (pcase-dolist (`(,ver . ,info) stdlib-changes)
-          (pcase-dolist (`(,kind (removed . ,removed) (added . ,added)) info)
-            (dolist (r removed)
-              (push `(,kind removed ,ver) (gethash r tbl)))
-            (dolist (a added)
-              (push `(,kind added ,ver) (gethash a tbl)))))
-        (maphash (lambda (key value)
-                   (let ((res (sort (nreverse value)
-                                    (lambda (a b)
-                                      (string< (symbol-name (car a)) (symbol-name (car b)))))))
-                     (puthash key res tbl-sorted)))
-                 tbl)
-        tbl-sorted)
-      "A hash-table contains symbol and added/removed info.")
-
-    (defconst package-lint--check-symbol-hash-table-keys
-      (cl-loop for k being the hash-keys of package-lint--check-symbol-hash-table collect k)
-      "A key list of `package-lint--check-symbol-hash-table'.")
 
     (defun package-lint--added-or-removed-function-p (sym)
       "Predicate that returns t if SYM is a function added/removed in any known emacs version."
@@ -1170,6 +1152,34 @@ otherwise invalid read forms are ignored."
                      (ignore-errors (read (current-buffer)))))))
         (when obj (funcall function obj))))))
 
+(defvar package-lint--check-symbol-hash-table nil)
+
+(defun package-lint--hash-table-keys (hash-table)
+  "Return a list of keys in HASH-TABLE.
+see `hash-table-keys' was included in Emacs 24.4."
+  (cl-loop for k being the hash-keys of hash-table collect k))
+
+(defun package-lint--check-symbol-create-table ()
+  "Return `package-lint--check-symbol-hash-table'."
+  (if package-lint--check-symbol-hash-table
+      package-lint--check-symbol-hash-table
+    (setq package-lint--check-symbol-hash-table
+          (let ((tbl (make-hash-table))
+                (tbl-sorted (make-hash-table)))
+            (pcase-dolist (`(,ver . ,info) (package-lint--read-stdlib-changes))
+              (pcase-dolist (`(,kind (removed . ,removed) (added . ,added)) info)
+                (dolist (r removed)
+                  (push `(,kind removed ,ver) (gethash r tbl)))
+                (dolist (a added)
+                  (push `(,kind added ,ver) (gethash a tbl)))))
+            (maphash (lambda (key value)
+                       (let ((res (sort (nreverse value)
+                                        (lambda (a b)
+                                          (string< (symbol-name (car a)) (symbol-name (car b)))))))
+                         (puthash key res tbl-sorted)))
+                     tbl)
+            tbl-sorted))))
+
 (defun package-lint--check-symbol-make-message (symbol info)
   "Create message from INFO.
 INFO is added/removed info list of (KIND STATUS VER).
@@ -1192,9 +1202,11 @@ VER is list represents version."
 (defun package-lint-check-symbol (symbol)
   "Return SYMBOL is added/removed on what Emacs Version using package-lint database."
   (interactive
-   (list (completing-read "Symbol: " package-lint--check-symbol-hash-table-keys)))
+   (list (completing-read "Symbol: "
+                          (package-lint--hash-table-keys
+                           (package-lint--check-symbol-create-table)))))
   (let* ((sym-symbol (if (stringp symbol) (intern symbol) symbol))
-         (info (gethash sym-symbol package-lint--check-symbol-hash-table))
+         (info (gethash sym-symbol (package-lint--check-symbol-create-table)))
          (msg (package-lint--check-symbol-make-message sym-symbol info)))
     (if (called-interactively-p 'interactive)
         (message msg)
