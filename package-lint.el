@@ -165,10 +165,7 @@ published in ELPA for use by older Emacsen.")
       "A hash-table contains symbol and added/removed info.")
 
     (defconst package-lint--check-symbol-hash-table-keys
-      (let (keys)
-        (maphash (lambda (key _value) (push key keys))
-                 package-lint--check-symbol-hash-table)
-        (delete-dups keys))
+      (cl-loop for k being the hash-keys of package-lint--check-symbol-hash-table collect k)
       "A key list of `package-lint--check-symbol-hash-table'.")
 
     (defun package-lint--added-or-removed-function-p (sym)
