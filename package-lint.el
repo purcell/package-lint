@@ -1181,7 +1181,7 @@ see `hash-table-keys' was included in Emacs 24.4."
             tbl-sorted))))
 
 (defun package-lint--check-symbol-make-message (symbol info)
-  "Create message from INFO.
+  "Create message from INFO for SYMBOL.
 INFO is added/removed info list of (KIND STATUS VER).
 KIND is one of (functions variables features) as symbol.
 STATUS is one of (added removed) as symbol.
