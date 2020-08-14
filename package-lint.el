@@ -1182,7 +1182,7 @@ VER is list represents version."
   (mapconcat
    (lambda (elm)
      (pcase-let ((`(,kind ,status ,ver) elm))
-       (format "%s(%s) is %s at Emacs-%s"
+       (format "%s(%s) was %s in Emacs %s"
                symbol kind status
                (mapconcat #'number-to-string ver "."))))
    info
