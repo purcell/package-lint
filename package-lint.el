@@ -1193,9 +1193,9 @@ VER is list represents version."
   "Return SYMBOL is added/removed on what Emacs Version using package-lint database."
   (interactive
    (list (completing-read "Symbol: " package-lint--check-symbol-hash-table-keys)))
-  (let* ((symbol* (if (stringp symbol) (intern symbol) symbol))
-         (info (gethash symbol* package-lint--check-symbol-hash-table))
-         (msg (package-lint--check-symbol-make-message symbol info)))
+  (let* ((sym-symbol (if (stringp symbol) (intern symbol) symbol))
+         (info (gethash sym-symbol package-lint--check-symbol-hash-table))
+         (msg (package-lint--check-symbol-make-message sym-symbol info)))
     (if (called-interactively-p 'interactive)
         (message msg)
       info)))
