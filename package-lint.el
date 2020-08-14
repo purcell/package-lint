@@ -148,7 +148,7 @@ published in ELPA for use by older Emacsen.")
 
     (defconst package-lint--check-symbol-hash-table
       (let ((tbl (make-hash-table))
-            (tbl* (make-hash-table)))
+            (tbl-sorted (make-hash-table)))
         (pcase-dolist (`(,ver . ,info) stdlib-changes)
           (pcase-dolist (`(,kind (removed . ,removed) (added . ,added)) info)
             (dolist (r removed)
@@ -159,9 +159,9 @@ published in ELPA for use by older Emacsen.")
                    (let ((res (sort (nreverse value)
                                     (lambda (a b)
                                       (string< (symbol-name (car a)) (symbol-name (car b)))))))
-                     (puthash key res tbl*)))
+                     (puthash key res tbl-sorted)))
                  tbl)
-        tbl*)
+        tbl-sorted)
       "A hash-table contains symbol and added/removed info.")
 
     (defconst package-lint--check-symbol-hash-table-keys
