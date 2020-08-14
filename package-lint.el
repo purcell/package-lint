@@ -1159,7 +1159,7 @@ otherwise invalid read forms are ignored."
 see `hash-table-keys' was included in Emacs 24.4."
   (cl-loop for k being the hash-keys of hash-table collect k))
 
-(defun package-lint--check-symbol-create-table ()
+(defun package-lint--check-symbol-get-table ()
   "Return `package-lint--check-symbol-hash-table'."
   (if package-lint--check-symbol-hash-table
       package-lint--check-symbol-hash-table
@@ -1204,9 +1204,9 @@ VER is list represents version."
   (interactive
    (list (completing-read "Symbol: "
                           (package-lint--hash-table-keys
-                           (package-lint--check-symbol-create-table)))))
+                           (package-lint--check-symbol-get-table)))))
   (let* ((sym-symbol (if (stringp symbol) (intern symbol) symbol))
-         (info (gethash sym-symbol (package-lint--check-symbol-create-table)))
+         (info (gethash sym-symbol (package-lint--check-symbol-get-table)))
          (msg (package-lint--check-symbol-make-message sym-symbol info)))
     (if (called-interactively-p 'interactive)
         (message msg)
