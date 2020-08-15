@@ -34,6 +34,7 @@
     (mapatoms
      (lambda (f)
        (when (and (funcall pred f)
+                  (not (keywordp f))
                   (not (string-prefix-p "sym-dump-" (symbol-name f))))
          (push f result))))
     (sort result (lambda (a b) (string< (symbol-name a) (symbol-name b))))))
