@@ -98,59 +98,60 @@ This is bound dynamically while the checks run.")
 These are libraries that are built into newer Emacsen and also
 published in ELPA for use by older Emacsen.")
 
-(eval-and-compile
-  (defun package-lint--match-symbols (symbols)
-    "Return a predicate which take a symbol and reports whether it is among `SYMBOLS'."
-    (let ((tbl (make-hash-table)))
-      (dolist (s symbols)
-        (puthash s t tbl))
-      (lambda (v) (gethash v tbl))))
+(defconst package-lint-symbol-info
+  (let* ((stdlib-changes (with-temp-buffer
+                           (insert-file-contents
+                            (expand-file-name "data/stdlib-changes"
+                                              (if load-file-name
+                                                  (file-name-directory load-file-name)
+                                                default-directory)))
+                           (read (current-buffer))))
+         (info (make-hash-table)))
+    (cl-labels ((add-info (syms plist-entry)
+                          (dolist (sym syms)
+                            (puthash sym (cons plist-entry (gethash sym info)) info))))
+      (pcase-dolist (`(,version . ,info) stdlib-changes)
+        (let-alist info
+          (add-info .features.added (cons 'library-added version))
+          (add-info .features.removed (cons 'library-removed version))
+          (add-info .functions.added (cons 'function-added version))
+          (add-info .functions.removed (cons 'function-removed version)))))
+    info))
 
-  (let ((stdlib-changes (with-temp-buffer
-                          (insert-file-contents
-                           (expand-file-name "data/stdlib-changes"
-                                             (if load-file-name
-                                                 (file-name-directory load-file-name)
-                                               default-directory)))
-                          (read (current-buffer)))))
+(defun package-lint-symbol-info (sym)
+  "Retrieve information about SYM, as an alist of (action . emacs-ver)."
+  (gethash (cl-etypecase sym
+             (string (intern sym))
+             (symbol sym))
+           package-lint-symbol-info))
 
-    (defconst package-lint--libraries-added-alist
-      (mapcar (lambda (version-data)
-                (let ((version (car version-data))
-                      (added-libraries (let-alist (cdr version-data) .features.added)))
-                  (cons version (package-lint--match-symbols added-libraries))))
-              stdlib-changes)
-      "An alist of library names and when they were added to Emacs.")
+(defun package-lint--read-known-symbol (prompt)
+  "Read a symbol `package-lint-symbol-info' with PROMPT."
+  (let* ((at-point (symbol-at-point))
+         (s (completing-read
+             prompt
+             (cl-loop for k being the hash-keys of package-lint-symbol-info collect k)
+             nil
+             t
+             (when at-point (symbol-name at-point)))))
+    (when s (intern s))))
 
-    (defconst package-lint--libraries-removed-alist
-      (mapcar (lambda (version-data)
-                (let ((version (car version-data))
-                      (removed-libraries (let-alist (cdr version-data) .features.removed)))
-                  (cons version (package-lint--match-symbols removed-libraries))))
-              stdlib-changes)
-      "An alist of library names and when they were added to Emacs.")
+(defun package-lint-describe-symbol-history (sym)
+  "Show the version history of SYM, if any."
+  (interactive (list (package-lint--read-known-symbol "Show history of symbol: ")))
+  (message
+   (concat (format "History of %s:\n" sym)
+           (mapconcat (lambda (info)
+                        (pcase-let ((`(,action . ,version) info))
+                          (format "* %s in Emacs %s"
+                                  action (mapconcat 'number-to-string version "."))))
+                      (package-lint-symbol-info sym)
+                      "\n"))))
 
-    (defconst package-lint--functions-and-macros-added-alist
-      (mapcar (lambda (version-data)
-                (let ((version (car version-data))
-                      (added-functions (let-alist (cdr version-data) .functions.added)))
-                  (cons version (package-lint--match-symbols added-functions))))
-              stdlib-changes)
-      "An alist of function/macro names and when they were added to Emacs.")
-
-    (defconst package-lint--functions-and-macros-removed-alist
-      (mapcar (lambda (version-data)
-                (let ((version (car version-data))
-                      (removed-functions (let-alist (cdr version-data) .functions.removed)))
-                  (cons version (package-lint--match-symbols removed-functions))))
-              stdlib-changes)
-      "An alist of function/macro names and when they were removed from Emacs.")
-
-    (defun package-lint--added-or-removed-function-p (sym)
-      "Predicate that returns t if SYM is a function added/removed in any known emacs version."
-      (cl-some (lambda (x) (funcall (cdr x) sym))
-               (append package-lint--functions-and-macros-added-alist
-                       package-lint--functions-and-macros-removed-alist)))))
+(defun package-lint--added-or-removed-function-p (sym)
+  "Predicate that returns t if SYM is a function added/removed in any known emacs version."
+  (let-alist (package-lint-symbol-info sym)
+    (or .function-added .function-removed)))
 
 (defconst package-lint--sane-prefixes
   (rx
@@ -546,32 +547,33 @@ CALLBACK."
               (unless (package-lint--inside-comment-or-string-p)
                 (apply #'package-lint--error-at-point err)))))))))
 
-(defun package-lint--check-version-regexp-list (valid-deps list symbol-regexp type)
+(defun package-lint--check-version-regexp-list (valid-deps symbol-regexp type)
   "Warn if symbols matched by SYMBOL-REGEXP are unavailable in the target Emacs.
 The target Emacs version is taken from VALID-DEPS, which are the
-declared dependencies of this package.  LIST is an alist
-of (VERSION . PRED), where PRED is passed the sym.  TYPE is the
+declared dependencies of this package.  TYPE is the
 type of the symbol, either FUNCTION or FEATURE."
   (let ((emacs-version-dep (or (cadr (assq 'emacs valid-deps)) '(0))))
-    (pcase-dolist (`(,added-in-version . ,pred) list)
-      (when (version-list-< emacs-version-dep added-in-version)
-        (package-lint--map-regexp-match
-         symbol-regexp
-         (lambda (sym)
-           (when (funcall pred (intern sym))
+    (package-lint--map-regexp-match
+     symbol-regexp
+     (lambda (sym)
+       (let-alist (package-lint-symbol-info sym)
+         (let ((added-in-version (cl-ecase type
+                                   ('function .function-added)
+                                   ('feature .library-added))))
+           (when (and added-in-version (version-list-< emacs-version-dep added-in-version))
              (unless (and (eq type 'function) (package-lint--seen-fboundp-check-for sym))
                (let ((available-backport
-                      (cond
-                       ((eq type 'feature)
-                        (cl-some (lambda (bp)
-                                   (when (string= (car bp) sym)
-                                     (car bp)))
-                                 package-lint-backport-libraries))
-                       ((eq type 'function)
-                        (cl-some (lambda (bp)
-                                   (when (string-match-p (cdr bp) sym)
-                                     (car bp)))
-                                 package-lint-backport-libraries)))))
+                      (cl-ecase type
+                        ('feature
+                         (cl-some (lambda (bp)
+                                    (when (string= (car bp) sym)
+                                      (car bp)))
+                                  package-lint-backport-libraries))
+                        ('function
+                         (cl-some (lambda (bp)
+                                    (when (string-match-p (cdr bp) sym)
+                                      (car bp)))
+                                  package-lint-backport-libraries)))))
                  (unless (and available-backport (assoc available-backport valid-deps))
                    (list
                     'error
@@ -620,7 +622,6 @@ type of the symbol, either FUNCTION or FEATURE."
   "Warn about use of libraries that are not available in the Emacs version in VALID-DEPS."
   (package-lint--check-version-regexp-list
    valid-deps
-   package-lint--libraries-added-alist
    package-lint--unconditional-require-regexp
    'feature))
 
@@ -629,14 +630,13 @@ type of the symbol, either FUNCTION or FEATURE."
   (package-lint--map-regexp-match
    package-lint--unconditional-require-regexp
    (lambda (sym)
-     (cl-block return
-       (pcase-dolist (`(,removed-in-version . ,pred) package-lint--libraries-removed-alist)
-         (when (funcall pred (intern sym))
-           (cl-return-from return
-             (list
-              'error
-              (format "The `%s' library was removed in Emacs version %s."
-                      sym (mapconcat #'number-to-string removed-in-version "."))))))))))
+     (let-alist (package-lint-symbol-info sym)
+       (let ((removed-in-version .library-removed))
+         (when removed-in-version
+           (list
+            'error
+            (format "The `%s' library was removed in Emacs version %s."
+                    sym (mapconcat #'number-to-string removed-in-version ".")))))))))
 
 (defconst package-lint--function-name-regexp
   (rx
@@ -657,7 +657,6 @@ type of the symbol, either FUNCTION or FEATURE."
   "Warn about use of functions/macros that are not available in the Emacs version in VALID-DEPS."
   (package-lint--check-version-regexp-list
    valid-deps
-   package-lint--functions-and-macros-added-alist
    package-lint--function-name-regexp
    'function))
 
@@ -669,20 +668,15 @@ the Emacs dependency matches the re-addition."
   (package-lint--map-regexp-match
    package-lint--function-name-regexp
    (lambda (sym)
-     (cl-block return
-       (pcase-dolist (`(,removed-in-version . ,pred) package-lint--functions-and-macros-removed-alist)
-         (when (funcall pred (intern sym))
+     (let-alist (package-lint-symbol-info sym)
+       (let ((removed-in-version .function-removed))
+         (when removed-in-version
            (let ((emacs-version-dep (or (cadr (assq 'emacs valid-deps)) '(0))))
-             (unless (cl-some (lambda (dep)
-                                (pcase-let ((`(,ver . ,pred) dep))
-                                  (and (version-list-<= ver emacs-version-dep)
-                                       (funcall pred (intern sym)))))
-                              package-lint--functions-and-macros-added-alist)
-               (cl-return-from return
-                 (list
-                  'error
-                  (format "`%s' was removed in Emacs version %s."
-                          sym (mapconcat #'number-to-string removed-in-version "."))))))))))))
+             (unless (and .function-added (version-list-<= .function-added emacs-version-dep))
+               (list
+                'error
+                (format "`%s' was removed in Emacs version %s."
+                        sym (mapconcat #'number-to-string removed-in-version ".")))))))))))
 
 (defun package-lint--check-lexical-binding-is-on-first-line ()
   "Check that any `lexical-binding' declaration is on the first line of the file."
@@ -892,7 +886,7 @@ Valid definition names are:
   "Verify that symbol DEFINITIONS start with package PREFIX."
   (pcase-dolist (`(,name . ,position) definitions)
     (unless (package-lint--valid-definition-name-p name prefix position)
-      (if (package-lint--added-or-removed-function-p (intern name))
+      (if (package-lint--added-or-removed-function-p name)
           (package-lint--error-at-point
            'error
            (format "Define compatibility functions with a prefix, e.g. \"%s--%s\", and use `defalias' where they exist."
