@@ -68,7 +68,7 @@ Additional checks for future versions:
 License
 -------
 
-Please refer to the files LICENSE and COPYING.
+Please refer to the file `LICENSE`.
 
 Credits
 -------
