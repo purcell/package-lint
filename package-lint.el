@@ -136,6 +136,7 @@ published in ELPA for use by older Emacsen.")
              (when at-point (symbol-name at-point)))))
     (when s (intern s))))
 
+;;;###autoload
 (defun package-lint-describe-symbol-history (sym)
   "Show the version history of SYM, if any."
   (interactive (list (package-lint--read-known-symbol "Show history of symbol: ")))
