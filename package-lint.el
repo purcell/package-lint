@@ -112,6 +112,8 @@ published in ELPA for use by older Emacsen.")
                             (puthash sym (cons (cons action version) (gethash sym info)) info))))
       (pcase-dolist (`(,version . ,info) stdlib-changes)
         (let-alist info
+          (add-info .variables.added 'variable-added version)
+          (add-info .variables.removed 'variable-removed version)
           (add-info .features.added 'library-added version)
           (add-info .features.removed 'library-removed version)
           (add-info .functions.added 'function-added version)
