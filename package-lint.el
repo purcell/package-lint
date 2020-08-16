@@ -148,7 +148,8 @@ published in ELPA for use by older Emacsen.")
                         (pcase-let ((`(,action . ,version) info))
                           (format "* %s in Emacs %s"
                                   action (mapconcat 'number-to-string version "."))))
-                      (package-lint-symbol-info sym)
+                      (sort (package-lint-symbol-info sym)
+                            (lambda (a b) (version-list-<= (cdr a) (cdr b))))
                       "\n"))))
 
 (defun package-lint--added-or-removed-function-p (sym)
