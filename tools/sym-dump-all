@@ -41,3 +41,10 @@ EOF
 
 mkdir -p "$rootdir/data"
 $(emacs_bin 27.1) -Q -batch --load "$rootdir/tools/sym-diff.el" --eval "$diff_expr" > "$rootdir/data/stdlib-changes"
+cat <<EOF >> "$rootdir/data/stdlib-changes"
+
+;; Local Variables:
+;; no-byte-compile: t
+;; no-update-autoloads: t
+;; End:
+EOF
