@@ -118,10 +118,13 @@ published in ELPA for use by older Emacsen.")
                              (cons .functions.removed 'function-removed))))
         (dolist (sym syms)
           (puthash sym (cons (cons action version) (gethash sym info)) info))))
-    info))
+    info)
+  "A hash table from SYMBOL to a list of events in its history.
+Each event is of the form (ACTION . EMACS-VER), where ACTION is a
+symbol such as 'variable-added.")
 
 (defun package-lint-symbol-info (sym)
-  "Retrieve information about SYM, as an alist of (action . emacs-ver)."
+  "Retrieve information about SYM, as an alist of (ACTION . EMACS-VER)."
   (gethash (cl-etypecase sym
              (string (intern sym))
              (symbol sym))
