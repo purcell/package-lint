@@ -38,13 +38,14 @@ fi
 # versions have buggy imenu that reports (defvar foo) as a definition of foo.
 "$EMACS" -Q -batch \
          --eval "$INIT_PACKAGE_EL" \
-         -l package-lint.el \
+         -L . \
+         --eval "(require 'package-lint)" \
          -f package-lint-batch-and-exit \
          package-lint.el package-lint-test.el || [ -n "${EMACS_LINT_IGNORE+x}" ]
 # Finally, run the testsuite
 "$EMACS" -Q -batch \
          --eval "$INIT_PACKAGE_EL" \
-         -l package-lint.el \
+         -l package-lint.elc \
          -l package-lint-test.el \
          -f ert-run-tests-batch-and-exit
 
