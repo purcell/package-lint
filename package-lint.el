@@ -248,6 +248,8 @@ symbol such as 'variable-added.")
              #'package-lint--check-globalized-minor-mode)
             (package-lint--check-objects-by-regexp
              "(defgroup\\s-" #'package-lint--check-defgroup)
+            (package-lint--check-objects-by-regexp
+             "(defcustom\\s-" #'package-lint--check-defcustom)
 
             (package-lint--check-no-use-of-cl)
             (package-lint--check-no-use-of-cl-lib-sublibraries)
@@ -926,6 +928,8 @@ Valid definition names are:
            (format
             "Global minor modes should be autoloaded or, rarely, `:require' their defining file (i.e. \":require '%s\"), to support the customization variable of the same name." feature)))))))
 
+(defvar package-lint--defgroups nil "Keep track of defgroups to xref defcustoms.")
+
 (defun package-lint--check-defgroup (def)
   "Offer up concerns about the customization group definition DEF."
   (when (symbolp (cadr def))
@@ -940,7 +944,22 @@ Valid definition names are:
   (unless (memq :group def)
     (package-lint--error-at-point
      'error
-     "Customization groups should specify a parent via `:group'.")))
+     "Customization groups should specify a parent via `:group'."))
+  (push (cadr def) package-lint--defgroups))
+
+(defun package-lint--check-defcustom (def)
+  "If :group is same as namespace in defcustom DEF, then make sure it got defgroup'ed."
+  (let* ((cus-name (symbol-name (cadr def)))
+         (props (nthcdr 4 def))
+         (group-sym (eval (plist-get props :group)))
+         (prefix (package-lint--get-package-prefix)))
+    ;; if file "foo-baz.el" contains defcustoms for group "foo", withhold judgment.
+    (when (string= (symbol-name group-sym) prefix)
+      (unless (memq group-sym package-lint--defgroups)
+        (package-lint--error-at-point
+         'error
+         (format "Defcustom of `%s' lacks corresponding defgroup of `%s'."
+                 cus-name (symbol-name group-sym)))))))
 
 (defun package-lint--check-defalias (prefix def)
   "Offer up concerns about the customization group definition DEF.
