@@ -674,6 +674,14 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     (package-lint-test--run "(defvaralias 'foobar 'string-equal)")))
   (should
    (equal
+    '((6 0 error "Aliases should start with the package's prefix \"test\"."))
+    (package-lint-test--run "(define-obsolete-function-alias 'foobar 'string-equal)")))
+  (should
+   (equal
+    '((6 0 error "Aliases should start with the package's prefix \"test\"."))
+    (package-lint-test--run "(define-obsolete-variable-alias 'foobar 'string-equal)")))
+  (should
+   (equal
     '()
     (package-lint-test--run "(defalias 'test-foobar 'string-equal)")))
   (should

@@ -238,7 +238,10 @@ symbol such as 'variable-added.")
             (package-lint--check-reserved-keybindings)
             (when prefix
               (package-lint--check-objects-by-regexp
-               (concat "(" (regexp-opt '("defalias" "defvaralias")) "\\s-")
+               (concat "(" (regexp-opt '("defalias" "defvaralias"
+                                         "define-obsolete-function-alias"
+                                         "define-obsolete-variable-alias"))
+                       "\\s-")
                (apply-partially #'package-lint--check-defalias prefix)))
             (package-lint--check-objects-by-regexp
              "(define-minor-mode\\s-"
