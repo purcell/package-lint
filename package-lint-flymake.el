@@ -70,8 +70,6 @@ Use `package-lint-setup-flymake' to add this to
     (add-hook 'flymake-diagnostic-functions #'package-lint-flymake nil t)
     (flymake-mode)))
 
-;;;###autoload
-(define-obsolete-function-alias 'package-lint-setup-flymake 'package-lint-flymake-setup)
 
 (provide 'package-lint-flymake)
 
