@@ -29,10 +29,10 @@
 ;; checking.  This library adds support for flymake to `package-lint'.
 ;; It requires Emacs 26.
 
-;; Enable it by calling `package-lint-setup-flymake' from a
+;; Enable it by calling `package-lint-flymake-setup' from a
 ;; file-visiting buffer.  To enable in all `emacs-lisp-mode' buffers:
 ;;
-;; (add-hook 'emacs-lisp-mode-hook #'package-lint-setup-flymake)
+;; (add-hook 'emacs-lisp-mode-hook #'package-lint-flymake-setup)
 
 ;;; Code:
 
@@ -46,7 +46,7 @@
 
 (defun package-lint-flymake (report-fn &rest _args)
   "A Flymake backend for `package-lint'.
-Use `package-lint-setup-flymake' to add this to
+Use `package-lint-flymake-setup' to add this to
 `flymake-diagnostic-functions'.  Calls REPORT-FN directly."
   (let ((collection (package-lint-buffer)))
     (cl-loop for (line col type message) in
