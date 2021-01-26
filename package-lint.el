@@ -93,6 +93,7 @@ This is bound dynamically while the checks run.")
         (cons 'jsonrpc "\\`jsonrpc-")
         (cons 'map "\\`map-")
         (cons 'nadvice "\\`advice-")
+        (cons 'org "\\`org-link-")
         (cons 'seq "\\`seq-")
         (cons 'let-alist "\\`let-alist"))
   "A sequence of (FEATURE . SYMBOL-NAME-MATCH) for backport libraries.
