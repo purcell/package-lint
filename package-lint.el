@@ -87,18 +87,23 @@ The path can be absolute or relative to that of the linted file.")
 This is bound dynamically while the checks run.")
 
 (defconst package-lint-backport-libraries
-  (list (cons 'cl-lib "\\`cl-")
-        (cons 'cl-generic "\\`cl-\\(?:def\\)?generic")
-        (cons 'cl-print "\\`cl-print")
-        (cons 'jsonrpc "\\`jsonrpc-")
-        (cons 'map "\\`map-")
-        (cons 'nadvice "\\`advice-")
-        (cons 'org "\\`org-link-")
-        (cons 'seq "\\`seq-")
-        (cons 'let-alist "\\`let-alist"))
-  "A sequence of (FEATURE . SYMBOL-NAME-MATCH) for backport libraries.
+  (list (list 'cl-lib "\\`cl-")
+        (list 'cl-generic "\\`cl-\\(?:def\\)?generic")
+        (list 'cl-print "\\`cl-print")
+        (list 'jsonrpc "\\`jsonrpc-")
+        (list 'map "\\`map-")
+        (list 'nadvice "\\`advice-")
+        (list 'ol "\\`org-link-" 'org "9.3")
+        (list 'seq "\\`seq-")
+        (list 'let-alist "\\`let-alist"))
+  "A sequence of (FEATURE SYMBOL-NAME-MATCH) for backport libraries.
 These are libraries that are built into newer Emacsen and also
-published in ELPA for use by older Emacsen.")
+published in ELPA for use by older Emacsen.
+
+Alternatively, items can take a form of (FEATURE
+SYMBOL-NAME-MATCH PACKAGE VERSION?) where PACKAGE is the name of
+a backport library shipping the feature and VERSION is an
+optional minimum version containing the feature.")
 
 (defconst package-lint-symbol-info
   (let* ((stdlib-changes (with-temp-buffer
@@ -571,25 +576,39 @@ type of the symbol, either FUNCTION or FEATURE."
                                    ('feature .library-added))))
            (when (and added-in-version (version-list-< emacs-version-dep added-in-version))
              (unless (and (eq type 'function) (package-lint--seen-fboundp-check-for sym))
-               (let ((available-backport
-                      (cl-ecase type
-                        ('feature
-                         (cl-some (lambda (bp)
-                                    (when (string= (car bp) sym)
-                                      (car bp)))
-                                  package-lint-backport-libraries))
-                        ('function
-                         (cl-some (lambda (bp)
-                                    (when (string-match-p (cdr bp) sym)
-                                      (car bp)))
-                                  package-lint-backport-libraries)))))
-                 (unless (and available-backport (assoc available-backport valid-deps))
+               (let* ((available-backport-with-ver
+                       (cl-ecase type
+                         ('feature
+                          (cl-some (lambda (bp)
+                                     (when (string= (car bp) sym)
+                                       (or (cddr bp)
+                                           (list (car bp)))))
+                                   package-lint-backport-libraries))
+                         ('function
+                          (cl-some (lambda (bp)
+                                     (when (string-match-p (nth 1 bp) sym)
+                                       (or (cddr bp)
+                                           (list (car bp)))))
+                                   package-lint-backport-libraries))))
+                      (available-backport (car available-backport-with-ver))
+                      (required-backport-version (cadr available-backport-with-ver))
+                      (matching-dep (when available-backport
+                                      (assoc available-backport valid-deps))))
+                 (unless (and matching-dep
+                              (or (not required-backport-version)
+                                  (version-list-<= (version-to-list required-backport-version)
+                                                   (cadr matching-dep))))
                    (list
                     'error
                     (format "You should depend on (emacs \"%s\")%s if you need `%s'."
                             (mapconcat #'number-to-string added-in-version ".")
                             (if available-backport
-                                (format " or the %s package" available-backport)
+                                (format " or the %s package"
+                                        (if required-backport-version
+                                            (format "(%s \"%s\")"
+                                                    available-backport
+                                                    required-backport-version)
+                                          available-backport))
                               "")
                             sym))))))))))))
 

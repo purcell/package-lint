@@ -532,6 +532,16 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((6 10 error "You should depend on (emacs \"25.1\") or the seq package if you need `seq'."))
     (package-lint-test--run "(require 'seq)"))))
 
+(ert-deftest package-lint-test-error-new-backported-sub-libraries ()
+  (should
+   (equal
+    '((6 10 error "You should depend on (emacs \"27.1\") or the (org \"9.3\") package if you need `ol'."))
+    (package-lint-test--run "(require 'ol)")))
+  (should
+   (equal
+    '((7 10 error "You should depend on (emacs \"27.1\") or the (org \"9.3\") package if you need `ol'."))
+    (package-lint-test--run ";; Package-Requires: ((org \"9.2\"))\n(require 'ol)"))))
+
 (ert-deftest package-lint-test-accept-new-backported-libraries-with-emacs-dep ()
   (should (equal '() (package-lint-test--run
                       ";; Package-Requires: ((emacs \"25.1\"))\n(require 'seq)"))))
@@ -539,6 +549,14 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-accept-new-backported-libraries-with-backport-dep ()
   (should (equal '() (package-lint-test--run
                       ";; Package-Requires: ((seq \"1\"))\n(require 'seq)"))))
+
+(ert-deftest package-lint-test-accept-new-backported-sub-libraries-with-emacs-dep ()
+  (should (equal '() (package-lint-test--run
+                      ";; Package-Requires: ((emacs \"27.1\"))\n(require 'ol)"))))
+
+(ert-deftest package-lint-test-accept-new-backported-sub-libraries-with-backport-dep ()
+  (should (equal '() (package-lint-test--run
+                      ";; Package-Requires: ((org \"9.3\"))\n(require 'ol)"))))
 
 (ert-deftest package-lint-test-accept-new-libraries-with-optional-require ()
   (should (equal '() (package-lint-test--run "(require 'nadvice nil t)"))))
