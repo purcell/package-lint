@@ -1126,7 +1126,7 @@ The returned list is of the form (SYMBOL-NAME . POSITION)."
       (pcase entry
         ((and `(,submenu-name . ,submenu-elements)
               (guard (consp submenu-elements)))
-         (when (member submenu-name '("Variables" "Defuns"))
+         (when (member submenu-name '("Variables" "Defuns" "Types"))
            (setq result (nconc (reverse submenu-elements) result))))
         (_
          (push entry result))))

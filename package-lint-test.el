@@ -448,9 +448,15 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should
    (equal
     '((6 0 error "`test-thing/bar' contains a non-standard separator `/', use hyphens instead (see Elisp Coding Conventions).")
-      (7 0 error "`test-thing:bar' contains a non-standard separator `:', use hyphens instead (see Elisp Coding Conventions)."))
+      (7 0 error "`test-thing:bar' contains a non-standard separator `:', use hyphens instead (see Elisp Coding Conventions).")
+      (8 0 error "`test-thing:face' contains a non-standard separator `:', use hyphens instead (see Elisp Coding Conventions).")
+      (9 0 error "`test-thing/face' contains a non-standard separator `/', use hyphens instead (see Elisp Coding Conventions)."))
     (package-lint-test--run
-     "(defun test-thing/bar () t)\n(defun test-thing:bar () nil)")))
+     "\
+(defun test-thing/bar () t)
+(defun test-thing:bar () nil)
+(defface test-thing:face '((default)))
+(defface test-thing/face '((default)))")))
   ;; But accept /= when at the end.
   (should (equal '() (package-lint-test--run "(defun test-/= (a b) t)"))))
 
