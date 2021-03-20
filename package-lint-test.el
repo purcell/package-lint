@@ -464,11 +464,21 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should
    (equal
     '((6 0 error "\"foo\" doesn't start with package's prefix \"test\"."))
+    (package-lint-test--run "(defvar foo 'hello)")))
+  (should
+   (equal
+    '((6 0 error "\"foo\" doesn't start with package's prefix \"test\"."))
     (package-lint-test--run "(defun foo ())")))
   (should
    (equal
     '((6 0 error "\"global-testfoo-mode\" doesn't start with package's prefix \"test\"."))
     (package-lint-test--run "(define-globalized-minor-mode global-testfoo-mode ignore ignore :require 'test)"))))
+
+(ert-deftest package-lint-test-accept-forward-var-declaration ()
+  (should
+   (equal
+    nil
+    (package-lint-test--run "(defvar foo)"))))
 
 (ert-deftest package-lint-test-accept-prefixed-definitions ()
   (should (equal '() (package-lint-test--run
