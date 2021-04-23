@@ -28,6 +28,7 @@
 ;;; Code:
 (require 'package-lint)
 (require 'ert)
+(require 'cl-lib)
 
 (defun package-lint-test-add-package-lint-foobar-to-archive (version &optional archive)
   "Add a package-lint-foobar package to ARCHIVE.
@@ -40,7 +41,7 @@ VERSION is a list of numbers, e.g., (0 5 0) to represent version
                                       (:url . "https://gitlab.com/somewhere"))])
    (or archive "melpa-stable")))
 
-(defun package-lint-test--run (contents &optional header version footer provide commentary url featurename)
+(cl-defun package-lint-test--run (contents &key header version footer provide commentary url featurename)
   "Run `package-lint-buffer' on a temporary buffer with given CONTENTS.
 
 HEADER, VERSION, FOOTER, PROVIDE, COMMENTARY, and URL can be
@@ -163,35 +164,33 @@ headers and provide form."
   (should
    (equal
     '((1 0 error "Package should have a Homepage or URL header."))
-    (package-lint-test--run "" nil nil nil nil nil "")))
+    (package-lint-test--run "" :url "")))
   (should
    (equal
     '((3 8 error "Package URLs should be a single HTTPS or HTTP URL."))
-    (package-lint-test--run "" nil nil nil nil nil ";; URL: not a URL\n")))
+    (package-lint-test--run "" :url ";; URL: not a URL\n")))
   (should
    (equal
     '((3 8 error "Package URLs should be a single HTTPS or HTTP URL."))
-    (package-lint-test--run "" nil nil nil nil nil
-                            ";; URL: git://test/test.git\n"))))
+    (package-lint-test--run "" :url ";; URL: git://test/test.git\n"))))
 
 (ert-deftest package-lint-test-accept-homepage ()
-  (should (equal '() (package-lint-test--run "" nil nil nil nil nil
-                                             ";; Homepage: https://package-lint.test/foo\n"))))
+  (should (equal '() (package-lint-test--run "" :url ";; Homepage: https://package-lint.test/foo\n"))))
 
 (ert-deftest package-lint-test-warn-invalid-version ()
   (should
    (member
     '(2 20 warning "\"invalid\" is not a valid version. MELPA will handle this, but other archives will not.")
-    (package-lint-test--run "" nil ";; Package-Version: invalid\n"))))
+    (package-lint-test--run "" :version ";; Package-Version: invalid\n"))))
 
 (ert-deftest package-lint-test-warn-no-version ()
   (should
    (member
     '(1 0 warning "\"Version:\" or \"Package-Version:\" header is missing. MELPA will handle this, but other archives will not.")
-    (package-lint-test--run ";; Package-Requires: ((example \"0\"))" nil ""))))
+    (package-lint-test--run ";; Package-Requires: ((example \"0\"))" :version ""))))
 
 (ert-deftest package-lint-test-accept-valid-version ()
-  (should (equal '() (package-lint-test--run "" nil ";; Package-Version: 1.2.3-cvs\n"))))
+  (should (equal '() (package-lint-test--run "" :version ";; Package-Version: 1.2.3-cvs\n"))))
 
 (ert-deftest package-lint-test-error-lexical-binding-not-at-end ()
   (should
@@ -208,7 +207,7 @@ headers and provide form."
     '((1 27 warning "You should depend on (emacs \"24.1\") if you need lexical-binding."))
     (package-lint-test--run
      ""
-     ";;; test.el --- A test -*- lexical-binding: t -*-\n"))))
+     :header ";;; test.el --- A test -*- lexical-binding: t -*-\n"))))
 
 (ert-deftest package-lint-test-accept-lexical-binding-with-emacs-24-dep ()
   (should
@@ -216,13 +215,13 @@ headers and provide form."
     '()
     (package-lint-test--run
      ";; Package-Requires: ((emacs \"24\"))"
-     ";;; test.el --- A test -*- lexical-binding: t -*-\n"))))
+     :header ";;; test.el --- A test -*- lexical-binding: t -*-\n"))))
 
 (ert-deftest package-lint-test-warn-empty-summary ()
   (should
    (equal
     '((1 0 error "Package should have a non-empty summary."))
-    (package-lint-test--run "" ";;; test.el ---\n"))))
+    (package-lint-test--run "" :header ";;; test.el ---\n"))))
 
 (ert-deftest package-lint-test-warn-too-long-summary ()
   (should
@@ -231,7 +230,7 @@ headers and provide form."
       (1 0 warning "The package summary should start with an uppercase letter or a digit."))
     (package-lint-test--run
      ""
-     ";;; test.el --- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"))))
+     :header ";;; test.el --- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"))))
 
 (ert-deftest package-lint-test-warn-summary-end-with-period ()
   (should
@@ -239,19 +238,19 @@ headers and provide form."
     '((1 0 warning "The package summary should not end with a period."))
     (package-lint-test--run
      ""
-     ";;; test.el --- A test.\n"))))
+     :header ";;; test.el --- A test.\n"))))
 
 (ert-deftest package-lint-test-warn-emacs-in-summary ()
   (should
    (equal
     '((1 0 warning "Including \"Emacs\" in the package summary is usually redundant."))
-    (package-lint-test--run "" ";;; test.el --- A package for Emacs\n"))))
+    (package-lint-test--run "" :header ";;; test.el --- A package for Emacs\n"))))
 
 (ert-deftest package-lint-test-accept-emacs-lisp-in-summary ()
-  (should (equal '() (package-lint-test--run "" ";;; test.el --- Emacs Lisp test framework\n"))))
+  (should (equal '() (package-lint-test--run "" :header ";;; test.el --- Emacs Lisp test framework\n"))))
 
 (ert-deftest package-lint-test-accept-.emacs-in-summary ()
-  (should (equal '() (package-lint-test--run "" ";;; test.el --- Something for .emacs\n"))))
+  (should (equal '() (package-lint-test--run "" :header ";;; test.el --- Something for .emacs\n"))))
 
 (ert-deftest package-lint-test-error-invalid-dependency ()
   (should
@@ -600,35 +599,35 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should
    (member
     '(1 0 error "package.el cannot parse this buffer: Search failed: \";;; test.el ends here\"")
-    (package-lint-test--run "" nil nil "\n\n;;; Test.el ends here\n"))))
+    (package-lint-test--run "" :footer "\n\n;;; Test.el ends here\n"))))
 
 (ert-deftest package-lint-test-error-missing-provide-form ()
   (should
    (equal
     '((1 0 error "There is no (provide 'test) form."))
-    (package-lint-test--run "" nil nil nil ""))))
+    (package-lint-test--run "" :provide ""))))
 
 (ert-deftest package-lint-test-error-mismatched-provide-form ()
   (should
    (equal
     '((1 0 error "There is no (provide 'test) form."))
-    (package-lint-test--run "" nil nil nil "(provide 'blargh)"))))
+    (package-lint-test--run "" :provide "(provide 'blargh)"))))
 
 (ert-deftest package-lint-test-accept-provide-me ()
   (should
-   (equal '() (package-lint-test--run "" nil nil nil "(provide-me)"))))
+   (equal '() (package-lint-test--run "" :provide "(provide-me)"))))
 
 (ert-deftest package-lint-test-error-no-commentary ()
   (should
    (equal
     '((1 0 error "Package should have a ;;; Commentary section."))
-    (package-lint-test--run "" nil nil nil nil "\n"))))
+    (package-lint-test--run "" :commentary "\n"))))
 
 (ert-deftest package-lint-test-error-empty-commentary ()
   (should
    (equal
     '((4 0 error "Package should have a non-empty ;;; Commentary section."))
-    (package-lint-test--run "" nil nil nil nil ";;; Commentary:\n ;;   \n \n\n;;; Code:\n"))))
+    (package-lint-test--run "" :commentary ";;; Commentary:\n ;;   \n \n\n;;; Code:\n"))))
 
 (ert-deftest package-lint-test-accept-unprefixed-defadvice ()
   (should (equal '() (package-lint-test--run "(defadvice foo (before ignore))")))
@@ -748,7 +747,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should
    (equal
     '((1 0 warning "The word \"emacs\" is redundant in Emacs package names."))
-    (package-lint-test--run "" nil nil nil nil nil nil "emacs-package"))))
+    (package-lint-test--run "" :featurename "emacs-package"))))
 
 (ert-deftest package-lint-test-warn-about-lonely-parens ()
   (should
@@ -778,13 +777,13 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should
    (equal
     '()
-    (package-lint-test--run "(defun org-foobar-test ()) (provide 'ox-foobar)" nil nil nil "ox-foobar" nil nil "ox-foobar"))))
+    (package-lint-test--run "(defun org-foobar-test ()) (provide 'ox-foobar)" :provide "ox-foobar" :featurename "ox-foobar"))))
 
 (ert-deftest package-lint-test-error-invalid-prefix-mappings ()
   (should
    (equal
     '((6 0 error "\"org-foobaz-test\" doesn't start with package's prefix \"ox-foobar\"."))
-    (package-lint-test--run "(defun org-foobaz-test ()) (provide 'ox-foobar)" nil nil nil "ox-foobar" nil nil "ox-foobar"))))
+    (package-lint-test--run "(defun org-foobaz-test ()) (provide 'ox-foobar)" :provide "ox-foobar" :featurename "ox-foobar"))))
 
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
