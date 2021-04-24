@@ -785,5 +785,17 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((6 0 error "\"org-foobaz-test\" doesn't start with package's prefix \"ox-foobar\"."))
     (package-lint-test--run "(defun org-foobaz-test ()) (provide 'ox-foobar)" :provide "ox-foobar" :featurename "ox-foobar"))))
 
+(ert-deftest package-lint-test-accept-provide-theme ()
+  (should
+   (equal
+    '()
+    (package-lint-test--run "(provide-theme 'foo)" :provide "" :featurename "foo-theme"))))
+
+(ert-deftest package-lint-test-reject-mismatched-provide-theme ()
+  (should
+   (equal
+    '((1 0 error "There is no (provide 'foo-theme) or (provide-theme 'foo) form."))
+    (package-lint-test--run "(provide-theme 'bar)" :provide "" :featurename "foo-theme"))))
+
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here

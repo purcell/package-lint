@@ -837,12 +837,14 @@ DESC is a struct as returned by `package-buffer-info'."
 (defun package-lint--check-provide-form (desc)
   "Check the provide form for package with descriptor DESC.
 DESC is a struct as returned by `package-buffer-info'."
-  (let ((name (package-lint--package-desc-name desc))
+  (let ((name (symbol-name (package-lint--package-desc-name desc)))
         (feature (package-lint--provided-feature)))
-    (unless (string-equal (symbol-name name) feature)
+    (unless (string-equal name feature)
       (package-lint--error-at-bob
        'error
-       (format "There is no (provide '%s) form." name)))))
+       (if (string-match-p "-theme\\'" name)
+           (format "There is no (provide '%s) or (provide-theme '%s) form." name (replace-regexp-in-string "-theme\\'" "" name))
+         (format "There is no (provide '%s) form." name))))))
 
 (defun package-lint--check-provide-form-secondary-file ()
   "Check there is a provide form."
@@ -1143,6 +1145,8 @@ The returned list is of the form (SYMBOL-NAME . POSITION)."
     (goto-char (point-max))
     (cond ((re-search-backward (rx "(provide '" (group (1+ (or (syntax word) (syntax symbol))))) nil t)
            (match-string-no-properties 1))
+          ((re-search-backward (rx "(provide-theme '" (group (1+ (or (syntax word) (syntax symbol))))) nil t)
+           (concat (match-string-no-properties 1) "-theme"))
           ((re-search-backward "(provide-me)" nil t)
            (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
 
