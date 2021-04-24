@@ -794,7 +794,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-reject-mismatched-provide-theme ()
   (should
    (equal
-    '((1 0 error "There is no (provide 'foo-theme) or (provide-theme 'foo) form."))
+    '((1 0 error "There is no (provide-theme 'foo) form."))
     (package-lint-test--run "(provide-theme 'bar)" :provide "" :featurename "foo-theme"))))
 
 (provide 'package-lint-test)
