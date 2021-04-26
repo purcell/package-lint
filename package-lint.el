@@ -1,6 +1,7 @@
 ;;; package-lint.el --- A linting library for elisp package authors -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2014-2020  Steve Purcell, Fanael Linithien
+;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;; Author: Steve Purcell <steve@sanityinc.com>
 ;;         Fanael Linithien <fanael4@gmail.com>
@@ -78,6 +79,14 @@ The path can be absolute or relative to that of the linted file.")
           (list (nth 0 x) (version-to-list (nth 1 x))))
         (nth 1 requirements))
        docstring))))
+
+(defun package-lint--string-join (strings separator)
+  ;; Comes with Emacs 24.4.
+  (with-temp-buffer
+    (when strings
+      (insert (car strings))
+      (dolist (string (cdr strings)) (insert separator string)))
+    (buffer-string)))
 
 
 ;;; Machinery
@@ -212,6 +221,7 @@ symbol such as 'variable-added.")
                   (setq deps (package-lint--check-dependency-list))
 
                   (package-lint--check-url-header)
+                  (package-lint--check-license-headers)
                   (package-lint--check-package-version-present)
                   (package-lint--check-commentary-existence))
               ;; Need to look at the main file to find prefix and dependencies
@@ -388,6 +398,45 @@ Instead it should use `user-emacs-directory' or `locate-user-emacs-file'."
     (package-lint--error-at-bob
      'error
      "Package should have a Homepage or URL header.")))
+
+(defconst package-lint--recommended-spdx-license-ids
+  '("BSD-2-Clause"
+    "BSD-3-Clause"
+    "GPL-2.0-or-later"
+    "GPL-3.0-or-later"
+    "ISC"
+    "LGPL-2.1-or-later"
+    "LGPL-3.0-or-later"
+    "MIT"
+    "Zlib"))
+
+(defun package-lint--check-license-headers ()
+  "Verify that the package has an SPDX or License header."
+  (let (license spdx)
+    (when (package-lint--goto-header "License")
+      (setq license (match-string-no-properties 3)))
+    (when (package-lint--goto-header "SPDX-License-Identifier")
+      (setq spdx (match-string-no-properties 3)))
+    (unless spdx
+      (package-lint--error-at-point
+       'warning
+       "Please add a SPDX-License-Identifier header."))
+    (when (and license spdx (not (equal license spdx)))
+      (package-lint--error-at-point
+       'warning
+       (concat
+        "When both License and SPDX-License-Identifier headers"
+        " are present, they should have the same value.")))
+    (let ((license (or license spdx)))
+      (when (and license
+                 (not (member license
+                              package-lint--recommended-spdx-license-ids)))
+        (package-lint--error-at-point
+         'warning
+         (format "License %s is not one of the recommended ones: %s"
+                 license
+                 (package-lint--string-join
+                  package-lint--recommended-spdx-license-ids ", ")))))))
 
 (defun package-lint--check-dependency-list ()
   "Check the contents of the \"Package-Requires\" header.
