@@ -89,6 +89,37 @@ The path can be absolute or relative to that of the linted file.")
     (buffer-string)))
 
 
+;;; Utilities
+
+(defun package-lint--region-paragraphs (start end)
+  "Return the paragraphs between START and END as string lists.
+
+Runs of whitespace in each paragraph are normalized to one space each."
+  (save-match-data
+    (save-excursion
+      (save-restriction
+        (let* ((whitespace "[ \t\r\n]")
+               (whitespace* (concat whitespace "*"))
+               (whitespace+ (concat whitespace "+"))
+               (para-break (concat "\n" whitespace* "\n" whitespace*))
+               (paragraphs '()))
+          (narrow-to-region start end)
+          (goto-char (point-min))
+          (while (not (eobp))
+            (when (looking-at whitespace+)
+              (goto-char (match-end 0)))
+            (let* ((pstart (point))
+                   (pend (or (and (re-search-forward para-break nil t)
+                                  (match-beginning 0))
+                             (point-max)))
+                   (para (replace-regexp-in-string
+                          whitespace+ " "
+                          (string-trim
+                           (buffer-substring-no-properties pstart pend)))))
+              (push para paragraphs)))
+          (reverse paragraphs))))))
+
+
 ;;; Machinery
 
 (defvar package-lint--errors nil
@@ -410,6 +441,64 @@ Instead it should use `user-emacs-directory' or `locate-user-emacs-file'."
     "MIT"
     "Zlib"))
 
+(defun package-lint--license-boilerplate-paragraphs ()
+  (let ((before-commentary (lm-section-start "Commentary")))
+    (goto-char before-commentary)
+    (forward-line -1)
+    (while (not (looking-at (concat lm-header-prefix "[^ \t]+:")))
+      (forward-line -1))
+    (forward-line 1)
+    (let* ((after-last-header (point))
+           (string (buffer-substring-no-properties
+                    after-last-header
+                    before-commentary)))
+      (with-temp-buffer
+        (emacs-lisp-mode)
+        (insert string)
+        (uncomment-region (point-min) (point-max))
+        (package-lint--region-paragraphs (point-min) (point-max))))))
+
+(defun package-lint--valid-gpl-boilerplate-p (license-version lesser-p)
+  (let* ((license (if lesser-p "GNU Lesser General Public License"
+                    "GNU General Public License"))
+         (wanted-paras
+          (list
+           ;; "This file is not part of GNU Emacs."
+           (concat
+            "This program is free software; you can redistribute it and/or"
+            " modify it under the terms of the " license " as published by"
+            " the Free Software Foundation, either version " license-version
+            " of the License, or (at your option) any later version.")
+           (concat
+            "This program is distributed in the hope that it will be useful,"
+            " but WITHOUT ANY WARRANTY; without even the implied warranty of"
+            " MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
+            " See the " license " for more details.")
+           (concat
+            "You should have received a copy of the " license
+            " along with this program."
+            " If not, see <http://www.gnu.org/licenses/>.")))
+         (found-paras (package-lint--license-boilerplate-paragraphs)))
+    (message "found %S" found-paras)
+    (let ((mismatch nil))
+      (dotimes (i (length wanted-paras))
+        (let ((wanted (elt wanted-paras i))
+              (found  (and (< i (length found-paras)) (elt found-paras i))))
+          (unless (equal wanted found)
+            (setq mismatch (or mismatch wanted)))))
+      mismatch)))
+
+(defun package-lint--valid-boilerplate-p (spdx)
+  (cond ((equal spdx "GPL-2.0-or-later")
+         (package-lint--valid-gpl-boilerplate-p "2" nil))
+        ((equal spdx "GPL-3.0-or-later")
+         (package-lint--valid-gpl-boilerplate-p "3" nil))
+        ((equal spdx "LGPL-2.1-or-later")
+         (package-lint--valid-gpl-boilerplate-p "2.1" t))
+        ((equal spdx "LGPL-3.0-or-later")
+         (package-lint--valid-gpl-boilerplate-p "3.0" t))
+        (t nil)))
+
 (defun package-lint--check-license-headers ()
   "Verify that the package has an SPDX or License header."
   (let (license spdx)
@@ -436,7 +525,13 @@ Instead it should use `user-emacs-directory' or `locate-user-emacs-file'."
          (format "License %s is not one of the recommended ones: %s"
                  license
                  (package-lint--string-join
-                  package-lint--recommended-spdx-license-ids ", ")))))))
+                  package-lint--recommended-spdx-license-ids ", ")))))
+    (let ((mismatch (package-lint--valid-boilerplate-p spdx)))
+      (when mismatch
+        (package-lint--error-at-point
+         'warning
+         (format "License boilerplate for %s does not match the standard one: %s"
+                 spdx mismatch))))))
 
 (defun package-lint--check-dependency-list ()
   "Check the contents of the \"Package-Requires\" header.
