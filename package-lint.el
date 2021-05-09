@@ -1281,8 +1281,7 @@ whether or not warnings alone produce a non-zero exit code."
             (widen)
             (goto-char (point-min))
             (re-search-forward
-             (concat lm-header-prefix
-                     (rx (or "Version" "Package-Version" "Package-Requires")))
+             (lm-get-header-re (rx (or "Version" "Package-Version" "Package-Requires")))
              nil t))))))
 
 (provide 'package-lint)

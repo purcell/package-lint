@@ -589,6 +589,10 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
    (with-temp-buffer
      (insert ";; Version: 0\n")
      (package-lint-looks-like-a-package-p)))
+  (should-not
+   (with-temp-buffer
+     (insert ";; Version Control: 0\n")
+     (package-lint-looks-like-a-package-p)))
   (should-not (with-temp-buffer (package-lint-looks-like-a-package-p)))
   (should-not
    (with-temp-buffer
