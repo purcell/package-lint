@@ -42,6 +42,7 @@
 (require 'imenu)
 (require 'let-alist)
 (require 'rx)
+(require 'regexp-opt)
 
 
 (defvar package-lint-main-file nil
@@ -1282,7 +1283,7 @@ whether or not warnings alone produce a non-zero exit code."
             (goto-char (point-min))
             (re-search-forward
              (concat lm-header-prefix
-                     (rx (or "Version" "Package-Version" "Package-Requires")))
+                     (regexp-opt '("Version:" "Package-Version:" "Package-Requires:")))
              nil t))))))
 
 (provide 'package-lint)
