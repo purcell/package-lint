@@ -180,8 +180,9 @@ symbol such as 'variable-added.")
   "A regexp matching whitelisted non-standard symbol prefixes.")
 
 (defvar package-lint--allowed-prefix-mappings
-  '(("ox-" . ("org-"))
-    ("ob-" . ("org-")))
+  '(("ob-" . ("org-"))
+    ("ol-" . ("org-"))
+    ("ox-" . ("org-")))
   "Alist containing mappings of package prefixes to symbol prefixes.")
 
 (defun package-lint--main-file-p ()
