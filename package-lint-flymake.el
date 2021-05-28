@@ -48,18 +48,19 @@
   "A Flymake backend for `package-lint'.
 Use `package-lint-flymake-setup' to add this to
 `flymake-diagnostic-functions'.  Calls REPORT-FN directly."
-  (let ((collection (package-lint-buffer)))
-    (cl-loop for (line col type message) in
-             collection
-             for (beg . end) = (flymake-diag-region (current-buffer) line col)
-             collect
-             (flymake-make-diagnostic
-              (current-buffer)
-              beg end
-              (if (eq type 'warning) :warning :error)
-              message)
-             into diags
-             finally (funcall report-fn diags))))
+  (when (package-lint-looks-like-a-package-p)
+    (let ((collection (package-lint-buffer)))
+      (cl-loop for (line col type message) in
+               collection
+               for (beg . end) = (flymake-diag-region (current-buffer) line col)
+               collect
+               (flymake-make-diagnostic
+                (current-buffer)
+                beg end
+                (if (eq type 'warning) :warning :error)
+                message)
+               into diags
+               finally (funcall report-fn diags)))))
 
 ;;;###autoload
 (defun package-lint-flymake-setup ()
