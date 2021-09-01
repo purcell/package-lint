@@ -1223,6 +1223,67 @@ Current buffer is used if none is specified."
       (view-mode 1))
     (display-buffer buf)))
 
+(defcustom package-lint-package-exclude-subdirectories
+  (list "^\\..*$")
+  "Subdirectories not to search for lint-able files.
+Each element is a regular expression."
+  :group 'package-lint
+  :type '(repeat (regexp)))
+
+
+;;;###autoload
+(defun package-lint-package (path)
+  "Display lint errors and warnings for all files of a package.
+Prompts for PATH, which if a directory means all *.el files in
+that tree, and if a file means all files in that tree with that
+file's base-name as prefix. Default is the path of the current
+buffer, if an elisp file. Symbolic links to sub-directories are
+not followed. See also variable
+`package-lint-package-exclude-subdirectories'."
+  (interactive "fEnter path to main file: ")
+  (let* ((excludes
+           (lambda (x)
+             (let ((array package-lint-package-exclude-subdirectories)
+                   found elem)
+               (while (and (setq elem (pop array))
+                           (not (setq found (string-match elem x)))))
+               (not found))))
+         (dir   (if (file-directory-p path)
+                  (file-name-as-directory path)
+                 (file-name-directory path)))
+         (regex (format "^%s.*\\.el$"
+                        (if (file-directory-p path)
+                          ""
+                         (concat (file-name-base path) "-"))))
+         (files (directory-files-recursively dir regex nil excludes))
+         (buf "*Package-Lint*")
+         errs)
+    (unless (file-directory-p path)
+      (push path files))
+    (unless (car files)
+      (user-error "No matching files found for regexp \"%s\" in directory %s" regex dir))
+    (with-current-buffer (get-buffer-create buf)
+      (let ((buffer-read-only nil))
+        (erase-buffer)
+        (insert "Linting files matching regexp \"" regex "\" in directory " dir)
+        (dolist (file files)
+          (with-temp-buffer
+            (emacs-lisp-mode)
+            (insert-file-contents file)
+            (setq errs (package-lint-buffer)))
+          (insert
+            "\n\n" file "\n"
+            (cond
+             ((null errs) "No issues found.")
+             ((null (cdr errs)) "1 issue found:\n\n")
+             (t (format "%d issues found:\n\n" (length errs)))))
+          (pcase-dolist (`(,line ,col ,type ,message) errs)
+            (insert (format "%d:%d: %s: %s\n" line col type message)))))
+      (special-mode)
+      (view-mode 1))
+    (display-buffer buf)))
+
+
 (defgroup package-lint nil
   "A linting library for elisp package authors"
   :group 'development)
