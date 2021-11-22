@@ -1059,7 +1059,7 @@ PREFIX is the package prefix."
 Lines consisting only of whitespace or empty comments are considered empty."
   (save-excursion
     (save-restriction
-      (let ((inhibit-changing-match-data t))
+      (save-match-data
         (narrow-to-region start end)
         (goto-char start)
         (while (and (looking-at "^[[:space:]]*;*[[:space:]]*$")
