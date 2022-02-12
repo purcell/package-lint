@@ -163,7 +163,7 @@ symbol such as 'variable-added.")
                       "\n"))))
 
 (defun package-lint--added-or-removed-function-p (sym)
-  "Predicate that returns t if SYM is a function added/removed in any known emacs version."
+  "Return t if SYM is a function added/removed in any known Emacs version."
   (let-alist (package-lint-symbol-info sym)
     (or .function-added .function-removed)))
 
@@ -298,11 +298,11 @@ POS defaults to `point'."
     (package-lint--error (line-number-at-pos) (- (point) (line-beginning-position)) type message)))
 
 (defun package-lint--error-at-bol (type message)
-  "Construct a datum for error at the beginning of the current line with TYPE and MESSAGE."
+  "Construct an error at the beginning of the current line with TYPE and MESSAGE."
   (package-lint--error (line-number-at-pos) 0 type message))
 
 (defun package-lint--error-at-bob (type message)
-  "Construct a datum for error at the beginning of the buffer with TYPE and MESSAGE."
+  "Construct an error at the beginning of the buffer with TYPE and MESSAGE."
   (package-lint--error 1 0 type message))
 
 
@@ -648,7 +648,8 @@ type of the symbol, either FUNCTION or FEATURE."
   "Regexp to match unconditional `require' forms.")
 
 (defun package-lint--check-libraries-available-in-emacs (valid-deps)
-  "Warn about use of libraries that are not available in the Emacs version in VALID-DEPS."
+  "Warn about use of libraries that are not available.
+The check is performed against the Emacs version in VALID-DEPS."
   (package-lint--check-version-regexp-list
    valid-deps
    package-lint--unconditional-require-regexp
@@ -683,7 +684,8 @@ type of the symbol, either FUNCTION or FEATURE."
   "Regexp to match function names.")
 
 (defun package-lint--check-macros-functions-available-in-emacs (valid-deps)
-  "Warn about use of functions/macros that are not available in the Emacs version in VALID-DEPS."
+  "Warn about use of unavailable functions/macros that are not available.
+The check is performed against the Emacs version in VALID-DEPS."
   (package-lint--check-version-regexp-list
    valid-deps
    package-lint--function-name-regexp
@@ -750,7 +752,8 @@ the Emacs dependency matches the re-addition."
              "`lexical-binding' must be set in the first line.")))))))
 
 (defun package-lint--check-cl-lib-version (valid-deps)
-  "Check that any dependency in VALID-DEPS on \"cl-lib\" is on a remotely-installable version."
+  "Check depenendencies in VALID-DEPS on \"cl-lib\".
+The specified versions must be remotely available for installation."
   (let ((emacs-version-dep (or (nth 1 (assq 'emacs valid-deps)) '(0)))
         (cl-lib-dep (assq 'cl-lib valid-deps)))
     (when cl-lib-dep
@@ -1224,7 +1227,7 @@ Current buffer is used if none is specified."
     (display-buffer buf)))
 
 (defgroup package-lint nil
-  "A linting library for elisp package authors"
+  "A linting library for elisp package authors."
   :group 'development)
 
 (defcustom package-lint-batch-fail-on-warnings t
