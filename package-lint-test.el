@@ -6,7 +6,7 @@
 ;;         Fanael Linithien <fanael4@gmail.com>
 ;; URL: https://github.com/purcell/package-lint
 ;; Version: 0
-;; Package-Requires: ((emacs "24.1"))
+;; Package-Requires: ((emacs "24.1") (cl-lib "0.6"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -456,8 +456,9 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (defun test-thing:bar () nil)
 (defface test-thing:face '((default)))
 (defface test-thing/face '((default)))")))
-  ;; But accept /= when at the end.
-  (should (equal '() (package-lint-test--run "(defun test-/= (a b) t)"))))
+  ;; But accept /= or / when at the end.
+  (should (equal '() (package-lint-test--run "(defun test-/= (a b) t)")))
+  (should (equal '() (package-lint-test--run "(defun test-/ (a b) t)"))))
 
 (ert-deftest package-lint-test-error-unprefixed-definitions ()
   (should

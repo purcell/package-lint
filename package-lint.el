@@ -876,8 +876,8 @@ DESC is a struct as returned by `package-buffer-info'."
     (when (and (string-match "[:/]" name)
                (not (string-match-p package-lint--sane-prefixes name)))
       (let ((match-pos (match-beginning 0)))
-        ;; As a special case, allow `/=' when at the end of a symbol.
-        (when (or (not (string-match (rx "/=" string-end) name))
+        ;; As a special case, allow `/=' or `/' when at the end of a symbol.
+        (when (or (not (string-match (rx "/" (optional "=") string-end) name))
                   (/= match-pos (match-beginning 0)))
           (goto-char position)
           (package-lint--error
