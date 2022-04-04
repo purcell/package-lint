@@ -12,7 +12,7 @@ function emacs_bin () {
 
 symbol_dump_dir="$rootdir/.symbol-dumps"
 mkdir -p "$symbol_dump_dir"
-for v in 23.4 24.1 24.2 24.3 24.4 24.5 25.1 25.2 25.3 26.1 26.2 26.3 27.1 27.2; do
+for v in 23.4 24.1 24.2 24.3 24.4 24.5 25.1 25.2 25.3 26.1 26.2 26.3 27.1 27.2 28.1; do
     echo "Dumping $v"
     $(emacs_bin $v) -Q --script "$rootdir/tools/sym-dump.el" > "$symbol_dump_dir/$v";
 done
@@ -36,6 +36,7 @@ diff_expr=$(cat - <<EOF
      ((26 3) . ,(sym-diff-dumps "26.2" "26.3"))
      ((27 1) . ,(sym-diff-dumps "26.3" "27.1"))
      ((27 2) . ,(sym-diff-dumps "27.1" "27.2"))
+     ((28 1) . ,(sym-diff-dumps "27.2" "28.1"))
      )))
 EOF
 )
