@@ -29,6 +29,9 @@
 
 ;;; Code:
 
+(defun sym-dump-sort-symbols (syms)
+  (sort syms (lambda (a b) (string< (symbol-name a) (symbol-name b)))))
+
 (defun sym-dump-filter-atoms (pred)
   (let (result)
     (mapatoms
@@ -37,7 +40,7 @@
                   (not (keywordp f))
                   (not (string-prefix-p "sym-dump-" (symbol-name f))))
          (push f result))))
-    (sort result (lambda (a b) (string< (symbol-name a) (symbol-name b))))))
+    (sym-dump-sort-symbols result)))
 
 (defun sym-dump-defined-functions ()
   (sym-dump-filter-atoms 'fboundp))
@@ -58,7 +61,7 @@
             ;; Additionally, loading secrets and tramp-gvfs causes a hard exit if no dbus support
             (unless (memq lib '(blessmail edt-mapper dunnet secrets tramp-gvfs gnus-registry))
               (push lib libs))))))
-    libs))
+    (sym-dump-sort-symbols libs)))
 
 (defun sym-dump-loaded ()
   `((variables . ,(sym-dump-defined-vars))
