@@ -95,6 +95,7 @@ This is bound dynamically while the checks run.")
         (list 'nadvice "\\`advice-")
         (list 'ol "\\`org-link-" 'org "9.3")
         (list 'seq "\\`seq-")
+        (list 'transient "\\`seq-")
         (list 'let-alist "\\`let-alist"))
   "A sequence of (FEATURE SYMBOL-NAME-MATCH) for backport libraries.
 These are libraries that are built into newer Emacsen and also
