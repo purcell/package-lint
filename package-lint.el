@@ -183,6 +183,7 @@ symbol such as 'variable-added.")
 
 (defvar package-lint--allowed-prefix-mappings
   '(("ob-" . ("org-"))
+    ("oc-" . ("org-"))
     ("ol-" . ("org-"))
     ("ox-" . ("org-")))
   "Alist containing mappings of package prefixes to symbol prefixes.")
