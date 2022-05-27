@@ -133,7 +133,7 @@ optional minimum version containing the feature.")
     info)
   "A hash table from SYMBOL to a list of events in its history.
 Each event is of the form (ACTION . EMACS-VER), where ACTION is a
-symbol such as =variable-added.")
+symbol such as `variable-added'.")
 
 (defun package-lint-symbol-info (sym)
   "Retrieve information about SYM, as an alist of (ACTION . EMACS-VER)."
@@ -1215,7 +1215,7 @@ Returns a list, each element of which is list of
 
    (LINE COL TYPE MESSAGE)
 
-where TYPE is either =warning or =error.
+where TYPE is either `warning' or `error'.
 
 Current buffer is used if none is specified."
   (with-current-buffer (or buffer (current-buffer))
