@@ -86,6 +86,9 @@ The path can be absolute or relative to that of the linted file.")
   "List of errors and warnings for the current buffer.
 This is bound dynamically while the checks run.")
 
+(defconst package-lint-emacs-head-version '(29)
+  "Version of Emacs HEAD.")
+
 (defconst package-lint-backport-libraries
   (list (list 'cl-lib "\\`cl-")
         (list 'cl-generic "\\`cl-\\(?:def\\)?generic")
@@ -481,7 +484,7 @@ required version PACKAGE-VERSION.  If not, raise an error for DEP-POS."
          'error
          "You can only depend on Emacs version 24 or greater: package.el for Emacs 23 does not support the \"emacs\" pseudopackage."
          dep-pos))
-       ((version-list-<= '(28) package-version)
+       ((version-list-<= package-lint-emacs-head-version package-version)
         (package-lint--error-at-point
          'warning
          "This makes the package uninstallable in all released Emacs versions."
