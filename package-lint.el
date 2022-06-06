@@ -430,20 +430,30 @@ the form (PACKAGE-NAME PACKAGE-VERSION DEP-POSITION)."
   (let (valid-deps)
     (dolist (entry parsed-deps)
       (pcase entry
-        ((and `(,package-name ,package-version)
-              (guard (symbolp package-name))
-              (guard (stringp package-version)))
+        ((or (and `(,package-name ,package-version)
+                  (guard (symbolp package-name))
+                  (guard (stringp package-version)))
+             (and `(,package-name)
+                  (guard (symbolp package-name)))
+             (and package-name
+                  (guard (symbolp package-name))))
          ;; Find the column at which the dependency is declared so we can
          ;; properly report the position of errors.
          (let ((dep-pos
                 (save-excursion
                   (goto-char position)
-                  (let ((pattern
-                         (format "( *\\(%s\\)\\(?:)\\|[^[:alnum:]_\\-].*?)\\)"
-                                 (regexp-quote (symbol-name package-name)))))
-                    (if (re-search-forward pattern (line-end-position) t)
+                  (let* ((symbol-pattern
+                          (format "\\(%s\\)"
+                                  (regexp-quote (symbol-name package-name))))
+                         (list-pattern
+                          (format "( *%s\\(?:[^[:alnum:]_\\-].*?\\)?)"
+                                  symbol-pattern)))
+                    (if (or (re-search-forward list-pattern (line-end-position) t)
+                            (re-search-forward symbol-pattern (line-end-position) t))
                         (match-beginning 1)
                       position)))))
+           (if (null package-version)
+               (setq package-version "0"))
            (if (ignore-errors (version-to-list package-version))
                (push (list package-name
                            (version-to-list package-version)

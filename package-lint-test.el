@@ -255,10 +255,6 @@ headers and provide form."
 (ert-deftest package-lint-test-error-invalid-dependency ()
   (should
    (member
-    '(6 0 error "Expected (package-name \"version-num\"), but found invalid.")
-    (package-lint-test--run ";; Package-Requires: (invalid)")))
-  (should
-   (member
     '(6 23 error "\"invalid\" is not a valid version string: see `version-to-list'.")
     (package-lint-test--run ";; Package-Requires: ((package-lint \"invalid\"))"))))
 
@@ -291,6 +287,14 @@ headers and provide form."
     (package-lint-test--run ";; Package-Requires: ((package-lint \"20160101.1234\"))"))))
 
 (ert-deftest package-lint-test-warn-unversioned-dep ()
+  (should
+   (member
+    '(6 22 warning "Use a properly versioned dependency on \"package-lint\" if possible.")
+    (package-lint-test--run ";; Package-Requires: (package-lint)")))
+  (should
+   (member
+    '(6 23 warning "Use a properly versioned dependency on \"package-lint\" if possible.")
+    (package-lint-test--run ";; Package-Requires: ((package-lint))")))
   (should
    (equal
     '((6 23 warning "Use a properly versioned dependency on \"package-lint\" if possible."))
