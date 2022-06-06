@@ -452,8 +452,8 @@ the form (PACKAGE-NAME PACKAGE-VERSION DEP-POSITION)."
                             (re-search-forward symbol-pattern (line-end-position) t))
                         (match-beginning 1)
                       position)))))
-           (if (null package-version)
-               (setq package-version "0"))
+           (unless package-version
+             (setq package-version "0"))
            (if (ignore-errors (version-to-list package-version))
                (push (list package-name
                            (version-to-list package-version)
