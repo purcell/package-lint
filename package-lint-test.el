@@ -281,6 +281,9 @@ headers and provide form."
     '((6 23 error "Package example-nonexistent-package is not installable."))
     (package-lint-test--run ";; Package-Requires: ((example-nonexistent-package \"1\"))"))))
 
+(ert-deftest package-lint-test-accept-builtin-dep ()
+  (should (equal '() (package-lint-test--run ";; Package-Requires: ((ediff \"2.0.0\"))"))))
+
 (ert-deftest package-lint-test-warn-snapshot-dep ()
   (should
    (equal

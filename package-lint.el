@@ -511,7 +511,10 @@ required version PACKAGE-VERSION.  If not, raise an error for DEP-POS."
   "Check that all VALID-DEPS are available for installation."
   (pcase-dolist (`(,package-name ,package-version ,dep-pos) valid-deps)
     (unless (eq 'emacs package-name)
-      (let ((archive-entry (assq package-name package-archive-contents)))
+      (let ((archive-entry
+             (if (package-built-in-p package-name)
+                 (cons package-name (package--from-builtin (assq package-name package--builtins)))
+               (assq package-name (append package-alist package-archive-contents)))))
         (if archive-entry
             (package-lint--check-package-installable archive-entry package-version dep-pos)
           (package-lint--error-at-point
@@ -1123,7 +1126,9 @@ Lines consisting only of whitespace or empty comments are considered empty."
 
 (defun package-lint--highest-installable-version-of (package)
   "Return the highest version of PACKAGE available for installation."
-  (let ((descriptors (cdr (assq package package-archive-contents))))
+  (let ((descriptors (if (package-built-in-p package)
+                         (list (package--from-builtin (assq package package--builtins)))
+                       (cdr (assq package (append package-alist package-archive-contents))))))
     (if (fboundp 'package-desc-version)
         (car (sort (mapcar 'package-desc-version descriptors)
                    (lambda (v1 v2) (not (version-list-< v1 v2)))))
