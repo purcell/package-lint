@@ -588,20 +588,20 @@ type of the symbol, either FUNCTION or FEATURE."
      symbol-regexp
      (lambda (sym)
        (let-alist (package-lint-symbol-info sym)
-         (let ((added-in-version (cl-ecase type
-                                   ('function .function-added)
-                                   ('feature .library-added))))
+         (let ((added-in-version (pcase type
+                                   (`function .function-added)
+                                   (`feature .library-added))))
            (when (and added-in-version (version-list-< emacs-version-dep added-in-version))
              (unless (and (eq type 'function) (package-lint--seen-fboundp-check-for sym))
                (let* ((available-backport-with-ver
-                       (cl-ecase type
-                         ('feature
+                       (pcase type
+                         (`feature
                           (cl-some (lambda (bp)
                                      (when (string= (car bp) sym)
                                        (or (cddr bp)
                                            (list (car bp)))))
                                    package-lint-backport-libraries))
-                         ('function
+                         (`function
                           (cl-some (lambda (bp)
                                      (when (string-match-p (nth 1 bp) sym)
                                        (or (cddr bp)
