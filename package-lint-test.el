@@ -490,6 +490,9 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
   (should (equal '() (package-lint-test--run
                       "(define-globalized-minor-mode global-test-mode ignore ignore :require 'test)")))
   (should (equal '() (package-lint-test--run
+                      "(define-globalized-minor-mode global-test-mode ignore ignore :require 'test-mode)"
+                      :featurename 'test-mode)))
+  (should (equal '() (package-lint-test--run
                       "(define-globalized-minor-mode global-test-foo-mode ignore ignore :require 'test)"))))
 
 (ert-deftest package-lint-test-accept-sane-prefixed-definitions ()
