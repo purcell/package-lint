@@ -726,6 +726,20 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '()
     (package-lint-test--run "(defvaralias 'test-foobar 'string-equal)"))))
 
+(ert-deftest package-lint-test-no-error-for-obsolete-alias-name ()
+  (should
+   (equal
+    '()
+    (package-lint-test--run "(define-obsolete-function-alias 'foobar 'string-equal)")))
+  (should
+   (equal
+    '()
+    (package-lint-test--run "(define-obsolete-variable-alias 'foobar 'string-equal)")))
+  (should
+   (equal
+    '()
+    (package-lint-test--run "(define-obsolete-face-alias 'foobar 'string-equal)"))))
+
 (ert-deftest package-lint-test-error-format-string ()
   (should
    (equal
