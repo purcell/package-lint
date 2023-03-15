@@ -181,7 +181,10 @@ symbol such as `variable-added'.")
     "org-babel-prep-session:"
     "org-babel-variable-assignments:"
     "org-babel-default-header-args:"
-    "pcomplete/"))
+    "pcomplete/"
+    "use-package-normalize/"
+    "use-package-handler/"
+    "use-package-autoloads/"))
   "A regexp matching whitelisted non-standard symbol prefixes.")
 
 (defvar package-lint--allowed-prefix-mappings
