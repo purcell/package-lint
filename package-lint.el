@@ -934,7 +934,7 @@ Valid definition names are:
       (when position
         (goto-char position)
         (looking-at-p (rx (*? space) "(" (*? space)
-                          (or "defadvice" "cl-defmethod" "define-advice")
+                          (or "defadvice" "cl-defmethod" "define-advice" "defalias" "defvaralias" (seq "define-obsolete-" (or "face" "function" "variable") "-alias"))
                           symbol-end)))))
 
 (defun package-lint--check-defs-prefix (prefix definitions)
