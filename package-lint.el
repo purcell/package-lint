@@ -581,22 +581,25 @@ CALLBACK."
               (unless (package-lint--inside-comment-or-string-p)
                 (apply #'package-lint--error-at-point err)))))))))
 
+(defun package-lint--quick-up-list ()
+  (if (eq ?\( (char-before))
+      (backward-char 1)
+    (backward-up-list)))
+
 (defun package-lint--is-a-let-binding ()
   "Return non-nil if point is on a symbol being introduced by a let binding."
-  (condition-case _
-      (save-excursion
-        (save-match-data
-          (backward-up-list)
-          (backward-up-list)
-          (down-list)
-          (let ((binding-pat (rx symbol-start (or "let" "let*" "cl-let") symbol-end)))
-            (or (looking-at binding-pat)
-                (progn
-                  (backward-up-list)
-                  (backward-up-list)
-                  (down-list)
-                  (looking-at binding-pat))))))
-    (scan-error nil)))
+  (let ((binding-pat (rx "(" (or "let" "let*" "cl-let") symbol-end)))
+    (condition-case _
+        (save-excursion
+          (save-match-data
+            (let ((was-first (eq ?\( (char-before))))
+              (package-lint--quick-up-list)
+              (package-lint--quick-up-list)
+              (or (looking-at binding-pat)
+                  (when was-first
+                    (package-lint--quick-up-list)
+                    (looking-at binding-pat))))))
+      (scan-error nil))))
 
 (defun package-lint--check-version-regexp-list (valid-deps symbol-regexp type)
   "Warn if symbols matched by SYMBOL-REGEXP are unavailable in the target Emacs.
@@ -612,44 +615,44 @@ type of the symbol, either FUNCTION or FEATURE."
                                    (`function .function-added)
                                    (`feature .library-added))))
            (when (and added-in-version (version-list-< emacs-version-dep added-in-version))
-             (unless (and (eq type 'function)
-                          (or (package-lint--seen-fboundp-check-for sym)
-                              (package-lint--is-a-let-binding)))
-               (let* ((available-backport-with-ver
-                       (pcase type
-                         (`feature
-                          (cl-some (lambda (bp)
-                                     (when (string= (car bp) sym)
-                                       (or (cddr bp)
-                                           (list (car bp)))))
-                                   package-lint-backport-libraries))
-                         (`function
-                          (cl-some (lambda (bp)
-                                     (when (string-match-p (nth 1 bp) sym)
-                                       (or (cddr bp)
-                                           (list (car bp)))))
-                                   package-lint-backport-libraries))))
-                      (available-backport (car available-backport-with-ver))
-                      (required-backport-version (cadr available-backport-with-ver))
-                      (matching-dep (when available-backport
-                                      (assoc available-backport valid-deps))))
-                 (unless (and matching-dep
-                              (or (not required-backport-version)
-                                  (version-list-<= (version-to-list required-backport-version)
-                                                   (cadr matching-dep))))
-                   (list
-                    'error
-                    (format "You should depend on (emacs \"%s\")%s if you need `%s'."
-                            (mapconcat #'number-to-string added-in-version ".")
-                            (if available-backport
-                                (format " or the %s package"
-                                        (if required-backport-version
-                                            (format "(%s \"%s\")"
-                                                    available-backport
-                                                    required-backport-version)
-                                          available-backport))
-                              "")
-                            sym))))))))))))
+             (let* ((available-backport-with-ver
+                     (pcase type
+                       (`feature
+                        (cl-some (lambda (bp)
+                                   (when (string= (car bp) sym)
+                                     (or (cddr bp)
+                                         (list (car bp)))))
+                                 package-lint-backport-libraries))
+                       (`function
+                        (cl-some (lambda (bp)
+                                   (when (string-match-p (nth 1 bp) sym)
+                                     (or (cddr bp)
+                                         (list (car bp)))))
+                                 package-lint-backport-libraries))))
+                    (available-backport (car available-backport-with-ver))
+                    (required-backport-version (cadr available-backport-with-ver))
+                    (matching-dep (when available-backport
+                                    (assoc available-backport valid-deps))))
+               (unless (or (and matching-dep
+                                (or (not required-backport-version)
+                                    (version-list-<= (version-to-list required-backport-version)
+                                                     (cadr matching-dep))))
+                           (and (eq type 'function)
+                                (or (package-lint--seen-fboundp-check-for sym)
+                                    (package-lint--is-a-let-binding))))
+                 (list
+                  'error
+                  (format "You should depend on (emacs \"%s\")%s if you need `%s'."
+                          (mapconcat #'number-to-string added-in-version ".")
+                          (if available-backport
+                              (format " or the %s package"
+                                      (if required-backport-version
+                                          (format "(%s \"%s\")"
+                                                  available-backport
+                                                  required-backport-version)
+                                        available-backport))
+                            "")
+                          sym)))))))))))
 
 (defun package-lint--check-eval-after-load ()
   "Warn about use of `eval-after-load' and co."

@@ -829,5 +829,33 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '((1 0 error "There is no (provide-theme 'foo) form."))
     (package-lint-test--run "(provide-theme 'bar)" :provide "" :featurename "foo-theme"))))
 
+(defmacro package-lint-test--bufsim (contents &rest body)
+  `(with-temp-buffer
+     (insert ,contents)
+     (setq-local delay-mode-hooks t)
+     (emacs-lisp-mode)
+     (search-backward-regexp "|")
+     (delete-char 1)
+     ,@body))
+
+(ert-deftest package-lint-test--let-binding-detection ()
+  (should
+   (package-lint-test--bufsim
+    "(let (|foo) blah)"
+    (package-lint--is-a-let-binding)))
+  (should
+   (package-lint-test--bufsim
+    "(let (bar |foo) blah)"
+    (package-lint--is-a-let-binding)))
+  (should
+   (package-lint-test--bufsim
+    "(let ((|foo bar)) blah)"
+    (package-lint--is-a-let-binding)))
+  (should-not
+   (package-lint-test--bufsim
+    "(let ((bar |foo)) blah)"
+    (package-lint--is-a-let-binding))))
+
+
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
