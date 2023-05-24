@@ -832,7 +832,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (defmacro package-lint-test--bufsim (contents &rest body)
   `(with-temp-buffer
      (insert ,contents)
-     (setq-local delay-mode-hooks t)
+     (set (make-local-variable 'delay-mode-hooks) t)
      (emacs-lisp-mode)
      (search-backward-regexp "|")
      (delete-char 1)
