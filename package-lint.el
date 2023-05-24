@@ -581,6 +581,23 @@ CALLBACK."
               (unless (package-lint--inside-comment-or-string-p)
                 (apply #'package-lint--error-at-point err)))))))))
 
+(defun package-lint--is-a-let-binding ()
+  "Return non-nil if point is on a symbol being introduced by a let binding."
+  (condition-case _
+      (save-excursion
+        (save-match-data
+          (backward-up-list)
+          (backward-up-list)
+          (down-list)
+          (let ((binding-pat (rx symbol-start (or "let" "let*" "cl-let") symbol-end)))
+            (or (looking-at binding-pat)
+                (progn
+                  (backward-up-list)
+                  (backward-up-list)
+                  (down-list)
+                  (looking-at binding-pat))))))
+    (scan-error nil)))
+
 (defun package-lint--check-version-regexp-list (valid-deps symbol-regexp type)
   "Warn if symbols matched by SYMBOL-REGEXP are unavailable in the target Emacs.
 The target Emacs version is taken from VALID-DEPS, which are the
@@ -595,7 +612,9 @@ type of the symbol, either FUNCTION or FEATURE."
                                    (`function .function-added)
                                    (`feature .library-added))))
            (when (and added-in-version (version-list-< emacs-version-dep added-in-version))
-             (unless (and (eq type 'function) (package-lint--seen-fboundp-check-for sym))
+             (unless (and (eq type 'function)
+                          (or (package-lint--seen-fboundp-check-for sym)
+                              (package-lint--is-a-let-binding)))
                (let* ((available-backport-with-ver
                        (pcase type
                          (`feature
