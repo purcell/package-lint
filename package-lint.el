@@ -834,7 +834,14 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
       (insert-buffer-substring-no-properties orig-buffer)
       (goto-char (point-min))
       (package-lint--update-or-insert-version "0")
-      (package-buffer-info))))
+      (let ((info (package-buffer-info)))
+        ;; Pedantically check for the footer comment
+        ;; In Emacs 29 this became a soft failure, but for packages to
+        ;; be installable with the package.el in older Emacsen, the
+        ;; footer comment must be there nonetheless.
+        (goto-char (point-min))
+        (search-forward (format ";;; %s.el ends here" (package-desc-name info)))
+        info))))
 
 (defun package-lint--check-package-el-can-parse ()
   "Check that `package-buffer-info' can read metadata from this file.
