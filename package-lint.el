@@ -840,7 +840,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
         ;; be installable with the package.el in older Emacsen, the
         ;; footer comment must be there nonetheless.
         (goto-char (point-min))
-        (search-forward (format ";;; %s.el ends here" (package-desc-name info)))
+        (search-forward (format ";;; %s.el ends here" (package-lint--package-desc-name info)))
         info))))
 
 (defun package-lint--check-package-el-can-parse ()
