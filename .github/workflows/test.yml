@@ -10,6 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
         emacs_version:
@@ -28,8 +29,11 @@ jobs:
           - 27.2
           - 28.1
           - 28.2
-          - snapshot
+          - release-snapshot
+        experimental: [false]
         include:
+          - emacs-version: snapshot
+            experimental: true
           - emacs_version: 24.1
             lint_ignore: 1
           - emacs_version: 24.2
