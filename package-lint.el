@@ -389,6 +389,10 @@ Instead it should use `user-emacs-directory' or `locate-user-emacs-file'."
   (if (package-lint--goto-header "\\(?:URL\\|Homepage\\)")
       (let ((url (match-string 3))
             (url-start (match-beginning 3)))
+        (when (string-match-p "^<.*>$" url)
+          (setq url (substring url 1 -1)
+                url-start (1+ url-start))
+          (backward-char 1))
         (unless (and (equal (thing-at-point 'url) url)
                      (string-match-p "^https?://" url))
           (package-lint--error-at-point

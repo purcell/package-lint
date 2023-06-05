@@ -175,7 +175,8 @@ headers and provide form."
     (package-lint-test--run "" :url ";; URL: git://test/test.git\n"))))
 
 (ert-deftest package-lint-test-accept-homepage ()
-  (should (equal '() (package-lint-test--run "" :url ";; Homepage: https://package-lint.test/foo\n"))))
+  (should (equal '() (package-lint-test--run "" :url ";; Homepage: https://package-lint.test/foo\n")))
+  (should (equal '() (package-lint-test--run "" :url ";; Homepage: <https://package-lint.test/foo>\n"))))
 
 (ert-deftest package-lint-test-warn-invalid-version ()
   (should
