@@ -797,7 +797,7 @@ the Emacs dependency matches the re-addition."
              "`lexical-binding' must be set in the first line.")))))))
 
 (defun package-lint--check-cl-lib-version (valid-deps)
-  "Check depenendencies in VALID-DEPS on \"cl-lib\".
+  "Check dependencies in VALID-DEPS on \"cl-lib\".
 The specified versions must be remotely available for installation."
   (let ((emacs-version-dep (or (nth 1 (assq 'emacs valid-deps)) '(0)))
         (cl-lib-dep (assq 'cl-lib valid-deps)))
