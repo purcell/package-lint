@@ -29,6 +29,7 @@ jobs:
           - 27.2
           - 28.1
           - 28.2
+          - 29.1
           - release-snapshot
         experimental: [false]
         include:
