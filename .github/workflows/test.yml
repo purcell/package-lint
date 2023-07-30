@@ -33,7 +33,7 @@ jobs:
           - release-snapshot
         experimental: [false]
         include:
-          - emacs-version: snapshot
+          - emacs_version: snapshot
             experimental: true
           - emacs_version: 24.1
             lint_ignore: 1
