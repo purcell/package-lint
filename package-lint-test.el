@@ -269,7 +269,7 @@ headers and provide form."
   (should
    (equal
     '((6 23 warning "This makes the package uninstallable in all released Emacs versions."))
-    (package-lint-test--run ";; Package-Requires: ((emacs \"29\"))"))))
+    (package-lint-test--run ";; Package-Requires: ((emacs \"30\"))"))))
 
 (ert-deftest package-lint-test-accept-emacs-24+-dep ()
   (should (equal '() (package-lint-test--run ";; Package-Requires: ((emacs \"24\"))")))
