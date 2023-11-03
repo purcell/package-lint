@@ -2,7 +2,7 @@
 
 EMACS="${EMACS:=emacs}"
 
-NEEDED_PACKAGES="cl-lib let-alist"
+NEEDED_PACKAGES="cl-lib let-alist compat"
 
 INIT_PACKAGE_EL="(progn \
   (require 'package) \

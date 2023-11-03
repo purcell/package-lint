@@ -282,10 +282,12 @@ headers and provide form."
     (package-lint-test--run ";; Package-Requires: ((example-nonexistent-package \"1\"))"))))
 
 (ert-deftest package-lint-test-warn-snapshot-dep ()
+  (package-lint-test-add-package-lint-foobar-to-archive '(0 5 0))
+  (package-lint-test-add-package-lint-foobar-to-archive '(20180101 0 0))
   (should
    (equal
-    '((6 23 warning "Use a non-snapshot version number for dependency on \"package-lint\" if possible."))
-    (package-lint-test--run ";; Package-Requires: ((package-lint \"20160101.1234\"))"))))
+    '((6 23 warning "Use a non-snapshot version number for dependency on \"package-lint-foobar\" if possible."))
+    (package-lint-test--run ";; Package-Requires: ((package-lint-foobar \"20160101.1234\"))"))))
 
 (ert-deftest package-lint-test-warn-unversioned-dep ()
   (should
@@ -370,9 +372,9 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-new-functions ()
   (should
    (equal
-    '((6 1 error "You should depend on (emacs \"25.1\") if you need `when-let'."))
+    '((6 1 error "You should depend on (emacs \"24.1\") if you need `window-resize'."))
     (package-lint-test--run
-     "(when-let ((foo (bar))) (message \"ok\"))"))))
+     "(window-resize foobar)"))))
 
 (ert-deftest package-lint-test-error-new-functions-as-quote ()
   (should
@@ -453,6 +455,36 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     (package-lint-test--run
      ";; Package-Requires: ((seq \"1\"))
 \(seq-length '(foo))"))))
+
+(ert-deftest package-lint-test-error-new-compat-functions ()
+  (should
+   (equal
+    '((6 1 error "You should depend on (emacs \"27.1\") or the compat package if you need `proper-list-p'."))
+    (package-lint-test--run
+     "(proper-list-p '(foo))"))))
+
+(ert-deftest package-lint-test-accepts-new-functions-with-compat ()
+  (should
+   (equal
+    '()
+    (package-lint-test--run
+     ";; Package-Requires: ((compat \"29\"))
+\(proper-list-p '(foo))"))))
+
+(ert-deftest package-lint-test-error-new-compat-macros ()
+  (should
+   (equal
+    '((6 1 error "You should depend on (emacs \"27.1\") or the compat package if you need `with-suppressed-warnings'."))
+    (package-lint-test--run
+     "(with-suppressed-warnings (foo))"))))
+
+(ert-deftest package-lint-test-accepts-new-macros-with-compat ()
+  (should
+   (equal
+    '()
+    (package-lint-test--run
+     ";; Package-Requires: ((compat \"29\"))
+\(with-suppressed-warnings (foo))"))))
 
 (ert-deftest package-lint-test-error-nonstandard-symbol-separator ()
   (should
