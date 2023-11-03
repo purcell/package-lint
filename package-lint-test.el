@@ -454,6 +454,21 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
      ";; Package-Requires: ((seq \"1\"))
 \(seq-length '(foo))"))))
 
+(ert-deftest package-lint-test-error-new-compat-functions ()
+  (should
+   (equal
+    '((6 1 error "You should depend on (emacs \"27.1\") or the compat package if you need `proper-list-p'."))
+    (package-lint-test--run
+     "(proper-list-p '(foo))"))))
+
+(ert-deftest package-lint-test-accepts-new-functions-with-compat ()
+  (should
+   (equal
+    '()
+    (package-lint-test--run
+     ";; Package-Requires: ((compat \"29\"))
+\(proper-list-p '(foo))"))))
+
 (ert-deftest package-lint-test-error-nonstandard-symbol-separator ()
   (should
    (equal
