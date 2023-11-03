@@ -182,10 +182,10 @@ symbol such as `variable-added'.")
           (insert-file-contents el-path)
           (goto-char (point-min))
           ;; TODO convert to rx
-          (while (search-forward-regexp "^(compat-\\(defun\\|\\defvar\\) +\\_<\\(.*?\\)\\_>" nil t)
+          (while (search-forward-regexp "^(compat-\\(defun\\|defmacro\\|\\defvar\\) +\\_<\\(.*?\\)\\_>" nil t)
             (pcase (match-string 1)
               ("defvar" (push (intern (match-string 2)) symbols))
-              ("defun" (push (intern (match-string 2)) functions)))))))
+              ((or "defun" "defmacro") (push (intern (match-string 2)) functions)))))))
     (cons symbols functions))
   "A cons cell of (VARS . FUNCTIONS) supported by \"compat\".")
 
