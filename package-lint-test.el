@@ -282,10 +282,12 @@ headers and provide form."
     (package-lint-test--run ";; Package-Requires: ((example-nonexistent-package \"1\"))"))))
 
 (ert-deftest package-lint-test-warn-snapshot-dep ()
+  (package-lint-test-add-package-lint-foobar-to-archive '(0 5 0))
+  (package-lint-test-add-package-lint-foobar-to-archive '(20180101 0 0))
   (should
    (equal
-    '((6 23 warning "Use a non-snapshot version number for dependency on \"package-lint\" if possible."))
-    (package-lint-test--run ";; Package-Requires: ((package-lint \"20160101.1234\"))"))))
+    '((6 23 warning "Use a non-snapshot version number for dependency on \"package-lint-foobar\" if possible."))
+    (package-lint-test--run ";; Package-Requires: ((package-lint-foobar \"20160101.1234\"))"))))
 
 (ert-deftest package-lint-test-warn-unversioned-dep ()
   (should
