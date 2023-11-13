@@ -459,9 +459,11 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-error-new-compat-functions ()
   (should
    (equal
-    '((6 1 error "You should depend on (emacs \"27.1\") or the compat package if you need `proper-list-p'."))
+    '((6 1 error "You should depend on (emacs \"27.1\") or the compat package if you need `proper-list-p'.")
+      (7 1 error "You should depend on (emacs \"29.1\") or the compat package if you need `string-split'."))
     (package-lint-test--run
-     "(proper-list-p '(foo))"))))
+     "(proper-list-p '(foo))
+\(string-split s)"))))
 
 (ert-deftest package-lint-test-accepts-new-functions-with-compat ()
   (should
@@ -469,7 +471,8 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     '()
     (package-lint-test--run
      ";; Package-Requires: ((compat \"29\"))
-\(proper-list-p '(foo))"))))
+\(proper-list-p '(foo))
+\(string-split s)"))))
 
 (ert-deftest package-lint-test-error-new-compat-macros ()
   (should

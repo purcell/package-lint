@@ -182,7 +182,7 @@ symbol such as `variable-added'.")
           (insert-file-contents el-path)
           (goto-char (point-min))
           (while (search-forward-regexp (rx line-start
-                                            "(compat-" (group (or "defun" "defmacro" "defvar"))
+                                            "(compat-" (group (or "defun" "defmacro" "defvar" "defalias"))
                                             (+ space)
                                             symbol-start
                                             (group (+? any))
@@ -190,7 +190,7 @@ symbol such as `variable-added'.")
                                         nil t)
             (pcase (match-string 1)
               ("defvar" (push (intern (match-string 2)) symbols))
-              ((or "defun" "defmacro") (push (intern (match-string 2)) functions)))))))
+              ((or "defun" "defmacro" "defalias") (push (intern (match-string 2)) functions)))))))
     (cons symbols functions))
   "A cons cell of (VARS . FUNCTIONS) supported by \"compat\".")
 
