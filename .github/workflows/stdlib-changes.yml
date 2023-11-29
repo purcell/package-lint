@@ -16,7 +16,7 @@ jobs:
       with:
         name: emacs-ci
     - run: tools/sym-dump-all
-    - uses: stefanzweifel/git-auto-commit-action@v4
+    - uses: stefanzweifel/git-auto-commit-action@v5
       with:
         commit_message: Regenerate stdlib-changes
         file_pattern: data/stdlib-changes
