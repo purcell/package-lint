@@ -8,7 +8,7 @@ function run_emacs () {
     local ver
     ver=$(echo "$1" | tr '.' '-')
     shift
-    nix run "github:purcell/nix-emacs-ci#emacs-$ver" -- "$@"
+    nix run --accept-flake-config "github:purcell/nix-emacs-ci#emacs-$ver" -- "$@"
 }
 
 symbol_dump_dir="$rootdir/.symbol-dumps"
