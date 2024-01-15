@@ -12,7 +12,7 @@ jobs:
       with:
         ref: ${{ github.head_ref }}
     - uses: cachix/install-nix-action@v25
-    - uses: cachix/cachix-action@v13
+    - uses: cachix/cachix-action@v14
       with:
         name: emacs-ci
     - run: tools/sym-dump-all
