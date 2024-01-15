@@ -4,17 +4,18 @@ set -e
 
 rootdir=$(cd "$(dirname $0)/.." && pwd)
 
-function emacs_bin () {
+function run_emacs () {
     local ver
     ver=$(echo "$1" | tr '.' '-')
-    echo "$(nix-build --no-out-link -A "emacs-$ver" https://github.com/purcell/nix-emacs-ci/archive/master.tar.gz)"/bin/emacs
+    shift
+    nix run "github:purcell/nix-emacs-ci#emacs-$ver" -- "$@"
 }
 
 symbol_dump_dir="$rootdir/.symbol-dumps"
 mkdir -p "$symbol_dump_dir"
 for v in 23.4 24.1 24.2 24.3 24.4 24.5 25.1 25.2 25.3 26.1 26.2 26.3 27.1 27.2 28.1 28.2 29.1; do
     echo "Dumping $v"
-    $(emacs_bin $v) -Q --script "$rootdir/tools/sym-dump.el" > "$symbol_dump_dir/$v";
+    run_emacs "$v" -Q --script "$rootdir/tools/sym-dump.el" > "$symbol_dump_dir/$v";
 done
 
 echo "Calculating changes between versions"
@@ -44,7 +45,7 @@ EOF
 )
 
 mkdir -p "$rootdir/data"
-$(emacs_bin 29.1) -Q -batch --load "$rootdir/tools/sym-diff.el" --eval "$diff_expr" > "$rootdir/data/stdlib-changes"
+run_emacs 29.1 -Q -batch --load "$rootdir/tools/sym-diff.el" --eval "$diff_expr" > "$rootdir/data/stdlib-changes"
 cat <<EOF >> "$rootdir/data/stdlib-changes"
 
 ;; Local Variables:
