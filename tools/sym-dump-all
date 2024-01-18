@@ -13,7 +13,7 @@ function run_emacs () {
 
 symbol_dump_dir="$rootdir/.symbol-dumps"
 mkdir -p "$symbol_dump_dir"
-for v in 23.4 24.1 24.2 24.3 24.4 24.5 25.1 25.2 25.3 26.1 26.2 26.3 27.1 27.2 28.1 28.2 29.1; do
+for v in 23.4 24.1 24.2 24.3 24.4 24.5 25.1 25.2 25.3 26.1 26.2 26.3 27.1 27.2 28.1 28.2 29.1 29.2; do
     echo "Dumping $v"
     run_emacs "$v" -Q --script "$rootdir/tools/sym-dump.el" > "$symbol_dump_dir/$v";
 done
@@ -40,12 +40,13 @@ diff_expr=$(cat - <<EOF
      ((28 1) . ,(sym-diff-dumps "27.2" "28.1"))
      ((28 2) . ,(sym-diff-dumps "28.1" "28.2"))
      ((29 1) . ,(sym-diff-dumps "28.2" "29.1"))
+     ((29 1) . ,(sym-diff-dumps "29.1" "29.2"))
      )))
 EOF
 )
 
 mkdir -p "$rootdir/data"
-run_emacs 29.1 -Q -batch --load "$rootdir/tools/sym-diff.el" --eval "$diff_expr" > "$rootdir/data/stdlib-changes"
+run_emacs 29.2 -Q -batch --load "$rootdir/tools/sym-diff.el" --eval "$diff_expr" > "$rootdir/data/stdlib-changes"
 cat <<EOF >> "$rootdir/data/stdlib-changes"
 
 ;; Local Variables:
