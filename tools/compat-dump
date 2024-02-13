@@ -1,0 +1,21 @@
+#!/usr/bin/env -S emacs -Q --script
+(unless (string-suffix-p "/package-lint/" default-directory)
+  (error "Not in the package-lint directory"))
+(let (symbols functions)
+  (dolist (file (directory-files "../compat/" t "compat-[0-9]+\\.el$"))
+    (with-temp-buffer
+      (insert-file-contents file)
+      (goto-char (point-min))
+      (while (search-forward-regexp (rx line-start
+                                        "(compat-" (group (or "defun" "defmacro" "defvar" "defalias"))
+                                        (+ space)
+                                        symbol-start
+                                        (group (+? any))
+                                        symbol-end)
+                                    nil t)
+        (pcase (match-string 1)
+          ("defvar" (push (intern (match-string 2)) symbols))
+          ((or "defun" "defmacro" "defalias") (push (intern (match-string 2)) functions))))))
+  (with-temp-buffer
+    (insert (prin1-to-string (cons symbols functions)))
+    (write-region (point-min) (point-max) "data/compat-symbols" nil 'quiet)))

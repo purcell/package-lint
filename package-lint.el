@@ -7,7 +7,7 @@
 ;; URL: https://github.com/purcell/package-lint
 ;; Keywords: lisp
 ;; Version: 0.21
-;; Package-Requires: ((cl-lib "0.5") (emacs "24.4") (let-alist "1.0.6") (compat "29.1"))
+;; Package-Requires: ((emacs "24.4") (let-alist "1.0.6"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -110,14 +110,18 @@ SYMBOL-NAME-MATCH PACKAGE VERSION?) where PACKAGE is the name of
 a backport library shipping the feature and VERSION is an
 optional minimum version containing the feature.")
 
+(defun package-lint--load-data (file)
+  "Load sexp data from FILE."
+  (with-temp-buffer
+    (insert-file-contents
+     (expand-file-name file
+                       (if load-file-name
+                           (file-name-directory load-file-name)
+                         default-directory)))
+    (read (current-buffer))))
+
 (defconst package-lint-symbol-info
-  (let* ((stdlib-changes (with-temp-buffer
-                           (insert-file-contents
-                            (expand-file-name "data/stdlib-changes"
-                                              (if load-file-name
-                                                  (file-name-directory load-file-name)
-                                                default-directory)))
-                           (read (current-buffer))))
+  (let* ((stdlib-changes (package-lint--load-data "data/stdlib-changes"))
          (info (make-hash-table)))
     (pcase-dolist (`(,version . ,data) stdlib-changes)
       (pcase-dolist (`(,syms . ,action)
@@ -172,33 +176,15 @@ symbol such as `variable-added'.")
   (let-alist (package-lint-symbol-info sym)
     (or .function-added .function-removed)))
 
-(defconst package-lint--supported-symbols
-  (let (symbols functions)
-    (dolist (ver '(25 26 27 28 29))
-      (let ((el-path (locate-library (format "compat-%d.el" ver) t)))
-        (unless el-path
-          (error "compat package not installed"))
-        (with-temp-buffer
-          (insert-file-contents el-path)
-          (goto-char (point-min))
-          (while (search-forward-regexp (rx line-start
-                                            "(compat-" (group (or "defun" "defmacro" "defvar" "defalias"))
-                                            (+ space)
-                                            symbol-start
-                                            (group (+? any))
-                                            symbol-end)
-                                        nil t)
-            (pcase (match-string 1)
-              ("defvar" (push (intern (match-string 2)) symbols))
-              ((or "defun" "defmacro" "defalias") (push (intern (match-string 2)) functions)))))))
-    (cons symbols functions))
+(defconst package-lint--compat-symbols
+  (package-lint--load-data "data/compat-symbols")
   "A cons cell of (VARS . FUNCTIONS) supported by \"compat\".")
 
 (defun package-lint--supported-by-compat (type sym)
   "Return non-nil if SYM is supported by the \"compat\" package.
 TYPE is `function' or `variable'."
   (memq sym (pcase type
-              (`function (cdr package-lint--supported-symbols))
+              (`function (cdr package-lint--compat-symbols))
               (_ nil))))
 
 (defconst package-lint--sane-prefixes
