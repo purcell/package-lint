@@ -1,0 +1,20 @@
+name: Update compat symbols
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: purcell/setup-emacs@master
+      with:
+        version: 28.2
+    - run: tools/compat-dump
+    - uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: Regenerate compat symbols
+        file_pattern: data/compat-symbols
