@@ -769,7 +769,8 @@ the Emacs dependency matches the re-addition."
        (let ((removed-in-version .function-removed))
          (when removed-in-version
            (let ((emacs-version-dep (or (cadr (assq 'emacs valid-deps)) '(0))))
-             (unless (and .function-added (version-list-<= .function-added emacs-version-dep))
+             (unless (or (package-lint--seen-fboundp-check-for sym)
+                         (and .function-added (version-list-<= .function-added emacs-version-dep)))
                (list
                 'error
                 (format "`%s' was removed in Emacs version %s."
