@@ -158,7 +158,7 @@
   (features
    (removed abbrevlist assoc complete cust-print eieio-loaddefs erc-hecomplete etc-authors-mode fast-lock hol-loaddefs htmlfontify-loaddefs lazy-lock mailpost mouse-sel pc-mode pc-select rmail-loaddefs s-region sregex)
    (added ansi-osc bind-key c-ts-common c-ts-mode cmake-ts-mode csharp-mode dockerfile-ts-mode eglot em-elecslash em-extpipe emacs-authors-mode emacs-news-mode emoji epa-ks erc-common erc-sasl erc-sasl-ecdsa-nist256p-challenge erc-sasl-external erc-sasl-plain erc-sasl-scram-sha-1 erc-sasl-scram-sha-256 erc-sasl-scram-sha-512 erts-mode eudc-capf eudcb-ecomplete eudcb-mailabbrev external-completion generate-lisp-file glyphless-mode go-ts-mode holiday-loaddefs icons idna-mapping ietf-drums-date image-crop image-dired-dired image-dired-external image-dired-tags image-dired-util indonesian java-ts-mode json-ts-mode keymap loaddefs-gen mh-acros multisession oc-bibtex oclosure org-cycle org-fold org-fold-core org-persist package-vc pcmpl-git pgtk-dnd philippine pixel-fill range ruby-ts-mode rust-ts-mode sqlite sqlite-mode string-edit tai-viet-util textsec textsec-check theme-loaddefs toml-ts-mode tramp-container treesit typescript-ts-mode uni-confusable uni-scripts use-package use-package-bind-key use-package-core use-package-delight use-package-diminish use-package-ensure use-package-ensure-system-package use-package-jump use-package-lint vtable wallpaper word-wrap-mode yaml-ts-mode yank-media)))
- ((29 1)
+ ((29 2)
   (functions
    (removed face-remap--copy-face internal--unlabel-restriction js--treesit-property-not-function-p js-jsx--treesit-font-lock-compatibility-bb1f97b python--treesit-fontify-string-interpolation ruby-ts--parser-after-change tramp-docker--completion-function transient--ensure-infix-command transient--suffix-command transient--suffix-symbol)
    (added c-ts-mode--else-heuristic c-ts-mode--emacs-defun-body-p c-ts-mode--first-sibling custom-icon-action custom-icon-mark-to-reset-standard custom-icon-mark-to-save custom-icon-reset-saved custom-icon-reset-standard custom-icon-save custom-icon-state-set-and-redraw emacs-lisp-native-compile internal--labeled-widen js-ts--syntax-propertize org-babel--variable-assignments:fish python--treesit-fontify-dotted-decorator python--treesit-fontify-union-types python--treesit-fontify-union-types-strict python--treesit-syntax-propertize rust-ts-mode--comment-docstring tramp-action-otp-password tramp-compat-length< tramp-compat-length= tramp-compat-length> tramp-completion-handle-expand-file-name tramp-completion-handle-file-exists-p tramp-completion-handle-file-name-directory tramp-completion-handle-file-name-nondirectory tramp-container--completion-function tramp-crypt-handle-file-exists-p tramp-fuse-handle-file-exists-p tramp-skeleton-file-exists-p tramp-skeleton-file-name-all-completions tramp-ssh-option-exists-p tramp-string-empty-or-nil-p transient--wrap-command-29 transient--wrap-command-30 treesit--pre-redisplay treesit--pre-syntax-ppss treesit--syntax-propertize-notifier tsx-ts--syntax-propertize tsx-ts--syntax-propertize-captures typescript-ts--syntax-propertize))
@@ -167,7 +167,17 @@
    (added custom-icon-extended-menu js-ts--s-p-query python--treesit-builtin-types python--treesit-type-regex tramp-otp-password-prompt-regexp tramp-show-ad-hoc-proxies treesit--pre-redisplay-tick treesit--syntax-propertize-start tsx-ts--s-p-query typescript-ts--s-p-query))
   (features
    (removed)
-   (added c++-ts-mode))))
+   (added c++-ts-mode)))
+ ((29 3)
+  (functions
+   (removed cmake-ts-mode--imenu cmake-ts-mode--imenu-1 dockerfile-ts-mode--imenu dockerfile-ts-mode--imenu-1)
+   (added cmake-ts-mode--function-name dockerfile-ts-mode--stage-name js--treesit-font-lock-compatibility-definition-feature tramp-crypt-cleanup-connection tsx-ts-mode--font-lock-compatibility-function-expression))
+  (variables
+   (removed)
+   (added org--latex-preview-when-risky tramp-pipe-stty-settings tramp-security-key-pin-regexp untrusted-content))
+  (features
+   (removed)
+   (added))))
 
 ;; Local Variables:
 ;; no-byte-compile: t
