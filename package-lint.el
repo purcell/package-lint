@@ -193,6 +193,7 @@ TYPE is `function' or `variable'."
    (or
     "org-dblock-write:"
     "org-babel-execute:"
+    "org-babel-expand-body:"
     "org-babel-prep-session:"
     "org-babel-variable-assignments:"
     "org-babel-default-header-args:"
