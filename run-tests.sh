@@ -7,9 +7,9 @@ NEEDED_PACKAGES="cl-lib let-alist compat"
 INIT_PACKAGE_EL="(progn \
   (require 'package) \
   (push '(\"melpa\" . \"https://melpa.org/packages/\") package-archives) \
+  (setq package-check-signature nil) \
   (package-initialize) \
-  (unless package-archive-contents \
-     (package-refresh-contents)) \
+  (package-refresh-contents) \
   (dolist (pkg '(${NEEDED_PACKAGES})) \
     (unless (package-installed-p pkg) \
       (package-install pkg))))"
