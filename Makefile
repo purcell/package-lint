@@ -12,11 +12,10 @@ INIT_PACKAGES="(progn \
       (unless (assoc pkg package-archive-contents) \
 	(package-refresh-contents)) \
       (package-install pkg))) \
-  ;; Ensure we have a downloadable package list for package-lint to work from \
   (unless package-archive-contents (package-refresh-contents)) \
   )"
 
-EMACS_BATCH="${EMACS} -Q -batch --eval ${INIT_PACKAGES}"
+EMACS_BATCH=${EMACS} -Q -batch --eval ${INIT_PACKAGES}
 
 all: clean-elc compile package-lint test
 
@@ -29,12 +28,16 @@ compile: clean-elc
 clean-elc:
 	rm -f f.elc
 
-test:
+TEST_SELECTOR ?= t
+test-unit:
 	@echo "---- Run unit tests"
 	@${EMACS_BATCH} \
 		 -l package-lint.el \
 		 -l package-lint-test.el \
-		 -f ert-run-tests-batch-and-exit && echo "OK"
+		 --eval "(ert-run-tests-batch-and-exit '${TEST_SELECTOR})" \
+		 && echo "OK"
+
+test-batch:
 	@echo "---- Assert clean package passes batch linting"
 	@${EMACS_BATCH} \
 		 -l package-lint.el \
@@ -59,5 +62,6 @@ test:
 		 batch-tests/has-errors.el && \
 	    exit 1 || echo "OK"
 
+test: test-unit test-batch
 
-.PHONY:	all compile clean-elc package-lint test
+.PHONY:	all compile clean-elc package-lint test test-unit test-batch
