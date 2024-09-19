@@ -43,4 +43,4 @@ jobs:
 
     - uses: actions/checkout@v4
     - name: Run tests
-      run: './run-tests.sh'
+      run: make
