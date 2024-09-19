@@ -20,9 +20,9 @@
                                         symbol-end)
                                     nil t)
         (pcase (match-string 1)
-          ("defvar" (push (intern (match-string 2)) symbols))
-          ((or "defun" "defmacro" "defalias") (push (intern (match-string 2)) functions))))))
+          ("defvar" (push (match-string 2) symbols))
+          ((or "defun" "defmacro" "defalias") (push (match-string 2) functions))))))
   (with-temp-buffer
-    (insert (prin1-to-string (cons symbols functions)))
+    (insert (prin1-to-string (mapcar 'intern (sort (append symbols functions) #'string<))))
     (write-region (point-min) (point-max) "data/compat-symbols"))
   (message "Wrote %d symbols and %d functions" (length symbols) (length functions)))
