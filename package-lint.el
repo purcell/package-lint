@@ -1204,7 +1204,7 @@ The returned list is of the form (SYMBOL-NAME . POSITION)."
          (save-excursion
            ;; Use the default imenu expression list so that we're not confused
            ;; by user customizations.
-           (let ((imenu-generic-expression lisp-imenu-generic-expression)
+           (let ((imenu-generic-expression (default-value 'lisp-imenu-generic-expression))
                  ;; In case it's actually Semantic, tell it not to decorate
                  ;; symbol names.
                  (semantic-imenu-summary-function 'semantic-format-tag-name))
