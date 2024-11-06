@@ -87,8 +87,6 @@ Author links:
 
 [✍ sanityinc.com](http://www.sanityinc.com/)
 
-[🐦 @sanityinc](https://twitter.com/sanityinc)
-
 [flycheck]: https://github.com/flycheck/flycheck
 [tags]: https://github.com/purcell/flycheck-package/tags
 [ledger]: https://ledger-cli.org/
