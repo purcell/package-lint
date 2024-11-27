@@ -982,7 +982,7 @@ Valid definition names are:
 - a NAME matching `package-lint--sane-prefixes', or
 
 - a NAME whose POSITION in the buffer denotes a global definition."
-  (or (string-prefix-p prefix name)
+  (or (string-match-p (rx-to-string `(seq string-start ,prefix (or string-end (not alpha)))) name)
       (string-match-p package-lint--sane-prefixes name)
       (string-match-p (rx-to-string `(seq string-start (or "define" "defun" "defvar" "defface" "with") "-" ,prefix)) name)
       (string-match-p (rx-to-string  `(seq string-start "global-" ,prefix (or "-mode" (seq "-" (* any) "-mode")) string-end)) name)

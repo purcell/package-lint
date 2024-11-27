@@ -517,6 +517,10 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     (package-lint-test--run "(defun foo ())")))
   (should
    (equal
+    '((6 0 error "\"testify\" doesn't start with package's prefix \"test\"."))
+    (package-lint-test--run "(defun testify ())")))
+  (should
+   (equal
     '((6 0 error "\"global-testfoo-mode\" doesn't start with package's prefix \"test\"."))
     (package-lint-test--run "(define-globalized-minor-mode global-testfoo-mode ignore ignore :require 'test)"))))
 
