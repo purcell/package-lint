@@ -153,7 +153,7 @@ headers and provide form."
 (ert-deftest package-lint-test-warn-no-standard-keyword ()
   (should
    (equal
-    '((6 3 warning "You should include standard keywords: see the variable `finder-known-keywords'."))
+    '((6 13 warning "You should include standard keywords: see the variable `finder-known-keywords'."))
     (package-lint-test--run ";; Keywords: foo"))))
 
 (ert-deftest package-lint-test-no-warning-if-at-least-one-standard-keyword ()
@@ -342,11 +342,11 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
 (ert-deftest package-lint-test-warning-cl-lib-not-needed ()
   (should
    (member
-    '(6 52 warning "An explicit dependency on cl-lib <= 1.0 is not needed on Emacs >= 24.3.")
+    '(6 21 warning "An explicit dependency on cl-lib <= 1.0 is not needed on Emacs >= 24.3.")
     (package-lint-test--run ";; Package-Requires: ((emacs \"25.1\") (cl-lib \"1.0\"))")))
   (should
    (member
-    '(6 52 warning "An explicit dependency on cl-lib <= 1.0 is not needed on Emacs >= 24.3.")
+    '(6 21 warning "An explicit dependency on cl-lib <= 1.0 is not needed on Emacs >= 24.3.")
     (package-lint-test--run ";; Package-Requires: ((emacs \"24.3\") (cl-lib \"0.5\"))"))))
 
 (ert-deftest package-lint-test-warning-cl ()

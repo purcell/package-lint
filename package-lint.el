@@ -393,7 +393,7 @@ Instead it should use `user-emacs-directory' or `locate-user-emacs-file'."
 (defun package-lint--check-keywords-list ()
   "Verify that package keywords are listed in `finder-known-keywords'."
   (when (package-lint--goto-header "Keywords")
-    (let ((err-pos (match-beginning 2)))
+    (let ((err-pos (point)))
       (let ((keywords (lm-keywords-list)))
         (unless (cl-some (lambda (keyword) (assoc (intern keyword) finder-known-keywords)) keywords)
           (package-lint--error-at-point
@@ -404,18 +404,15 @@ Instead it should use `user-emacs-directory' or `locate-user-emacs-file'."
 (defun package-lint--check-url-header ()
   "Verify that the package has an HTTPS or HTTP Homepage/URL header."
   (if (package-lint--goto-header "\\(?:URL\\|Homepage\\)")
-      (let ((url (match-string 3))
-            (url-start (match-beginning 3)))
-        (when (string-match-p "^<.*>$" url)
-          (setq url (substring url 1 -1)
-                url-start (1+ url-start))
-          (backward-char 1))
-        (unless (and (equal (thing-at-point 'url) url)
-                     (string-match-p "^https?://" url))
-          (package-lint--error-at-point
-           'error
-           "Package URLs should be a single HTTPS or HTTP URL."
-           url-start)))
+      (progn
+        (when (looking-at "<.*>$")
+          (forward-char 1))
+        (let ((url (thing-at-point 'url)))
+          (unless (and url (string-match-p "^https?://" url))
+            (package-lint--error-at-point
+             'error
+             "Package URLs should be a single HTTPS or HTTP URL."
+             (point)))))
     (package-lint--error-at-bob
      'error
      "Package should have a Homepage or URL header.")))
@@ -424,27 +421,27 @@ Instead it should use `user-emacs-directory' or `locate-user-emacs-file'."
   "Check the contents of the \"Package-Requires\" header.
 Return a list of well-formed dependencies, same as
 `package-lint--check-well-formed-dependencies'."
-  (when (package-lint--goto-header "Package-Requires")
-    (let ((position (match-beginning 3))
-          (deps (match-string 3)))
-      (condition-case err
-          (pcase-let ((`(,parsed-deps . ,parse-end-pos) (read-from-string deps)))
-            (unless (= parse-end-pos (length deps))
-              (package-lint--error-at-bol
-               'error
-               "More than one expression provided."))
-            (let ((deps (package-lint--check-well-formed-dependencies position parsed-deps)))
-              (package-lint--check-emacs-version deps)
-              (package-lint--check-packages-installable deps)
-              (package-lint--check-deps-use-non-snapshot-version deps)
-              (package-lint--check-deps-do-not-use-zero-versions deps)
-              (package-lint--check-cl-lib-version deps)
-              deps))
-        (error
-         (package-lint--error-at-bol
-          'error
-          (format "Couldn't parse \"Package-Requires\" header: %s" (error-message-string err)))
-         nil)))))
+  (let ((deps (package-lint--goto-header "Package-Requires")))
+    (when deps
+      (let ((position (point)))
+        (condition-case err
+            (pcase-let ((`(,parsed-deps . ,parse-end-pos) (read-from-string deps)))
+              (unless (= parse-end-pos (length deps))
+                (package-lint--error-at-bol
+                 'error
+                 "More than one expression provided."))
+              (let ((deps (package-lint--check-well-formed-dependencies position parsed-deps)))
+                (package-lint--check-emacs-version deps)
+                (package-lint--check-packages-installable deps)
+                (package-lint--check-deps-use-non-snapshot-version deps)
+                (package-lint--check-deps-do-not-use-zero-versions deps)
+                (package-lint--check-cl-lib-version deps)
+                deps))
+          (error
+           (package-lint--error-at-bol
+            'error
+            (format "Couldn't parse \"Package-Requires\" header: %s" (error-message-string err)))
+           nil))))))
 
 (defun package-lint--check-well-formed-dependencies (position parsed-deps)
   "Check that dependencies listed at POSITION are well-formed.
@@ -849,7 +846,7 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
           (package-lint--error-at-point
            'warning
            (format "\"%s\" is not a valid version. MELPA will handle this, but other archives will not." version)
-           (match-beginning 3)))
+           (point)))
       (package-lint--error-at-bob
        'warning
        "\"Version:\" or \"Package-Version:\" header is missing. MELPA will handle this, but other archives will not."))))
@@ -1154,18 +1151,28 @@ Lines consisting only of whitespace or empty comments are considered empty."
                    (lambda (v1 v2) (not (version-list-< v1 v2)))))
       (aref descriptors 0))))
 
-(defun package-lint--goto-header (header-name)
+(defun package-lint--goto-header (header-name &optional multiline)
   "Move to the first occurrence of HEADER-NAME in the file.
-If the return value is non-nil, then point will be at the end of
-the file, and the second and third match groups will contain the name and
-value of the header with any leading or trailing whitespace removed."
-  (let ((initial-point (point)))
-    (goto-char (point-min))
-    (let ((case-fold-search t))
-      (if (re-search-forward (concat (lm-get-header-re header-name) "\\(.*?\\) *$") nil t)
-          (match-string-no-properties 3)
-        (goto-char initial-point)
-        nil))))
+If the return value is non-nil, then point will be at the
+beginning of the header's value, and the second and third match
+groups will contain the name and value of the header with any
+leading or trailing whitespace removed.
+
+If MULTILINE is non-nil, allow the header value to span lines, and return
+them as a list of strings."
+  (goto-char (point-min))
+  (when (re-search-forward (concat (lm-get-header-re header-name) "\\(.*?\\) *$") (lm-code-mark) t)
+    (let ((start-pos (match-beginning 3))
+          (val (match-string-no-properties 3)))
+      (when multiline
+        (setq val (list val))
+        (forward-line 1)
+        (while (looking-at "^;+\\(\t\\|[\t\s]\\{2,\\}\\)\\(.+\\)")
+          (push (match-string-no-properties 2) val)
+          (forward-line 1))
+        (nreverse val))
+      (goto-char start-pos)
+      val)))
 
 (defun package-lint--update-or-insert-version (version)
   "Ensure current buffer has a \"Version: VERSION\" header."
