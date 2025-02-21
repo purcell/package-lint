@@ -422,8 +422,10 @@ Instead it should use `user-emacs-directory' or `locate-user-emacs-file'."
   "Check the contents of the \"Package-Requires\" header.
 Return a list of well-formed dependencies, same as
 `package-lint--check-well-formed-dependencies'."
-  (let ((deps (package-lint--goto-header "Package-Requires")))
+  (let ((deps (package-lint--goto-header "Package-Requires" t)))
     (when deps
+      (when (listp deps)
+        (setq deps (mapconcat #'identity deps "")))
       (let ((position (point)))
         (condition-case err
             (pcase-let ((`(,parsed-deps . ,parse-end-pos) (read-from-string deps)))
