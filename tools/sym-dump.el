@@ -72,7 +72,7 @@
 (defun sym-dump-go-crazy ()
   (dolist (lib (sym-dump-libraries load-path))
     (message "Loading %s" lib)
-    (with-demoted-errors (require lib nil t)))
+    (with-demoted-errors "Error: %S" (require lib nil t)))
   (message "Loaded all")
   (let (print-level print-length) ; avoid truncation
     (pp (sym-dump-loaded))))
