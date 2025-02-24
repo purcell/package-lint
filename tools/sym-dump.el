@@ -74,7 +74,7 @@
     (message "Loading %s" lib)
     (with-demoted-errors "Error: %S" (require lib nil t)))
   (message "Loaded all")
-  (let (print-level print-length) ; avoid truncation
+  (let (print-level print-length (pp-default-function 'pp-29)) ; avoid truncation
     (pp (sym-dump-loaded))))
 
 (sym-dump-go-crazy)
