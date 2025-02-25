@@ -1209,8 +1209,8 @@
 	  eshell-source-file eshell-test-imatch eshell-unix-initialize
 	  eshell-unload-all-modules eshell-unload-extension-modules
 	  eshell-using-module eshell-write-aliases-list
-	  eshell-write-history eshell-write-last-dir-ring eshell/
-	  . eshell/agrep eshell/alias eshell/basename eshell/cat
+	  eshell-write-history eshell-write-last-dir-ring 
+          eshell/. eshell/agrep eshell/alias eshell/basename eshell/cat
 	  eshell/cd eshell/cp eshell/date eshell/diff eshell/dirname
 	  eshell/dirs eshell/du eshell/echo eshell/egrep eshell/fgrep
 	  eshell/glimpse eshell/grep eshell/history eshell/info
