@@ -54,7 +54,8 @@ headers and provide form."
   (unless featurename
     (setq featurename "test"))
   (with-temp-buffer
-    (emacs-lisp-mode)
+    (let ((delay-mode-hooks t))
+      (emacs-lisp-mode))
     (insert (or header (format ";;; %s.el --- A test\n" featurename)))
     (insert (or version ";; Package-Version: 0\n"))
     (insert (or url ";; URL: https://package-lint.test/p?q#f\n"))
@@ -488,6 +489,14 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     (package-lint-test--run
      ";; Package-Requires: ((compat \"29\"))
 \(with-suppressed-warnings (foo))"))))
+
+(ert-deftest package-lint-test-accepts-compat-call ()
+  (should
+   (equal
+    '()
+    (package-lint-test--run
+     ";; Package-Requires: ((compat \"29\"))
+\(compat-call 'foo)"))))
 
 (ert-deftest package-lint-test-error-nonstandard-symbol-separator ()
   (should
