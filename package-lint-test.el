@@ -489,6 +489,14 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
      ";; Package-Requires: ((compat \"29\"))
 \(with-suppressed-warnings (foo))"))))
 
+(ert-deftest package-lint-test-accepts-compat-call ()
+  (should
+   (equal
+    '()
+    (package-lint-test--run
+     ";; Package-Requires: ((compat \"29\"))
+\(compat-call 'foo)"))))
+
 (ert-deftest package-lint-test-error-nonstandard-symbol-separator ()
   (should
    (equal
