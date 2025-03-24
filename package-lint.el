@@ -86,7 +86,7 @@ The path can be absolute or relative to that of the linted file.")
   "List of errors and warnings for the current buffer.
 This is bound dynamically while the checks run.")
 
-(defconst package-lint-emacs-head-version '(30)
+(defconst package-lint-emacs-head-version '(31)
   "Version of Emacs HEAD.")
 
 (defconst package-lint-backport-libraries
