@@ -24,6 +24,7 @@
           ((or "defun" "defmacro" "defalias") (push (match-string 2) functions))))))
   (push "compat" functions)
   (push "compat-call" functions)
+  (push "compat-function" functions)
   (with-temp-buffer
     (insert (prin1-to-string (cons (mapcar #'intern (sort symbols #'string<))
                                    (mapcar #'intern (sort functions #'string<)))))
