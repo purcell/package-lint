@@ -428,6 +428,15 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     (when-let blah)
   (bloop))"))))
 
+(ert-deftest package-lint-test-accept-new-functions-with-functionp ()
+  (should
+   (equal
+    '()
+    (package-lint-test--run
+     "(if (functionp 'when-let)
+    (when-let blah)
+  (bloop))"))))
+
 (ert-deftest package-lint-test-distinguishes-let-vars-from-function-calls ()
   (should (equal '() (package-lint-test--run "(let (seq-length '(foo)))")))
   (should (equal '() (package-lint-test--run "(let ((seq-length '(foo))))")))
