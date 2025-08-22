@@ -43,6 +43,15 @@
 (require 'let-alist)
 (require 'rx)
 
+(defvar package-lint-prefix nil
+  "The prefix used by symbols defined in the package.
+
+When set, this is used as the package prefix instead of obtaining it
+from the main package file (if indicated via `package-lint-main-file')
+or directly from the buffer being linted. This allows package-lint to
+operate on secondary files in a package as well as component packages
+in a package suite that may share a common prefix.")
+(put 'package-lint-prefix 'safe-local-variable #'stringp)
 
 (defvar package-lint-main-file nil
   "For multi-file packages, set this to the main .el or -pkg.el file.
@@ -50,6 +59,10 @@
 When set, the package prefix and dependencies are obtained from
 that file instead of the buffer being linted.  This allows
 package-lint to operate on secondary files in a package.
+
+Note that for the purposes of validating prefixes used in symbol
+naming in the package, `package-lint-prefix', if set, overrides the
+name of the main file as the prefix to validate against.
 
 The path can be absolute or relative to that of the linted file.")
 (put 'package-lint-main-file 'safe-local-variable #'stringp)
@@ -231,7 +244,8 @@ TYPE is `function' or `variable'."
             (if (package-lint--main-file-p)
                 (progn
                   ;; TODO: handle when the main file is a -pkg.el file
-                  (setq prefix (package-lint--get-package-prefix))
+                  (setq prefix (or package-lint-prefix
+                                   (package-lint--get-package-prefix)))
                   (let ((desc (package-lint--check-package-el-can-parse)))
                     (when desc
                       (package-lint--check-package-summary desc)
@@ -243,10 +257,11 @@ TYPE is `function' or `variable'."
                   (package-lint--check-package-version-present)
                   (package-lint--check-commentary-existence))
               ;; Need to look at the main file to find prefix and dependencies
-              (setq prefix (replace-regexp-in-string
-                            "\\(-mode\\)?\\(-pkg\\)?\\'" ""
-                            (file-name-sans-extension
-                             (file-name-nondirectory package-lint-main-file))))
+              (setq prefix (or package-lint-prefix
+                               (replace-regexp-in-string
+                                "\\(-mode\\)?\\(-pkg\\)?\\'" ""
+                                (file-name-sans-extension
+                                 (file-name-nondirectory package-lint-main-file)))))
               (let ((main-file package-lint-main-file))
                 (if (string-match-p "-pkg\\.el\\'" main-file)
                     (let ((expr (with-temp-buffer

@@ -970,6 +970,39 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
         (package-lint-test--run "(defun secondary-file-fn ())"
                                 :featurename "secondary-file"))))))
 
+(ert-deftest package-lint-test-explicit-prefix ()
+  "Test the `package-lint-prefix' variable."
+  (let ((package-lint-prefix "my-suite"))
+    ;; A correct, explicitly-provided prefix passes,
+    ;; even when the filename suggests a different prefix.
+    (should
+     (equal
+      '()
+      (package-lint-test--run "(defun my-suite-component-a-fn ())"
+                              :featurename "component-a")))
+
+    ;; A symbol using the filename's prefix fails when
+    ;; `package-lint-prefix' is set to something else.
+    (should
+     (equal
+      '((6 0 error "\"component-a-fn\" doesn't start with package's prefix \"my-suite\"."))
+      (package-lint-test--run "(defun component-a-fn ())"
+                              :featurename "component-a")))
+
+    ;; `package-lint-prefix` overrides `package-lint-main-file`.
+    (let* ((main-file-basename "my-suite-main-pkg")
+           (main-file-path (make-temp-file main-file-basename nil ".el"))
+           (package-lint-main-file main-file-path))
+      (with-temp-file main-file-path
+        (with-temp-buffer
+          (package-lint-test--setup-buffer "" :featurename main-file-basename)
+          (write-file main-file-path nil))
+
+        (should
+         (equal
+          '()
+          (package-lint-test--run "(defun my-suite-another-fn ())"
+                                  :featurename "component-b")))))))
 
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
