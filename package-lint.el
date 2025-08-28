@@ -422,8 +422,10 @@ Instead it should use `user-emacs-directory' or `locate-user-emacs-file'."
   "Check the contents of the \"Package-Requires\" header.
 Return a list of well-formed dependencies, same as
 `package-lint--check-well-formed-dependencies'."
-  (let ((deps (package-lint--goto-header "Package-Requires")))
+  (let ((deps (package-lint--goto-header "Package-Requires" t)))
     (when deps
+      (when (listp deps)
+        (setq deps (mapconcat #'identity deps "")))
       (let ((position (point)))
         (condition-case err
             (pcase-let ((`(,parsed-deps . ,parse-end-pos) (read-from-string deps)))
@@ -1162,7 +1164,12 @@ leading or trailing whitespace removed.
 If MULTILINE is non-nil, allow the header value to span lines, and return
 them as a list of strings."
   (goto-char (point-min))
-  (when (re-search-forward (concat (lm-get-header-re header-name) "\\(.*?\\) *$") (lm-code-mark) t)
+  (when (re-search-forward (concat (lm-get-header-re header-name) "\\(.*?\\) *$")
+                           (cond
+                            ((fboundp 'lm-code-start) (lm-code-start)) ; >=30
+                            ((fboundp 'lm-code-mark) (lm-code-mark))   ; <=29
+                            ((error "BUG: lm-code-{start,mark} disappeared")))
+                           t)
     (let ((start-pos (match-beginning 3))
           (val (match-string-no-properties 3)))
       (when multiline
@@ -1171,7 +1178,7 @@ them as a list of strings."
         (while (looking-at "^;+\\(\t\\|[\t\s]\\{2,\\}\\)\\(.+\\)")
           (push (match-string-no-properties 2) val)
           (forward-line 1))
-        (nreverse val))
+        (setq val (nreverse val)))
       (goto-char start-pos)
       val)))
 
