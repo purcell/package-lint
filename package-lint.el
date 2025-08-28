@@ -1168,7 +1168,7 @@ them as a list of strings."
                            (cond
                             ((fboundp 'lm-code-start) (lm-code-start)) ; >=30
                             ((fboundp 'lm-code-mark) (lm-code-mark))   ; <=29
-                            ((error "BUG: lm-code-{start,mark} disappeard")))
+                            ((error "BUG: lm-code-{start,mark} disappeared")))
                            t)
     (let ((start-pos (match-beginning 3))
           (val (match-string-no-properties 3)))
