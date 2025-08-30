@@ -1278,7 +1278,8 @@ otherwise invalid read forms are ignored."
       (let ((obj (unless (package-lint--inside-comment-or-string-p)
                    (save-excursion
                      (ignore-errors (read (current-buffer)))))))
-        (when obj (funcall function obj))))))
+        (when (and obj (listp (cdr-safe obj)))
+          (funcall function obj))))))
 
 
 ;;; Public interface
