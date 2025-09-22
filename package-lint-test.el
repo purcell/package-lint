@@ -41,6 +41,29 @@ VERSION is a list of numbers, e.g., (0 5 0) to represent version
                                       (:url . "https://gitlab.com/somewhere"))])
    (or archive "melpa-stable")))
 
+(cl-defun package-lint-test--setup-buffer (contents &key header version footer provide commentary url featurename)
+  "Insert standard package boilerplate and CONTENTS into the current buffer.
+
+This is the core logic for creating a valid test package buffer to be
+used for linting, and should typically be called inside
+`with-temp-buffer'.
+
+HEADER, VERSION, FOOTER, PROVIDE, COMMENTARY, URL and FEATURENAME are
+as documented in `package-lint-test--run'.
+
+This returns a filename for the buffer based on FEATURENAME."
+  (let ((delay-mode-hooks t))
+    (emacs-lisp-mode))
+  (let ((featurename (or featurename "test")))
+    (insert (or header (format ";;; %s.el --- A test\n" featurename)))
+    (insert (or version ";; Package-Version: 0\n"))
+    (insert (or url ";; URL: https://package-lint.test/p?q#f\n"))
+    (insert (or commentary ";;; Commentary:\n;; A test package, for testing.\n"))
+    (insert contents)
+    (insert "\n" (or provide (format "(provide '%s)\n" featurename)))
+    (insert (or footer (format "\n\n;;; %s.el ends here\n" featurename)))
+    (format "%s.el" featurename)))
+
 (cl-defun package-lint-test--run (contents &key header version footer provide commentary url featurename)
   "Run `package-lint-buffer' on a temporary buffer with given CONTENTS.
 
@@ -51,19 +74,16 @@ it's nil, the default is used.
 
 FEATURENAME defaults to \"test\", and is used in the file name,
 headers and provide form."
-  (unless featurename
-    (setq featurename "test"))
   (with-temp-buffer
-    (let ((delay-mode-hooks t))
-      (emacs-lisp-mode))
-    (insert (or header (format ";;; %s.el --- A test\n" featurename)))
-    (insert (or version ";; Package-Version: 0\n"))
-    (insert (or url ";; URL: https://package-lint.test/p?q#f\n"))
-    (insert (or commentary ";;; Commentary:\n;; A test package, for testing.\n"))
-    (insert contents)
-    (insert "\n" (or provide (format "(provide '%s)\n" featurename)))
-    (insert (or footer (format "\n\n;;; %s.el ends here\n" featurename)))
-    (let ((buffer-file-name (format "%s.el" featurename)))
+    (let ((buffer-file-name
+           (package-lint-test--setup-buffer contents
+                                            :header header
+                                            :version version
+                                            :footer footer
+                                            :provide provide
+                                            :commentary commentary
+                                            :url url
+                                            :featurename featurename)))
       (package-lint-buffer))))
 
 (ert-deftest package-lint-test-reserved-keybindings ()
@@ -925,6 +945,30 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
    (package-lint-test--bufsim
     "(let ((bar |foo)) blah)"
     (package-lint--is-a-let-binding))))
+
+(ert-deftest package-lint-test-main-file-prefix ()
+  "Test prefix detection when `package-lint-main-file' is set."
+  (let* ((main-file-path (make-temp-file "main-pkg" nil ".el"))
+         (prefix (file-name-sans-extension (file-name-nondirectory main-file-path)))
+         (package-lint-main-file main-file-path))
+    (with-temp-file main-file-path
+      (with-temp-buffer
+        (package-lint-test--setup-buffer "" :featurename prefix)
+        (write-file main-file-path nil))
+
+      ;; A valid function name starts with the prefix derived from the main file
+      (should
+       (equal
+        '()
+        (package-lint-test--run (format "(defun %s-secondary-fn ())" prefix)
+                                :featurename "secondary-file")))
+
+      ;; Using the secondary filename as a prefix signals an error if a main file is indicated
+      (should
+       (equal
+        (list (list 6 0 'error (format "\"secondary-file-fn\" doesn't start with package's prefix \"%s\"." prefix)))
+        (package-lint-test--run "(defun secondary-file-fn ())"
+                                :featurename "secondary-file"))))))
 
 
 (provide 'package-lint-test)
