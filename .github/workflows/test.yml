@@ -43,6 +43,6 @@ jobs:
       with:
         version: ${{ matrix.emacs_version }}
 
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Run tests
       run: make
