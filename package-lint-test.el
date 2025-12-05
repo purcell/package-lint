@@ -450,6 +450,13 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     (package-lint-test--run
      "(seq-length '(foo))"))))
 
+(ert-deftest package-lint-test-no-dep-warnings-within-backported-libs ()
+  (should
+   (equal
+    '()
+    (package-lint-test--run
+     "(seq-length '(foo))" :featurename 'seq))))
+
 (ert-deftest package-lint-test-accepts-new-backported-functions-with-emacs-dep ()
   (should
    (equal
