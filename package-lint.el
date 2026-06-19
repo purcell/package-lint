@@ -1,13 +1,13 @@
 ;;; package-lint.el --- A linting library for elisp package authors -*- lexical-binding: t -*-
 
-;; Copyright (C) 2014-2020  Steve Purcell, Fanael Linithien
+;; Copyright (C) 2014-2026  Steve Purcell, Fanael Linithien and contributors
 
 ;; Author: Steve Purcell <steve@sanityinc.com>
 ;;         Fanael Linithien <fanael4@gmail.com>
 ;; URL: https://github.com/purcell/package-lint
 ;; Keywords: lisp
 ;; Version: 0.26
-;; Package-Requires: ((emacs "24.4") (let-alist "1.0.6"))
+;; Package-Requires: ((emacs "25.1") (let-alist "1.0.6"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
