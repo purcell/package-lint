@@ -52,6 +52,7 @@ that file instead of the buffer being linted.  This allows
 package-lint to operate on secondary files in a package.
 
 The path can be absolute or relative to that of the linted file.")
+;;;###autoload
 (put 'package-lint-main-file 'safe-local-variable #'stringp)
 
 
