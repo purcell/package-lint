@@ -933,6 +933,19 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     "(let ((bar |foo)) blah)"
     (package-lint--is-a-let-binding))))
 
+(ert-deftest package-lint-test-accept-relative-main-file-in-batch-mode ()
+  (let ((this-dir (if load-file-name
+                      (file-name-directory load-file-name)
+                    default-directory)))
+    (ert-info ("lint files in the current dir")
+      (let ((default-directory
+             (expand-file-name "batch-tests/relative-package-lint-main-file/" this-dir)))
+        (should (package-lint-batch-and-exit-1 '("foo.el" "foo-bar.el")))))
+    (ert-info ("lint files in a sub dir")
+      (let ((default-directory (expand-file-name "batch-tests/" this-dir)))
+        (should
+         (package-lint-batch-and-exit-1 '("relative-package-lint-main-file/foo.el"
+                                          "relative-package-lint-main-file/foo-bar.el")))))))
 
 (provide 'package-lint-test)
 ;;; package-lint-test.el ends here
