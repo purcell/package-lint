@@ -34,8 +34,6 @@ jobs:
         include:
           - emacs_version: snapshot
             experimental: true
-    env:
-      EMACS_LINT_IGNORE: ${{ matrix.lint_ignore }}
     steps:
     - uses: purcell/setup-emacs@master
       with:
