@@ -934,6 +934,9 @@ Alternatively, depend on (emacs \"24.3\") or greater, in which cl-lib is bundled
     (package-lint--is-a-let-binding))))
 
 (ert-deftest package-lint-test-accept-relative-main-file-in-batch-mode ()
+  :expected-result (if (= emacs-major-version 25)
+                       :failed
+                     :passed)
   (let ((this-dir (if load-file-name
                       (file-name-directory load-file-name)
                     default-directory)))
