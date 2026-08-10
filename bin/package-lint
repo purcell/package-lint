@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+usage () {
+    cat <<EOF
+[cask exec] package-lint [FILES]
+
+Arguments:
+
+FILES:
+  Package lint will use files defined in Cask by default if no files are
+  specified as arguments.
+
+EOF
+}
+
+CASK="${CASK:=cask}"
+EMACS="${EMACS:=emacs}"
+FILES="$*"
+
+INIT_PACKAGE_EL="(progn
+  (require 'package)
+  (setq package-user-dir \"$($CASK package-directory)\")
+  (setq package-archives
+        (mapcar
+         (lambda (archive)
+           (list archive))
+         (cl-delete-if
+          (lambda (file) (string-prefix-p \".\" file))
+          (directory-files (concat package-user-dir \"/archives\")))))
+  (package-read-all-archive-contents))"
+
+if [ -z "$FILES" ]; then
+    FILES=$("$CASK" files)
+fi
+
+EMACS_ARGS=()
+while [[ "$#" -gt 0 ]]
+do
+    case "$1" in
+        "-h"|"--help")
+            usage
+            exit
+            ;;
+        "-L"|"--directory"|"-f"|"--funcall"|"-l"|"--load"|"--eval"|"--execute")
+            EMACS_ARGS+=("$1")
+            EMACS_ARGS+=("$2")
+            shift
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
+
+"$EMACS" -Q -batch \
+         "${EMACS_ARGS[@]}" \
+         --eval "$INIT_PACKAGE_EL" \
+         -L . \
+         -l package-lint.el \
+         -f package-lint-batch-and-exit \
+         $FILES
