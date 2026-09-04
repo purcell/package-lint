@@ -1346,6 +1346,7 @@ The main loop is this separate function so it's easier to test."
     (dolist (file filenames success)
       (let* ((file (expand-file-name file))
              (file-directory (file-name-directory file))
+             (default-directory file-directory)
              (base (file-name-nondirectory file)))
         (with-temp-buffer
           (insert-file-contents file t)
